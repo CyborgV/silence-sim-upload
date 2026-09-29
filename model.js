@@ -12,6 +12,11 @@
  *   感知代价 (p4):    ĉ = 0 (k=0); P (k>0, x̂=0); P·min(1, k/x̂)
  *   参与更新 (p4):    a_{i,t+1} = (1−r_{i,t+1})·max{u_{i,t+1}, 1{τ_i+b_{i,t+1} ≥ ĉ_{i,t}}}
  * 扩展(原文指明需另写转移规则): 释放 releaseProb、大赦、 Memorial 延迟核 (p8)
+ * 游戏层扩展(不改变上述方程, 默认关闭或为零):
+ *   潜藏记忆 latent: 可见度 w<1 时"没被看见"的那部分 γ(1−w)(P−P̄)₊ζ 暂存, 外泄/曝光时 reveal() 兑现
+ *   addGrievance(): 外生事件(侮辱性定性、火灾、同情)直接改变 b, 与所选记忆核一致
+ *   预防性拘捕名单阈值 listThreshold: 只拘押 τ+b 不低于阈值的人(默认 0 = 原版行为)
+ *   不动点分析可选 useMem(用 τ+b 而非 τ)与 kScale(信息压缩造成的有效执行能力放大)
  * ============================================================ */
 (function (global) {
   'use strict';
@@ -116,6 +121,10 @@
     netDamage: 0.5,     // 针对组织者拘押时, 其联络被切断的比例
     hardCore: 0.0,      // 永久参与者比例 x0 (愿承担完整处罚)
     continuousK: false, // K_t 取整(有限人口) 或连续近似
+    latentDecay: 0.02,  // 潜藏记忆每轮消退率(游戏扩展)
+    listThreshold: 0,   // 预防性拘捕名单阈值(游戏扩展, 0=原版)
+    listMode: 'all',    // 'all' = 原版(全体自由人口排名); 'flag' = 只抓"在案"的人(曾经参与或被登记)
+    tolMul: 1, tolAdd: 0, // 承受上限整体缩放/平移(游戏扩展)
     noRemoval: false,   // 冻结切面(p2): 不实际移除被拘押者, x_{t+1}=F(x_t)
   };
 
@@ -124,6 +133,7 @@
       this.o = Object.assign({}, DEFAULTS, opts || {});
       const o = this.o, N = o.N, rng = this.rng = mulberry32(o.seed);
       this.tau = sampleTolerances(N, o.tolType, rng);
+      if (o.tolMul !== 1 || o.tolAdd !== 0) for (let i = 0; i < N; i++) this.tau[i] = this.tau[i] * o.tolMul + o.tolAdd;
       this.net = buildNetwork(N, o.netType, rng, o.netDeg, o.netGroups);
       // 永久参与者 = 承受上限最高的一批 (性质六)
       this.hard = new Uint8Array(N);
@@ -143,6 +153,8 @@
       this.a = new Uint8Array(N);
       this.r = new Uint8Array(N);
       this.b = new Float64Array(N);
+      this.latent = new Float64Array(N); // 被封锁压住、尚未公开的记忆(游戏扩展)
+      this.flagged = new Uint8Array(N);  // 在案名单: 曾公开参与或被登记的人(游戏扩展)
       this.Ehist = [];                 // memorial 核的事件历史
       this.events = [];                // 一次性政策事件
       this.t = 0;
@@ -209,7 +221,7 @@
       let nDet = 0;
       if (!o.noRemoval) {
         if (o.targetMode === 'preventive') {
-          let freeN = 0; for (let i = 0; i < N; i++) if (!this.r[i]) freeN++;
+          let freeN = 0; for (let i = 0; i < N; i++) if (!this.r[i] && (o.listMode !== 'flag' || this.flagged[i])) freeN++;
           nDet = Math.min(freeN, Math.round(K));
         } else {
           nDet = Math.min(part.length, Math.round(K));
@@ -221,7 +233,9 @@
         if (o.targetMode === 'preventive') {
           // 预防性拘捕(扩展): 从全体自由人口按 τ+b 排名, 不待参与即抓
           const poolAll = [];
-          for (let i = 0; i < N; i++) if (!this.r[i]) poolAll.push(i);
+          const th = o.listThreshold || 0;
+          const byFlag = o.listMode === 'flag';
+          for (let i = 0; i < N; i++) if (!this.r[i] && (!byFlag || this.flagged[i]) && (th <= 0 || this.tau[i] + this.b[i] >= th)) poolAll.push(i);
           const keyP = (i) => this.tau[i] + this.b[i];
           poolAll.sort((a, b2) => keyP(b2) - keyP(a));
           victims = new Set(poolAll.slice(0, Math.min(nDet, poolAll.length)));
@@ -265,12 +279,14 @@
           }
         }
         for (const v of victims) { this.r[v] = 1; e[v] = 1; }
+        nDet = victims.size;   // 名单阈值可能使实际拘押少于能力上限
       }
       const p = nDet / N;
       this.R += p;
       /* -- 3. 记忆: ζ 与 b 更新 (p4; memorial 核见 p8) -- */
       const over = Math.max(0, eff.P - o.Pbar);          // (P_t − P̄)_+
       const eta = o.gamma * eff.vis * over;              // η_t = γw(P−P̄)_+
+      const etaLatent = o.gamma * Math.max(0, 1 - eff.vis) * over;  // 没被看见的部分(游戏扩展)
       const E = new Float64Array(N);
       for (let i = 0; i < N; i++) {
         let zeta;
@@ -280,6 +296,7 @@
           zeta = this.observe(s, nb.length, p, eff, false);
         } else zeta = p;
         E[i] = eta * zeta;
+        this.latent[i] = this.latent[i] * (1 - o.latentDecay) + etaLatent * zeta;
       }
       if (o.kernel === 'memorial') {
         this.Ehist.unshift(E);
@@ -328,6 +345,7 @@
         }
       }
       this.a = newA;
+      for (let i = 0; i < N; i++) if (newA[i]) this.flagged[i] = 1;   // 公开露面就会被记下
       /* -- 5. 执行者据本轮观察决定 z_{t+1} (p3) -- */
       const press = o.alpha * x + o.beta * d + o.delta * over;
       for (let j = 0; j < o.M; j++) this.z[j] = press >= this.psi[j] ? 1 : 0;
@@ -368,21 +386,23 @@
     /** 连续经验分布(分段线性 CDF, 对应原文连续人口近似 p5)。
      *  默认用自由(未被拘押)人口的分布, 构成变化(谁被抓走)会移动反应函数(p5 末段)。
      *  外部改动 tau 后须调用 refreshTau() */
-    refreshTau() { this.sortedTau = Float64Array.from(this.tau).sort(); this.tauDirty = false; }
-    _freeTau() {
-      if (this.tauDirty) {
+    refreshTau() { this.sortedTau = Float64Array.from(this.tau).sort(); this.tauDirty = false; this._tauKey = 't'; }
+    _freeTau(useMem) {
+      const key = useMem ? 'm' : 't';
+      if (this.tauDirty || this._tauKey !== key) {
         const arr = [];
-        for (let i = 0; i < this.o.N; i++) if (!this.r[i]) arr.push(this.tau[i]);
+        for (let i = 0; i < this.o.N; i++) if (!this.r[i]) arr.push(useMem ? this.tau[i] + this.b[i] : this.tau[i]);
         this.sortedTau = Float64Array.from(arr).sort();
         this.tauDirty = false;
+        this._tauKey = key;
       }
       return this.sortedTau;
     }
 
     /** 经验反应函数 F(x) = 1 − G(c(x)),G 为(自由人口)分段线性经验分布 */
-    frozenF(x, P, k) {
+    frozenF(x, P, k, useMem) {
       const c = this.cost(k, x, P);
-      const t = this._freeTau(), N = t.length;
+      const t = this._freeTau(useMem), N = t.length;
       if (N === 0) return 0;
       if (c <= t[0]) return 1;
       if (c >= t[N - 1]) return 0;
@@ -394,14 +414,14 @@
 
     /** 不动点扫描: F(x)=x 的解及其稳定性 (F'<1 稳定)
      *  阶梯型经验 F 会使 g 恰好落在 0 上, 故用带死区的符号变化检测 */
-    fixedPoints(P, k) {
+    fixedPoints(P, k, useMem) {
       const pts = [];
       const M = 4000, EPS = 1e-9;
-      const g = (x) => this.frozenF(x, P, k) - x;
+      const g = (x) => this.frozenF(x, P, k, useMem) - x;
       const S = (v) => (v > EPS ? 1 : v < -EPS ? -1 : 0);
       const record = (xr) => {
         const eps = 1e-4;
-        const slope = (this.frozenF(Math.min(1, xr + eps), P, k) - this.frozenF(Math.max(0, xr - eps), P, k)) / (2 * eps);
+        const slope = (this.frozenF(Math.min(1, xr + eps), P, k, useMem) - this.frozenF(Math.max(0, xr - eps), P, k, useMem)) / (2 * eps);
         if (!pts.some(q => Math.abs(q.x - xr) < 1e-4)) pts.push({ x: xr, stable: slope < 1, slope });
       };
       let xPrev = 0, sPrev = S(g(0));
@@ -464,12 +484,37 @@
       };
     }
 
-    /** 重量分析(按需调用): 不动点与临界种子 */
-    analysis() {
+    /** 重量分析(按需调用): 不动点与临界种子
+     *  opts.useMem: 用有效承受上限 τ+b(含记忆债务); opts.kScale: 有效执行能力放大(宣传压缩使人低估人数) */
+    analysis(opts) {
+      opts = opts || {};
       const eff = this.eff(), d = this.meanU8(this.z), { k } = this.capacity(d);
-      const roots = this.fixedPoints(eff.P, k);
+      const kk = k * (opts.kScale || 1);
+      const roots = this.fixedPoints(eff.P, kk, !!opts.useMem);
       const xc = roots.filter(q => !q.boundary && !q.stable);
-      return { roots, xCrit: xc.length ? xc[0].x : null };
+      return { roots, xCrit: xc.length ? xc[0].x : null, k: kk };
+    }
+
+    /* ---------- 游戏层扩展: 外生改变记忆 ---------- */
+    /** 给第 i 人的记忆加 amt(与当前记忆核一致: 指数核直接加; 纪念核记入本轮事件, 之后按核演化) */
+    addGrievance(i, amt) {
+      if (!(amt > 0)) return;
+      this.b[i] += amt;
+      this.tauDirty = true;
+      if (this.o.kernel === 'memorial') {
+        if (!this.Ehist.length) this.Ehist.unshift(new Float64Array(this.o.N));
+        const w0 = this.kernelWeights(1)[0];
+        if (w0 > 0) this.Ehist[0][i] += amt / w0;
+      }
+    }
+    /** 曝光: 被封锁压住的潜藏记忆按比例 frac 兑现为公开记忆, 返回平均兑现量 */
+    reveal(frac) {
+      let s = 0;
+      for (let i = 0; i < this.o.N; i++) {
+        const v = this.latent[i] * frac;
+        if (v > 0 && !this.r[i]) { this.latent[i] -= v; this.addGrievance(i, v); s += v; }
+      }
+      return s / this.o.N;
     }
   }
 
