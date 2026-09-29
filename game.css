@@ -7,6 +7,7 @@
   --serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
   --sans: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   --r: 10px;
+  color-scheme: dark;   /* 刻意只做深色: 夜里的城市 */
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 14px/1.6 var(--sans); overflow: hidden; }
@@ -26,7 +27,7 @@ b { font-weight: 600; }
 .btn:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ---------- 屏幕 ---------- */
-.screen { position: fixed; inset: 0; display: none; }
+.screen { position: fixed; inset: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) 0; display: none; }
 .screen.active { display: block; }
 
 /* 标题页 */
