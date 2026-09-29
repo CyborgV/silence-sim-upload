@@ -30,27 +30,40 @@
    * 序章 · 教程
    * ============================================================ */
   LEVELS.push({
-    id: 'tutorial', chapter: '序章', title: '操场上的二十一个人', era: '教程', place: '某中学操场', icon: '🏫',
-    side: 'movement', role: '一名学生',
-    blurb: '一千名学生,一个只能抓二十人的教导主任。站出来的人够不够多,决定了一切。',
+    id: 'tutorial', chapter: '序章', title: '操场上的二十一个人', era: '教程', place: '某中学 · 升旗仪式', icon: '🏫',
+    side: 'movement', role: '初二(3)班的一名学生',
+    blurb: '一千名学生站在操场上听训话。站出来的人够不够多,决定了一切。',
     intro: [
-      '大热天,一千名学生站在操场上听训话。校长宣布:从下周起取消周末,全部补课。',
-      '台下一片沉默。一个学生心想:假如只有我提出异议,大概会被单独处理;假如所有人同时提出异议,事情就不一样了。',
+      '周一早上的升旗仪式。大热天,一千名学生按班级站在操场上,听台上的校领导训话。',
+      '校领导宣布:从下周起取消周末,全部补课。台下一片沉默。',
+      '你心想:假如只有我站出来提异议,大概会被单独处理;假如所有人同时站出来,事情就不一样了。',
       '这个念头,就是整个游戏的核心——<b>每个人都根据别人的行动决定自己是否行动,而自己的行动又会改变别人的决定。</b>',
     ],
-    goalText: '让全校一半以上的学生站出来,并坚持两轮。',
+    goalText: '让全校一半以上的学生站出来提异议,并坚持两分钟。',
     tips: ['跟着召公的提示走。'],
-    rounds: 30, scale: 1, moodScale: 1, tipSpread: 0.1, tipNoise: 0,
-    world: { N: 1000, tolType: 'uniform', netType: 'full', P: 1, Pbar: 9, K0: 20, M: 20, alpha: 0, beta: 0, delta: 0, gamma: 0, memDecay: 0.2, vis: 1, omega: 1, globalScale: 1, noise: 0, hardCore: 0, seed: 7, psiScale: 1 },
+    rounds: 30, scale: 1, moodScale: 1, tipSpread: 0.1, tipNoise: 0, econ: 1, randomEvents: false,
+    layout: 'assembly',
+    world: { N: 1000, tolType: 'uniform', netType: 'full', P: 1, Pbar: 9, K0: 20, M: 16, alpha: 0, beta: 0, delta: 0, gamma: 0, memDecay: 0.2, vis: 1, omega: 1, globalScale: 1, noise: 0, hardCore: 0, seed: 7, psiScale: 1 },
     relMul: 0, noAI: true,
     policies: { start: STD_POL },
-    labels: { army: '老师们', crowd: '操场上', plaza: '操场', prison: '教导处', barracks: '办公楼', avenue: '林荫道' },
+    labels: { army: '老师们', crowd: '站出来的学生', plaza: '主席台前', prison: '教导处', barracks: '主席台', avenue: '' },
     cards: ['t_small', 't_big'], startAP: 1, apCap: 3, income: 1,
     goal: { x: 0.5, hold: 2 },
-    dateFmt: (r) => `第 ${r + 1} 节课间`,
+    dateFmt: (r) => `升旗仪式 · 上午 8:${String(r).padStart(2, '0')}`,
+    events: [
+      { at: 0, headline: '升旗仪式。太阳很毒,没有一丝风。' },
+      { at: 1, headline: '校领导:"从下周起,取消周末,全部补课。"' },
+      { at: 2, headline: '队伍里有人小声骂了一句,马上又不作声了。' },
+      { at: 3, headline: '教导主任在队伍之间来回走,盯着每一张脸。' },
+      { at: 5, headline: '"有意见的,可以站出来说。"台上的人冷冷地说。' },
+      { at: 7, headline: '后排有人在交换眼色。' },
+      { at: 10, headline: '汗顺着脖子往下流。训话还在继续。' },
+      { at: 15, headline: '有人开始偷偷看表。' },
+      { at: 22, headline: '训话快结束了。' },
+    ],
     endings: {
-      crowd: { title: '二十一个人', text: '二十个人站出来,会被一个个带走,操场重归安静;二十一个人站出来,三轮之后就是九百多人。<br>同样的沉默,不同的分界。' },
-      timeout: { title: '下课铃响了', text: '没有人再站出来。补课照常进行。' },
+      crowd: { title: '二十一个人', text: '二十个人站出来,会被一个个点名带走,操场重归安静;二十一个人站出来,三分钟之后就是九百多人。<br>同样的沉默,不同的分界。' },
+      timeout: { title: '散会了', text: '没有人再站出来。补课照常进行。' },
     },
     history: '这个例子来自《道路以目——沉默相变模型》第15—16页:千人,承受上限均匀分布,处罚强度 1,处罚能力 2%。从 20 人出发,第一轮就归零;从 21 人出发,依次约为 48、580、966 人,最终趋近 980 人。',
     lesson: { title: '性质八 · 临界种子', text: '临界种子是一道"山脊",不是某个固定的"勇敢者百分比"。低于它,小行动被吸回沉默(性质六);越过它,每个人面对的风险被越来越多的人摊薄,连锁开始。反复看见小行动失败,不能证明更大的行动也会失败。' },
@@ -271,7 +284,7 @@
       ] },
       { at: 18, news: '地下团结工会成立了临时协调委员会。', kind: 'event', run: (g) => { g.L.ai.income = 1.25; } },
       { at: 20, title: '5月3日', art: '🇵🇱', text: '宪法纪念日。线人报告:各大城市可能有示威。', choices: [{ label: '知道了' }], run: (g) => g.addSeeds(0.035) },
-      { at: 33, title: '8月31日', art: '⚓', text: '格但斯克协议签署两周年。团结工会地下领导号召全国示威。', choices: [{ label: '准备应对' }], run: (g) => g.addSeeds(0.05) },
+      { at: 37, title: '8月31日', art: '⚓', text: '格但斯克协议签署两周年。团结工会地下领导号召全国示威。', choices: [{ label: '准备应对' }], run: (g) => g.addSeeds(0.05) },
       { at: 43, news: '议会通过新工会法,团结工会被正式取缔。', kind: 'event' },
     ],
     endings: {
@@ -575,6 +588,10 @@
       lesson: null,
     };
   }
+
+  // 合并历史时间线(timelines.js)
+  const TLmod = global.SilenceTimelines || (typeof require === 'function' ? require('./timelines.js') : null);
+  if (TLmod) for (const L of LEVELS) if (TLmod.TL[L.id]) L.events = (L.events || []).concat(TLmod.TL[L.id]);
 
   const api = { LEVELS, SOCIETIES, makeSkirmish, cnNum };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -292,12 +292,12 @@
     /* ---- 教程 ---- */
     t_small: {
       side: 'movement', name: '几个人先站出来', icon: '🙋', cost: 1, cd: 0, special: true,
-      text: '你和九个最要好的同学,十个人一起走到台前。',
+      text: '你和同班九个最要好的同学,十个人一起走出队列,站到主席台前。',
       tags: ['上街 +10 人'], run(g) { g.addSeeds(10 / g.N); },
     },
     t_big: {
       side: 'movement', name: '全年级串联', icon: '📣', cost: 3, cd: 0, special: true,
-      text: '前一天晚上,你们挨个宿舍敲门,约好明天课间一起站出来。二十五个人答应了。',
+      text: '前一天晚上,你们挨个宿舍敲门,约好一听到"补课"就一起走出队列。二十五个人答应了。',
       tags: ['上街 +25 人'], run(g) { g.addSeeds(25 / g.N); },
     },
 
@@ -730,6 +730,7 @@
     griefScale(mul) { griefScale(this, mul); this.tipCache.t = -1; }
     scalePsi(frac, mul) { scalePsi(this, frac, mul); }
     cutEdges(frac) { cutEdges(this, frac); }
+    addEdgesFrac(frac) { addEdges(this, Math.round(this.N * frac)); }
     giveFree(id, rounds) { this.freebies[id] = Math.max(this.freebies[id] || 0, rounds || 1); this.me.cool[id] = 0; }
     /** 玩家一方因事件选择而(免费)执行一张牌的效果 */
     selfCard(id, say) {
