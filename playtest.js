@@ -20,17 +20,19 @@ function movementBot(g) {
   const pushCards = ['strike', 'blankpaper', 'march', 'mobilize', 'prayer', 'goddess', 'rally', 't_big'];
   for (let guard = 0; guard < 8; guard++) {
     const r = g.readout(), x = g.x;
-    // 1) 能否一次凑够临界点?
-    let ap = g.me.ap, total = g.seedNext / g.N; const plan = [];
+    // 1) 能否一次凑够临界点?(用界面上那根条的"斜纹是否越过紫框")
+    let ap = g.me.ap; const plan = [];
     for (const id of pushCards) {
       const c = g.hand().find(h => h.id === id); if (!c) continue;
       const cs = g.cardState(c); if (!cs.cond || cs.cd > 0 || cs.blocked) continue;
-      if (ap >= cs.cost) { ap -= cs.cost; total += (SEED[id] || 0.02) * (id === 'prayer' && g.isMonday() ? 1 : 1); plan.push(id); }
+      if (ap >= cs.cost) { ap -= cs.cost; plan.push(id); }
     }
+    const total = g.pushCapacity();
     const tipOk = r.tip.kind === 'tinder' || (r.tip.kind === 'est' && r.tip.est * 1.1 < x + total);
     if (plan.length && tipOk && g.L.id !== 'pyongyang') { for (const id of plan) tryPlay(g, id); break; }
-    // 2) 铺垫 (保留储备, 除非资源满了)
-    const reserve = g.me.ap >= g.apCap - 0.05 ? 0 : 3;
+    // 2) 建设 + 铺垫 (保留储备, 除非资源满了)
+    const reserve = g.me.ap >= g.apCap - 0.05 ? 0 : 7;
+    for (const id of MOVE_TREE) { const n = g.tree().flatMap(b => b.nodes).find(q => q.id === id); if (n && g.nodeState(n).ok && g.me.ap - n.cost >= reserve && g.alert < 60) { g.buy(id); break; } }
     const cheap = (id) => { const c = g.hand().find(h => h.id === id); return c && g.me.ap - g.cardCost(c) >= reserve && tryPlay(g, id); };
     const played =
       (g.L.id === 'tutorial' && tryPlay(g, 't_big')) ||
@@ -54,9 +56,14 @@ function movementBot(g) {
   }
 }
 
+const MOVE_TREE = ['m_word', 'm_net', 'm_witness', 'm_talk', 'm_press', 'm_legal', 'm_mourn', 'm_sympath', 'm_names', 'm_crypto', 'm_foreign', 'm_anniv', 'm_family', 'm_barracks', 'm_courage'];
+const buyFrom = (g, list, reserve) => { for (const id of list) { const n = g.tree().flatMap(b => b.nodes).find(q => q.id === id); if (n && g.nodeState(n).ok && g.me.ap - n.cost >= reserve) { g.buy(id); return true; } } return false; };
+
 /* ---------- 朝廷: 克制的统治者 ---------- */
 function wiseRegimeBot(g) {
   const r = g.readout(), x = g.x;
+  buyFrom(g, ['r_relief', 'r_inform', 'r_petition', 'r_pay', 'r_law', 'r_grid', 'r_police', 'r_share', 'r_reform'], 6);
+  if (g.orgShown() > 70) { tryPlay(g, 'dialogue') || tryPlay(g, 'informants'); }
   const setP = (k, v) => { if (g.pol[k] !== v) g.setPolicy(k, v); };
   if (g.round % 8 === 1) tryPlay(g, 'informants');
   if (r.army.level >= 2) tryPlay(g, 'bonus');
@@ -72,6 +79,7 @@ function wiseRegimeBot(g) {
 /* ---------- 朝廷: 铁腕 ---------- */
 function terrorBot(g) {
   const setP = (k, v) => { if (g.pol[k] !== v) g.setPolicy(k, v); };
+  buyFrom(g, ['r_police', 'r_riot', 'r_inform', 'r_censor', 'r_pay', 'r_outside', 'r_grid', 'r_propaganda', 'r_loyal', 'r_firewall'], 2);
   setP('enforce', 'terror'); setP('info', 'blackout');
   setP('police', g.policyAllowed('police', 'martial') ? 'martial' : 'surge');
   if (g.x > 0.02) tryPlay(g, 'crackdown');
@@ -91,6 +99,7 @@ function runOne(L, bot, seed, choicePolicy) {
   let guard = 0;
   while (!g.over && guard++ < 400) {
     if (g.popup) { const n = g.popup.choices.length; g.choose(choicePolicy === 'last' ? n - 1 : 0); continue; }
+    if (choicePolicy !== 'last') g.collectAll(0.85);   // 认真的玩家会点掉大多数气泡
     bot(g);
     if (g.popup) continue;
     g.step();

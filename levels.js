@@ -42,6 +42,7 @@
     goalText: '让全校一半以上的学生站出来提异议,并坚持两分钟。',
     tips: ['跟着召公的提示走。'],
     rounds: 30, scale: 1, moodScale: 1, tipSpread: 0.1, tipNoise: 0, econ: 1, randomEvents: false,
+    tree: { only: ['m_net'], costMul: 0.22 },
     layout: 'assembly',
     world: { N: 1000, tolType: 'uniform', netType: 'full', P: 1, Pbar: 9, K0: 20, M: 16, alpha: 0, beta: 0, delta: 0, gamma: 0, memDecay: 0.2, vis: 1, omega: 1, globalScale: 1, noise: 0, hardCore: 0, seed: 7, psiScale: 1 },
     relMul: 0, noAI: true,
@@ -322,7 +323,7 @@
     slogans: ['反腐败!', '新闻自由!', '对话!', '人民军队爱人民!', '民主万岁!'],
     cards: ['rally', 'march', 'mobilize', 'hunger', 'fraternize', 'blockade', 'goddess', 'memorial', 'samizdat', 'legal'],
     startAP: 2, income: 1.0,
-    ai: { aggression: 0.3, income: 1.2, lag: 2, start: { enforce: 'lenient', police: 'lean', info: 'spin' }, max: { police: 'normal', enforce: 'normal' }, cards: ['editorial', 'informants', 'bonus', 'rotate'] },
+    ai: { aggression: 0.3, alertMul: 0.35, income: 1.2, lag: 2, start: { enforce: 'lenient', police: 'lean', info: 'spin' }, max: { police: 'normal', enforce: 'normal' }, cards: ['editorial', 'informants', 'bonus', 'rotate'] },
     goal: { d: 0.5, hold: 2, dHold: 2 },
     stars: [
       { text: '在戒严后十天内成功(5月30日前)', test: (g) => g.round <= 45 },
@@ -352,7 +353,7 @@
       { at: 34, title: '5月19日 · 凌晨', art: '🌃', quote: '我们来得太晚了。', text: '中共中央总书记赵紫阳来到广场,看望绝食学生。他拿着喇叭,眼里有泪。<br><br>这是他最后一次公开露面。', choices: [{ label: '……' }], run: (g) => { g.flags.aggrMul = 3.5; } },
       { at: 35, title: '5月20日 · 戒严', art: '🪖', text: '国务院总理李鹏宣布:北京部分地区实行戒严。几十万军队从四面八方向城区开进。<br><br>——但他们被堵在了路上。老人、工人、学生涌上路口,围住军车,给士兵送水送饭。', choices: [{ label: '拦住他们', hint: '「拦阻军车」本回合免费', run: (g) => g.giveFree('blockade', 2) }], run: (g) => {
         // 部队被堵在城外: 能抓的人并没有马上变多; 外国记者也还在
-        g.flags.martialLaw = true;
+        g.flags.martialLaw = true; g.alert = Math.max(g.alert, 80); g.L.ai.alertMul = 1;
         g.forcePolicy('police', 'surge', 99, '戒严令(部队受阻)'); g.forcePolicy('enforce', 'harsh', 99, '戒严令'); g.forcePolicy('info', 'spin', 99, '戒严令');
         g.L.ai.max = {};
         // 执行者从警察换成了开进城的部队

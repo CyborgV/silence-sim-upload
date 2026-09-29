@@ -74,9 +74,14 @@
     </div>
     <button class="icon-btn" id="g-help" title="怎么玩">?</button>
   </header>
+  <div id="meters">
+    <div class="meter" id="m-main"></div>
+    <div class="meter" id="m-opp"></div>
+  </div>
   <div id="hud-main">
     <aside id="hud-left">
       <div class="goalcard" id="goalcard"><div class="g1" id="goal-text"></div><div class="gbar"><i id="goal-bar"></i></div><div class="g2" id="goal-sub"></div></div>
+      <div id="build"></div>
       <div class="sec-t">态势 <span class="tag" id="intel-tag"></span></div>
       <div id="readouts"></div>
       <div class="chips" id="effects"></div>
@@ -84,11 +89,15 @@
     </aside>
     <div id="stage">
       <canvas id="city"></canvas>
+      <div id="bubbles"></div>
+      <div id="headline"></div>
+      <div id="banner"></div>
       <div id="toasts"></div>
       <div class="pausetag" id="pausetag">已暂停 · 按 ▶ 或空格继续</div>
     </div>
     <aside id="hud-right">
       <div class="res" id="res"></div>
+      <button class="btn tree-btn" id="tree-btn"></button>
       <div id="policies"></div>
       <div class="sec-t" id="cards-title">行动</div>
       <div class="cards" id="cards"></div>
@@ -100,12 +109,14 @@
 <!-- ============ 弹窗 ============ -->
 <div class="overlay" id="ov-event"><div class="modal" id="ev-box"></div></div>
 <div class="overlay" id="ov-end"><div class="modal end" id="end-box"></div></div>
+<div class="overlay" id="ov-tree"><div class="modal treebox" id="tree-box"></div></div>
 <div class="overlay" id="ov-menu"><div class="modal" style="width:min(360px,100%)">
   <h3>暂停</h3>
   <div class="choices">
     <button class="choice" id="mm-resume">继续</button>
     <button class="choice" id="mm-restart">重新开始本关</button>
     <button class="choice" id="mm-help">怎么玩</button>
+    <button class="choice" id="mm-auto">自动收集气泡:关</button>
     <button class="choice" id="mm-levels">返回关卡选择</button>
     <button class="choice" id="mm-title">返回标题</button>
   </div>
@@ -123,12 +134,15 @@
     <li><b>封锁</b>:压住的不是记忆,只是记忆的公开。一旦曝光,会加倍兑现。</li>
     <li><b>执行者也在看</b>:街上的人数、同僚的态度、命令是否过火,都会让士兵和警察犹豫。他们一倒戈,能抓的人就少了。</li>
   </ul>
-  <h4>操作</h4>
+  <h4>像《瘟疫公司》一样玩</h4>
   <ul>
-    <li>右边的<b>牌</b>是一次性行动,花费"组织力/政治资本"(圆点),用完要冷却。</li>
-    <li>扮演当局时,右上还有<b>政策</b>:常设的执法力度、警力、抓捕方式、舆论、关押。越强硬越贵。</li>
-    <li>时间可以暂停(空格)、一轮一轮走(→),或加速。数字键 1–9 直接出牌。</li>
-    <li>关卡结束后,<b>复盘</b>会揭晓你看不到的真实数值。</li>
+    <li><b>最上面两根条</b>:左边是你的进度(民间:离临界点还差多少;当局:还要撑多久),右边是对手(当局警觉 / 反对派组织度 / 暴露风险)。</li>
+    <li><b>气泡</b>:局势一变化,城市里就会冒出气泡。点击收集组织力或政治资本,过一会儿会消失。</li>
+    <li><b>建设</b>(快捷键 B):三条路线的永久升级。民间一方的每项建设都会让当局更警觉。</li>
+    <li><b>行动牌</b>:一次性,有冷却。能把人带上街的牌会在进度条上显示为斜纹——斜纹越过紫框,就是出手的时候。</li>
+    <li><b>政策</b>(当局):常设的执法力度、警力、抓捕方式、舆论、关押。越强硬越贵。</li>
+    <li><b>突发事件</b>与<b>历史事件</b>会逼你做选择。每一天都有当日要闻。</li>
+    <li>时间:暂停(空格)、一轮一轮走(→)、加速。数字键 1–9 出牌。关卡结束后,<b>复盘</b>揭晓你看不到的真实数值。</li>
   </ul>
   <div class="actions" style="justify-content:center;display:flex;margin-top:14px"><button class="btn primary" id="help-close">知道了</button></div>
 </div></div>

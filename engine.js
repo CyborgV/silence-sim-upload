@@ -417,48 +417,48 @@
   const TREES = {
     movement: [
       { id: 'spread', name: '传播', icon: '📡', desc: '人们能看见彼此多少', nodes: [
-        { id: 'm_word', name: '口耳相传', cost: 3, alert: 1, text: '熟人之间的消息网。一个人站出来,更容易带动身边的人。', tags: ['互相带动 ↑', '偶尔冒出「消息」气泡'], run(g) { addEdges(g, Math.round(g.N * 0.2)); } },
-        { id: 'm_net', name: '联络网', cost: 6, req: ['m_word'], alert: 2, text: '固定的联络人与暗号。约好的行动,来的人更多。', tags: ['每次行动带出的人 +25%'], run(g) { g.seedMul *= 1.25; } },
-        { id: 'm_press', name: '地下刊物', cost: 6, req: ['m_word'], alert: 3, text: '手抄本、油印传单。官方的说法不再是唯一的说法。', tags: ['封锁的效果 −30%', '执法更容易被看作越界'], run(g) { g.infoResist = Math.max(g.infoResist, 0.3); g.base.Pbar -= 0.04; } },
-        { id: 'm_foreign', name: '境外媒体', cost: 9, req: ['m_press'], alert: 4, text: '外国记者、短波电台、翻墙。被压下去的事情,终究会被知道。', tags: ['封锁的效果 −60%', '被压住的愤怒立刻浮出'], run(g) { g.infoResist = Math.max(g.infoResist, 0.6); g.sim.reveal(0.6); } },
-        { id: 'm_crypto', name: '加密通讯', cost: 12, req: ['m_net'], alert: 3, text: '抓走一个人,不再能顺藤摸瓜。', tags: ['每次行动带出的人 +25%', '断联打击减半'], run(g) { g.seedMul *= 1.25; g.sim.o.netDamage = (g.sim.o.netDamage || 0.5) * 0.5; g.flags.cutResist = true; } },
+        { id: 'm_word', name: '口耳相传', cost: 4, alert: 1, text: '熟人之间的消息网。一个人站出来,更容易带动身边的人。', tags: ['互相带动 ↑', '偶尔冒出「消息」气泡'], run(g) { addEdges(g, Math.round(g.N * 0.2)); } },
+        { id: 'm_net', name: '联络网', cost: 9, req: ['m_word'], alert: 2, text: '固定的联络人与暗号。约好的行动,来的人更多。', tags: ['每次行动带出的人 +25%'], run(g) { g.seedMul *= 1.25; } },
+        { id: 'm_press', name: '地下刊物', cost: 9, req: ['m_word'], alert: 3, text: '手抄本、油印传单。官方的说法不再是唯一的说法。', tags: ['封锁的效果 −30%', '执法更容易被看作越界'], run(g) { g.infoResist = Math.max(g.infoResist, 0.3); g.base.Pbar -= 0.04; } },
+        { id: 'm_foreign', name: '境外媒体', cost: 14, req: ['m_press'], alert: 4, text: '外国记者、短波电台、翻墙。被压下去的事情,终究会被知道。', tags: ['封锁的效果 −60%', '被压住的愤怒立刻浮出'], run(g) { g.infoResist = Math.max(g.infoResist, 0.6); g.sim.reveal(0.6); } },
+        { id: 'm_crypto', name: '加密通讯', cost: 18, req: ['m_net'], alert: 3, text: '抓走一个人,不再能顺藤摸瓜。', tags: ['每次行动带出的人 +25%', '断联打击减半'], run(g) { g.seedMul *= 1.25; g.sim.o.netDamage = (g.sim.o.netDamage || 0.5) * 0.5; g.flags.cutResist = true; } },
       ] },
       { id: 'memory', name: '记忆', icon: '🕯️', desc: '镇压在人们心里留下多少', nodes: [
-        { id: 'm_witness', name: '口述见证', cost: 3, alert: 1, text: '把看到的事情讲给别人听。每一次越界的处罚,都会被更多人记住。', tags: ['处罚留下的记忆 +30%'], run(g) { g.base.gamma *= 1.3; } },
-        { id: 'm_mourn', name: '悼念传统', cost: 5, req: ['m_witness'], alert: 2, text: '为逝者守灵、做七、过四十日。记忆不再很快褪去。', tags: ['遗忘速度 −40%'], run(g) { g.sim.o.memDecay *= 0.6; } },
-        { id: 'm_names', name: '受难者名单', cost: 7, req: ['m_witness'], alert: 3, text: '一个一个地记下名字。处罚不再是数字,而是某个人。', tags: ['处罚被看见的程度 +25%'], run(g) { g.base.vis *= 1.25; } },
-        { id: 'm_anniv', name: '纪念日', cost: 8, req: ['m_mourn'], alert: 3, text: '每到那一天,人们都会想起。', tags: ['每隔一段时间,积怨自动上升'], run(g) { g.flags.anniv = true; } },
-        { id: 'm_courage', name: '不再沉默', cost: 14, req: ['m_names', 'm_anniv'], reqAny: true, alert: 6, text: '人们开始相信:沉默保护不了任何人。', tags: ['所有人都更敢站出来'], run(g) { shiftTau(g, g.L.courage != null ? g.L.courage : 0.035); } },
+        { id: 'm_witness', name: '口述见证', cost: 4, alert: 1, text: '把看到的事情讲给别人听。每一次越界的处罚,都会被更多人记住。', tags: ['处罚留下的记忆 +30%'], run(g) { g.base.gamma *= 1.3; } },
+        { id: 'm_mourn', name: '悼念传统', cost: 8, req: ['m_witness'], alert: 2, text: '为逝者守灵、做七、过四十日。记忆不再很快褪去。', tags: ['遗忘速度 −40%'], run(g) { g.sim.o.memDecay *= 0.6; } },
+        { id: 'm_names', name: '受难者名单', cost: 10, req: ['m_witness'], alert: 3, text: '一个一个地记下名字。处罚不再是数字,而是某个人。', tags: ['处罚被看见的程度 +25%'], run(g) { g.base.vis *= 1.25; } },
+        { id: 'm_anniv', name: '纪念日', cost: 12, req: ['m_mourn'], alert: 3, text: '每到那一天,人们都会想起。', tags: ['每隔一段时间,积怨自动上升'], run(g) { g.flags.anniv = true; } },
+        { id: 'm_courage', name: '不再沉默', cost: 21, req: ['m_names', 'm_anniv'], reqAny: true, alert: 6, text: '人们开始相信:沉默保护不了任何人。', tags: ['所有人都更敢站出来'], run(g) { shiftTau(g, g.L.courage != null ? g.L.courage : 0.035); } },
       ] },
       { id: 'resist', name: '韧性', icon: '🛡️', desc: '扛住镇压,赢得执行者', nodes: [
-        { id: 'm_legal', name: '法律援助', cost: 3, alert: 1, text: '律师、家属、联名信。被抓的人能更快回来。', tags: ['被捕者获释 ↑'], run(g) { g.relBonus += 0.07; } },
-        { id: 'm_family', name: '家属互助', cost: 6, req: ['m_legal'], alert: 1, text: '有人被抓,他的家人有人照顾。站出来不再意味着全家遭殃。', tags: ['被抓的代价 −12%'], run(g) { g.penaltyMul *= 0.88; } },
-        { id: 'm_talk', name: '与士兵交谈', cost: 5, alert: 2, text: '士兵也是某人的儿子。和他们说话,给他们送水。', tags: ['人群对执行者的影响 ↑'], run(g) { g.base.alpha += 0.08; } },
-        { id: 'm_sympath', name: '军中同情者', cost: 9, req: ['m_talk'], alert: 3, text: '有些军官私下表示同情。', tags: ['执行者更容易动摇'], run(g) { scalePsi(g, 1, 0.85); } },
-        { id: 'm_barracks', name: '兵营串联', cost: 13, req: ['m_sympath'], alert: 4, text: '一个团倒戈,消息会传到下一个团。', tags: ['倒戈会连锁'], run(g) { g.sim.o.beta += 0.15; } },
+        { id: 'm_legal', name: '法律援助', cost: 4, alert: 1, text: '律师、家属、联名信。被抓的人能更快回来。', tags: ['被捕者获释 ↑'], run(g) { g.relBonus += 0.07; } },
+        { id: 'm_family', name: '家属互助', cost: 9, req: ['m_legal'], alert: 1, text: '有人被抓,他的家人有人照顾。站出来不再意味着全家遭殃。', tags: ['被抓的代价 −12%'], run(g) { g.penaltyMul *= 0.88; } },
+        { id: 'm_talk', name: '与士兵交谈', cost: 8, alert: 2, text: '士兵也是某人的儿子。和他们说话,给他们送水。', tags: ['人群对执行者的影响 ↑'], run(g) { g.base.alpha += 0.08; } },
+        { id: 'm_sympath', name: '军中同情者', cost: 14, req: ['m_talk'], alert: 3, text: '有些军官私下表示同情。', tags: ['执行者更容易动摇'], run(g) { scalePsi(g, 1, 0.85); } },
+        { id: 'm_barracks', name: '兵营串联', cost: 20, req: ['m_sympath'], alert: 4, text: '一个团倒戈,消息会传到下一个团。', tags: ['倒戈会连锁'], run(g) { g.sim.o.beta += 0.15; } },
       ] },
     ],
     regime: [
       { id: 'fist', name: '铁拳', icon: '🪖', desc: '能抓多少人,执行者是否可靠', nodes: [
-        { id: 'r_police', name: '扩编警力', cost: 4, text: '更多的警察、更多的车。', tags: ['每轮能抓的人 +20%'], run(g) { g.base.K0 *= 1.2; } },
-        { id: 'r_riot', name: '防暴部队', cost: 7, req: ['r_police'], text: '专门训练过的防暴队伍。', tags: ['每轮能抓的人 +15%'], run(g) { g.base.K0 *= 1.15; } },
-        { id: 'r_pay', name: '军饷优先', cost: 6, req: ['r_police'], text: '先保证拿枪的人吃饱。', tags: ['执行者更可靠'], run(g) { scalePsi(g, 1, 1.2); } },
-        { id: 'r_outside', name: '外地驻军', cost: 9, req: ['r_riot'], text: '换防成与本地无亲无故的部队。', tags: ['人群对执行者的影响 −30%'], run(g) { g.base.alpha *= 0.7; } },
-        { id: 'r_loyal', name: '政治委员', cost: 12, req: ['r_outside', 'r_pay'], reqAny: true, text: '每个连队都有人盯着。', tags: ['执行者之间不再互相带动'], run(g) { g.sim.o.beta *= 0.5; } },
+        { id: 'r_police', name: '扩编警力', cost: 6, text: '更多的警察、更多的车。', tags: ['每轮能抓的人 +20%'], run(g) { g.base.K0 *= 1.2; } },
+        { id: 'r_riot', name: '防暴部队', cost: 10, req: ['r_police'], text: '专门训练过的防暴队伍。', tags: ['每轮能抓的人 +15%'], run(g) { g.base.K0 *= 1.15; } },
+        { id: 'r_pay', name: '军饷优先', cost: 9, req: ['r_police'], text: '先保证拿枪的人吃饱。', tags: ['执行者更可靠'], run(g) { scalePsi(g, 1, 1.2); } },
+        { id: 'r_outside', name: '外地驻军', cost: 14, req: ['r_riot'], text: '换防成与本地无亲无故的部队。', tags: ['人群对执行者的影响 −30%'], run(g) { g.base.alpha *= 0.7; } },
+        { id: 'r_loyal', name: '政治委员', cost: 18, req: ['r_outside', 'r_pay'], reqAny: true, text: '每个连队都有人盯着。', tags: ['执行者之间不再互相带动'], run(g) { g.sim.o.beta *= 0.5; } },
       ] },
       { id: 'eye', name: '天网', icon: '👁️', desc: '你能知道多少,他们能看见多少', nodes: [
-        { id: 'r_inform', name: '线人', cost: 4, text: '在每个单位、每条街安插耳目。', tags: ['情报更准', '「情报」气泡更多'], run(g) { g.intelBonus += 0.2; } },
-        { id: 'r_grid', name: '网格化管理', cost: 7, req: ['r_inform'], text: '每户都有人负责盯着。', tags: ['在案名单扩大', '反对派组织更慢'], run(g) { g.flagTop(0.04); g.orgMul *= 0.8; } },
-        { id: 'r_censor', name: '新闻审查', cost: 6, req: ['r_inform'], text: '删帖、封号、约谈编辑。', tags: ['人们更低估彼此'], run(g) { g.base.globalScale *= 0.85; } },
-        { id: 'r_propaganda', name: '舆论引导', cost: 8, req: ['r_censor'], text: '让大家相信:别人都很满意。', tags: ['人们更低估彼此', '执法更少被看作越界'], run(g) { g.base.globalScale *= 0.85; g.base.Pbar += 0.05; } },
-        { id: 'r_firewall', name: '防火墙', cost: 11, req: ['r_propaganda'], text: '外面的消息进不来。', tags: ['对方的「曝光」「刊物」效果减半'], run(g) { g.flags.firewall = true; } },
+        { id: 'r_inform', name: '线人', cost: 6, text: '在每个单位、每条街安插耳目。', tags: ['情报更准', '「情报」气泡更多'], run(g) { g.intelBonus += 0.2; } },
+        { id: 'r_grid', name: '网格化管理', cost: 10, req: ['r_inform'], text: '每户都有人负责盯着。', tags: ['在案名单扩大', '反对派组织更慢'], run(g) { g.flagTop(0.04); g.orgMul *= 0.8; } },
+        { id: 'r_censor', name: '新闻审查', cost: 9, req: ['r_inform'], text: '删帖、封号、约谈编辑。', tags: ['人们更低估彼此'], run(g) { g.base.globalScale *= 0.85; } },
+        { id: 'r_propaganda', name: '舆论引导', cost: 12, req: ['r_censor'], text: '让大家相信:别人都很满意。', tags: ['人们更低估彼此', '执法更少被看作越界'], run(g) { g.base.globalScale *= 0.85; g.base.Pbar += 0.05; } },
+        { id: 'r_firewall', name: '防火墙', cost: 16, req: ['r_propaganda'], text: '外面的消息进不来。', tags: ['对方的「曝光」「刊物」效果减半'], run(g) { g.flags.firewall = true; } },
       ] },
       { id: 'heart', name: '民心', icon: '⚖️', desc: '人们是否还认为你的统治正当', nodes: [
-        { id: 'r_relief', name: '惠民补贴', cost: 4, text: '降价、发粮。', tags: ['积怨 −15%', '以后每轮收入略减'], run(g) { griefScale(g, 0.85); g.bonusIncome -= 0.15; } },
-        { id: 'r_petition', name: '信访渠道', cost: 6, req: ['r_relief'], text: '让人有地方说话。', tags: ['人们认可的界线 ↑', '反对派组织更慢'], run(g) { g.base.Pbar += 0.1; g.orgMul *= 0.85; } },
-        { id: 'r_law', name: '依法治理', cost: 8, req: ['r_petition'], text: '按程序抓人,按程序审判。', tags: ['人们认可的界线 ↑', '执行者更安心'], run(g) { g.base.Pbar += 0.1; g.sim.o.delta *= 0.6; } },
-        { id: 'r_share', name: '让利于民', cost: 9, req: ['r_relief'], text: '日子过得去的人,有更多可以失去。', tags: ['所有人都更不愿冒险'], run(g) { shiftTau(g, -(g.L.courage != null ? g.L.courage : 0.035)); } },
-        { id: 'r_reform', name: '政治改革', cost: 15, req: ['r_law', 'r_share'], reqAny: true, text: '让一部分诉求成为制度。', tags: ['积怨 −40%', '界线大幅上移'], run(g) { g.base.Pbar += 0.25; griefScale(g, 0.6); g.org = Math.max(0, g.org - 30); } },
+        { id: 'r_relief', name: '惠民补贴', cost: 6, text: '降价、发粮。', tags: ['积怨 −15%', '以后每轮收入略减'], run(g) { griefScale(g, 0.85); g.bonusIncome -= 0.15; } },
+        { id: 'r_petition', name: '信访渠道', cost: 9, req: ['r_relief'], text: '让人有地方说话。', tags: ['人们认可的界线 ↑', '反对派组织更慢'], run(g) { g.base.Pbar += 0.1; g.orgMul *= 0.85; } },
+        { id: 'r_law', name: '依法治理', cost: 12, req: ['r_petition'], text: '按程序抓人,按程序审判。', tags: ['人们认可的界线 ↑', '执行者更安心'], run(g) { g.base.Pbar += 0.1; g.sim.o.delta *= 0.6; } },
+        { id: 'r_share', name: '让利于民', cost: 14, req: ['r_relief'], text: '日子过得去的人,有更多可以失去。', tags: ['所有人都更不愿冒险'], run(g) { shiftTau(g, -(g.L.courage != null ? g.L.courage : 0.035)); } },
+        { id: 'r_reform', name: '政治改革', cost: 22, req: ['r_law', 'r_share'], reqAny: true, text: '让一部分诉求成为制度。', tags: ['积怨 −40%', '界线大幅上移'], run(g) { g.base.Pbar += 0.25; griefScale(g, 0.6); g.org = Math.max(0, g.org - 30); } },
       ] },
     ],
   };
@@ -957,11 +957,11 @@
       const x = this.x, n = arrested * this.N, o = this.sim.o, rng = this.rng;
       if (this.side === 'movement') {
         const over = o.P - o.Pbar;
-        if (n >= 1 && over > 0) this.spawnBubble('anger', Math.min(6, 1 + n * over * 0.12 * clamp(o.vis, 0.3, 1.5)), 'prison');
-        else if (n >= 3 && rng() < 0.3) this.spawnBubble('anger', 1, 'prison');
+        if (n >= 1 && over > 0 && rng() < 0.7) this.spawnBubble('anger', Math.min(3, 1 + n * over * 0.05 * clamp(o.vis, 0.3, 1.5)), 'prison');
+        else if (n >= 3 && rng() < 0.2) this.spawnBubble('anger', 1, 'prison');
         const dx = x - this.prevX;
-        if (dx > 0.003) this.spawnBubble('morale', Math.min(8, 1 + dx * this.N * 0.025), 'plaza');
-        if (this.d - d0 > 0.03) this.spawnBubble('sympathy', Math.min(5, 2 + (this.d - d0) * 20), 'barracks');
+        if (dx > 0.003) this.spawnBubble('morale', Math.min(4, 1 + dx * this.N * 0.008), 'plaza');
+        if (this.d - d0 > 0.03) this.spawnBubble('sympathy', Math.min(3, 1 + (this.d - d0) * 12), 'barracks');
         const lv = this.bought.m_word ? 1 + (this.bought.m_press ? 1 : 0) + (this.bought.m_foreign ? 1 : 0) : 0;
         if (lv && rng() < 0.12 * lv) this.spawnBubble('word', 1 + (lv >= 2 ? 1 : 0), 'home');
       } else {
@@ -1078,7 +1078,7 @@
         {},
         { enforce: 'harsh', police: 'surge', info: 'spin', target: net ? 'organizer' : null },
         { enforce: 'harsh', police: 'surge', info: 'blackout', target: net ? 'organizer' : null },
-        { enforce: aggr > 0.5 ? 'terror' : 'harsh', police: 'martial', info: 'blackout', target: net ? 'preventive' : null },
+        { enforce: aggr > 0.5 ? 'terror' : 'harsh', police: 'martial', info: 'blackout', target: net ? 'organizer' : null },
       ][stage];
       const ladder = (key, w) => {
         if (this.locks[key] && this.locks[key].until > this.round) return;

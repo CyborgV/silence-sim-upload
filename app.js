@@ -4,7 +4,7 @@
  */
 (function () {
   'use strict';
-  const { Game, POLICIES, POLICY_KEYS, CARDS, fmtCount } = window.SilenceGame;
+  const { Game, POLICIES, POLICY_KEYS, CARDS, STAGES, BUBBLES, fmtCount } = window.SilenceGame;
   const { LEVELS, SOCIETIES, makeSkirmish } = window.SilenceLevels;
   const $ = (id) => document.getElementById(id);
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -134,6 +134,8 @@
     $('g-chapter').textContent = L.chapter + ' · ';
     $('g-title').textContent = L.title;
     $('cards-title').innerHTML = G.side === 'regime' ? '行动 <span class="tag">一次性 · 有冷却</span>' : '对策 <span class="tag">一次性 · 有冷却</span>';
+    $('meters').classList.toggle('solo', !!L.noAI);
+    Bub.clear(); $('headline').innerHTML = ''; $('banner').innerHTML = ''; $('ov-tree').classList.remove('show');
     if (!city) city = new window.SilenceCity($('city'));
     requestAnimationFrame(() => { city.setGame(G); city.resize(); });
     setSpeed(0);
@@ -143,7 +145,14 @@
     // 开场: 教程 / 首次进入某关的引导 / 事件
     setTimeout(() => {
       if (L.id === 'tutorial') Coach.start(TUTORIAL, { lock: true });
-      else if (COACH[L.id] && !SAVE.coach[L.id]) { SAVE.coach[L.id] = 1; persist(); Coach.start(COACH[L.id], { lock: false, after: () => { if (G && G.popup) showEvent(); } }); }
+      else {
+        const steps = [];
+        const sk = 'sys_' + G.side;
+        if (!SAVE.coach[sk] && G.tree().length) { SAVE.coach[sk] = 1; steps.push(...SYS[G.side]); }
+        if (COACH[L.id] && !SAVE.coach[L.id]) { SAVE.coach[L.id] = 1; steps.push(...COACH[L.id]); }
+        persist();
+        if (steps.length) Coach.start(steps, { lock: false, after: () => { if (G && G.popup) showEvent(); } });
+      }
       if (G.popup && !Coach.active) showEvent();
     }, 350);
   }
@@ -161,10 +170,12 @@
   function loop(ts) {
     if (!running) return;
     const dt = Math.min(80, ts - (lastTs || ts)); lastTs = ts;
-    if (G && speed > 0 && !G.popup && !G.over && !Coach.blocking() && !anyOverlay()) {
+    const live = G && speed > 0 && !G.popup && !G.over && !Coach.blocking() && !anyOverlay();
+    if (live) {
       acc += dt;
       if (acc >= ROUND_MS[speed]) { acc = 0; doStep(); }
     }
+    Bub.tick(dt, live);
     if (city && G) city.frame(dt);
     requestAnimationFrame(loop);
   }
@@ -174,7 +185,12 @@
     if (!G || G.over || G.popup) return;
     const x0 = G.x;
     G.step();
+    const hadHeadline = G.fx.some((f) => f.type === 'headline');
     processFx();
+    if (!hadHeadline) {
+      const imp = G.news.find((n) => n.round === G.round && ['crowd', 'army', 'opp', 'arrest', 'event'].includes(n.kind));
+      if (imp) headline(imp.text, imp.kind, true);
+    }
     // 街头突然聚集大量人群 → 自动暂停, 给玩家反应时间
     if (G.side === 'regime' && G.x - x0 > 0.04 && G.round - lastAutoPause > 3 && speed > 0) autoPause('⚠ 街头突然聚集了大量人群!');
     renderAll();
@@ -198,10 +214,69 @@
         const nm = G.card(f.id).name;
         toast(`${G.side === 'movement' ? '当局' : '对方'}:${CARDS[f.id].icon} ${nm}`, 'opp');
       }
-      else if (f.type === 'news' && ['crowd', 'army', 'event'].includes(f.kind)) toast(f.text, f.kind === 'army' ? 'good' : 'crowd');
+      else if (f.type === 'news' && ['crowd', 'army'].includes(f.kind)) toast(f.text, f.kind === 'army' ? 'good' : 'crowd');
+      else if (f.type === 'headline') headline(f.text, f.kind);
+      else if (f.type === 'bubble') Bub.add(f.b);
+      else if (f.type === 'seeds') city.say(`+约 ${fmtCount(f.n * G.scale)} 人`, '#9fe0b5');
+      else if (f.type === 'ignite') { banner('连锁反应!', '越来越多的人加入了', 'ignite'); city.flash('#ffb347', 700); }
+      else if (f.type === 'nearmiss') banner('差一点', '人群散去了——再多一些人,也许就不一样了', 'miss');
+      else if (f.type === 'stage') {
+        if (f.up) { banner(`当局:${STAGES[f.stage].name}`, STAGES[f.stage].tip, 'stage'); city.flash('#ff3b2f', 500); if (speed > 0 && G.round - lastAutoPause > 2) autoPause('当局升级了'); }
+        else toast(`当局的戒备降到「${STAGES[f.stage].name}」`, 'good');
+      }
+      else if (f.type === 'push') { banner('反对派发动了!', '一次大规模行动——压不压得住,取决于你看不见的临界点', 'stage'); if (G.side === 'regime' && speed > 0) autoPause('反对派发动了大规模行动'); }
+      else if (f.type === 'buy') toast(`建成:${f.name}`, 'crowd');
     }
     if (G.x > 0.004 && slogans.length && Math.random() < Math.min(0.9, 0.25 + G.x * 2)) city.say(slogans[(Math.random() * slogans.length) | 0]);
   }
+  let hlT = 0, bnT = 0;
+  function headline(text, kind, soft) {
+    const el = $('headline');
+    el.innerHTML = `<div class="hl ${kind || ''}"${soft ? ' style="opacity:.85"' : ''}><span class="d">${G.dateLabel()}</span>${text}</div>`;
+    clearTimeout(hlT); hlT = setTimeout(() => { el.innerHTML = ''; }, 8000);
+  }
+  function banner(text, sub, cls) {
+    $('banner').innerHTML = `<div class="bn ${cls || ''}">${text}${sub ? `<small>${sub}</small>` : ''}</div>`;
+    clearTimeout(bnT); bnT = setTimeout(() => { $('banner').innerHTML = ''; }, 2700);
+  }
+
+  /* ---------- 气泡 ---------- */
+  const Bub = (() => {
+    const layer = $('bubbles'); let items = [];
+    function add(b) {
+      const p = city && city.spot ? city.spot(b.where) : { x: 0.5, y: 0.5 };
+      const el = document.createElement('button');
+      el.className = 'bubble ' + b.kind;
+      el.style.left = (p.x * 100).toFixed(1) + '%'; el.style.top = (p.y * 100).toFixed(1) + '%';
+      el.innerHTML = `${b.icon}<b>+${b.amt}</b>`;
+      el.dataset.tip = `<b>${b.name}</b> · 点击收集 +${b.amt}<div class="tt-tags">${BUBBLES[b.kind].tip}</div>`;
+      el.addEventListener('click', (e) => { e.stopPropagation(); take(b.id, 1); });
+      layer.appendChild(el);
+      items.push({ id: b.id, el, life: 9000, auto: SAVE.autoCollect ? 1500 : null });
+      if (Coach.active) Coach.remark();
+    }
+    function take(id, frac) {
+      const it = items.find((q) => q.id === id); if (!it || !G) return;
+      const v = G.collect(id, frac);
+      const pl = document.createElement('div'); pl.className = 'plus'; pl.style.left = it.el.style.left; pl.style.top = it.el.style.top; pl.textContent = '+' + v;
+      layer.appendChild(pl); setTimeout(() => pl.remove(), 1000);
+      it.el.remove(); items = items.filter((q) => q !== it);
+      renderRes(); renderTreeBtn(); renderCards(); renderMeters();
+      Coach.notify('collect');
+    }
+    function tick(dt, live) {
+      if (!live) return;
+      for (const it of items.slice()) {
+        if (it.auto != null) { it.auto -= dt; if (it.auto <= 0) { take(it.id, 0.5); continue; } }
+        it.life -= dt;
+        if (it.life < 2500) it.el.classList.add('dying');
+        if (it.life <= 0) { if (G) G.expire(it.id); it.el.remove(); items = items.filter((q) => q !== it); }
+      }
+    }
+    function clear() { items = []; layer.innerHTML = ''; }
+    return { add, take, tick, clear };
+  })();
+
   function toast(text, kind) {
     const el = document.createElement('div');
     el.className = 'toast ' + (kind || '');
@@ -217,7 +292,7 @@
     if (!G) return;
     $('g-date').textContent = G.dateLabel();
     $('g-timefill').style.width = (100 * G.round / G.maxRound).toFixed(1) + '%';
-    renderGoal(); renderReadouts(); renderEffects(); renderRes(); renderPolicies(); renderCards(); renderNews();
+    renderGoal(); renderMeters(); renderBuild(); renderReadouts(); renderEffects(); renderRes(); renderTreeBtn(); renderPolicies(); renderCards(); renderNews();
     $('pausetag').classList.toggle('hidden', speed > 0 || !!G.over);
   }
 
@@ -248,24 +323,148 @@
     $('goal-sub').innerHTML = sub;
   }
 
+  const cur = () => (G.side === 'regime' ? '🏛' : '✊');
+  function renderMeters() {
+    const r = G.readout(), L = G.L, lab = L.labels || {};
+    const pct = (v) => (clamp(v, 0, 1) * 100).toFixed(1) + '%';
+    const cnt = (f) => fmtCount(Math.max(0, f * G.N * G.scale));
+    let main = '', opp = '';
+    if (G.side === 'movement') {
+      const x = G.x, cap = Math.max(0, G.pushCapacity() - G.seedNext / G.N) + G.seedNext / G.N;
+      const t = r.tip, sp = L.tipSpread != null ? L.tipSpread : 0.3;
+      let lo = null, hi = null, tipTxt;
+      if (t.kind === 'none') tipTxt = '看不到转机';
+      else if (t.kind === 'tinder') { lo = hi = 0; tipTxt = '一点就着'; }
+      else { lo = t.est * (1 - sp); hi = t.est * (1 + sp); tipTxt = `约 ${cnt(lo)}～${cnt(hi)} 人`; }
+      let max = Math.max(0.04, (hi || 0) * 1.3, (x + cap) * 1.15, x * 1.1);
+      if (lo == null) max = Math.max(max, 0.12);
+      max = Math.min(1, max);
+      const P = (v) => pct(v / max);
+      const ready = lo != null && cap > 0 && L.id !== 'pyongyang' && x + cap >= lo;
+      const band = lo != null ? `<div class="band" style="left:${P(lo)};width:${pct(Math.max(0.008, (hi - lo) / max))}"></div>` : '<div class="band" style="left:calc(100% - 10px);width:10px"></div>';
+      const crowdTxt = x * G.N * G.scale < 1 ? '无人' : '约 ' + cnt(x) + ' 人';
+      const armyGoal = L.goal && L.goal.d != null && L.goal.x == null;
+      if (armyGoal) {
+        const dS = clamp(G.d + G.intelNoise.army, 0, 1), gd = L.goal.d;
+        main = `<div class="mh" data-tip="${esc('这一关要赢,靠的是执行者倒戈。街上的人越多、越和士兵说话,他们越动摇;当局换防会把军心重置。')}"><b>🪖 ${lab.army || '军警'}倒戈</b><span class="mv">${r.army.words}(传闻)· ${lab.crowd || '街上'} ${crowdTxt}</span></div>
+          <div class="mbar"><div class="fill" style="width:${pct(dS / (gd * 1.25))}"></div><div class="band" style="left:${pct(gd / (gd * 1.25))};width:1%"></div></div>
+          <div class="ms">${G.streak.d > 0 ? `<span class="go">已经坚持 ${G.streak.d}/${L.goal.dHold || L.goal.hold || 2} 轮!</span>` : `紫线是目标:成建制倒戈 · 街上的人越多,士兵越动摇`}</div>`;
+      } else if (L.id === 'pyongyang') {
+        main = `<div class="mh" data-tip="${esc('需要多少人同时站出来,局面才会改变。你的目标是让它从「看不到转机」降到约两成人。')}"><b>🔥 让临界点出现</b><span class="mv">需要 ${tipTxt} · 目标:降到约 ${cnt(0.22)} 以下</span></div>
+          <div class="mbar"><div class="fill" style="width:${lo == null ? '2%' : pct(clamp((1 - t.est) / 0.78, 0, 1))}"></div></div>
+          <div class="ms">${G.streak.tip > 0 ? `<span class="go">裂缝已经出现(${G.streak.tip}/3)</span>` : '别上街:在这里,公开行动只是送死'}</div>`;
+      } else {
+        main = `<div class="mh" data-tip="${esc('黄色:此刻站出来的人。斜纹:你手里的组织力一次还能带出的人。紫框:临界点——大约要这么多人同时站出来,风险才被摊薄、连锁才会开始(估计值)。')}"><b>🔥 离临界点</b><span class="mv">${lab.crowd || '街上'} ${crowdTxt} · 需要 ${tipTxt}</span></div>
+          <div class="mbar"><div class="fill" style="width:${P(x)}"></div><div class="ghost" style="left:${P(x)};width:${P(cap)}"></div>${band}</div>
+          <div class="ms">${ready ? '<span class="go">够了!现在全力行动,可能点燃连锁反应</span>' : cap > 0 ? `你的组织力一次还能带出约 ${cnt(cap)} 人` : '组织力不够发起行动——收集气泡,或等一等'}</div>`;
+      }
+      if (L.id === 'pyongyang') {
+        const e = G.exposure;
+        opp = `<div class="mh"><b>🕵️ 暴露风险</b><span class="mv">${e < 25 ? '低' : e < 50 ? '中' : e < 75 ? '高' : '危险'}</span></div>
+          <div class="mbar danger"><div class="fill" style="width:${pct(e / 100)}"></div></div>
+          <div class="ms">${e >= 60 ? '<span class="warn">109 常务组随时会上门</span>' : '到顶全盘皆输 ·「销毁痕迹」可以降低'}</div>`;
+      } else if (!L.noAI) {
+        const a = G.alert, s = G.stage(), nx = s < 3 ? STAGES[s + 1] : null;
+        opp = `<div class="mh" data-tip="${esc('当局的警觉。街上的人、人数的突增、你的每个动作和建设都会推高它;安静时慢慢回落。到 25 / 50 / 75 当局会依次升级。')}"><b>🚨 当局警觉</b><span class="stage-pill st${s}">${STAGES[s].name}</span></div>
+          <div class="mbar danger"><div class="fill" style="width:${pct(a / 100)}"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div></div>
+          <div class="ms">${nx ? `到 ${(s + 1) * 25}:${nx.name}(${nx.tip})` : '<span class="warn">已是全面镇压</span>'}</div>`;
+      }
+    } else {
+      const left = G.maxRound - G.round;
+      main = `<div class="mh"><b>🏛 ${L.id === 'liwang' ? '王位' : '撑下去'}</b><span class="mv">还要 ${left} 轮 · 局面(据报):${r.tip.words}</span></div>
+        <div class="mbar time"><div class="fill" style="width:${pct(G.round / G.maxRound)}"></div></div>
+        <div class="ms">${G.streak.x > 0 || G.streak.d > 0 ? `<span class="warn">⚠ 局面正在失控(${Math.max(G.streak.x, G.streak.d)}/${(L.goal || {}).hold || 3})</span>` : '撑到最后就是胜利——星级看积怨与抓了多少人'}</div>`;
+      const o = G.orgShown();
+      opp = `<div class="mh" data-tip="${esc('反对派在暗中组织。积怨越深、街上越热闹,涨得越快;满了就会发动一次大规模行动。抓串联者、对话让步能压下去。注意:你越凶,这个数字报得越低。')}"><b>✊ 反对派组织度</b><span class="mv">据报 · ${o >= 75 ? '即将发动' : o >= 45 ? '正在串联' : '零散'}</span></div>
+        <div class="mbar org"><div class="fill" style="width:${pct(o / 100)}"></div></div>
+        <div class="ms">${o >= 75 ? '<span class="warn">随时可能发动大规模行动!</span>' : '满了就会发动一次大规模行动'}</div>`;
+    }
+    $('m-main').innerHTML = main; $('m-opp').innerHTML = opp;
+  }
+  function renderBuild() {
+    const lv = G.buildLevels(), keys = Object.keys(lv);
+    if (!keys.length) { $('build').innerHTML = ''; return; }
+    $('build').innerHTML = `<div class="sec-t">${G.side === 'regime' ? '你的机器' : '你的组织'} <span class="tag">永久建设</span></div><div class="build ${G.side}">` + keys.map((k) => {
+      const b = lv[k]; let pips = ''; for (let i = 0; i < b.max; i++) pips += `<i class="${i < b.n ? 'on' : ''}"></i>`;
+      return `<div class="brow ${G.side}"><span>${b.icon}</span><span class="bn">${b.name}</span><span class="pipsx">${pips}</span></div>`;
+    }).join('') + '</div>';
+  }
+  function renderTreeBtn() {
+    const btn = $('tree-btn');
+    if (!G.tree().length) { btn.classList.add('hidden'); return; }
+    btn.classList.remove('hidden');
+    const n = G.affordableNodes();
+    btn.className = 'btn tree-btn ' + G.side + (n ? ' pulse' : '');
+    btn.innerHTML = `<span>${G.side === 'regime' ? '🏛 政权建设' : '🧬 组织建设'} <small>(B)</small></span>${n ? `<span class="cnt">${n} 项可建</span>` : '<span class="era">点数不够</span>'}`;
+  }
+
+  /* ---------- 建设树 ---------- */
+  let treeSel = null;
+  function openTree() {
+    if (!G || G.over || !G.tree().length) return;
+    const firstOk = G.tree().flatMap((b) => b.nodes).find((n) => G.nodeState(n).ok);
+    treeSel = treeSel || (firstOk && firstOk.id);
+    $('ov-tree').classList.add('show');
+    renderTree();
+    Coach.notify('tree-open');
+    if (Coach.active) setTimeout(() => Coach.remark(), 40);
+  }
+  function closeTree() { $('ov-tree').classList.remove('show'); }
+  function renderTree() {
+    const T = G.tree(), box = $('tree-box');
+    box.className = 'modal treebox ' + (G.side === 'regime' ? 'regimeT' : '');
+    let sel = null;
+    let h = `<div class="th"><h3>${G.side === 'regime' ? '🏛 政权建设' : '🧬 组织建设'}</h3><span class="pts">${cur()} <b>${Math.floor(G.me.ap)}</b></span><button class="btn" id="tree-close">关闭</button></div>
+      <div class="era" style="margin-top:4px">建成后永久生效。${G.side === 'movement' ? '每一项都会让当局更警觉——先闷声发展,还是先打出声势?' : ''}</div><div class="tcols">`;
+    for (const b of T) {
+      h += `<div class="tcol"><h4>${b.icon} ${b.name}</h4><div class="td">${b.desc}</div>`;
+      for (const n of b.nodes) {
+        const st = G.nodeState(n);
+        if (treeSel === n.id) sel = { n, st };
+        const cls = st.have ? 'have' : st.ok ? 'ok' : !st.reqOk ? 'locked' : '';
+        h += `<button class="tnode ${cls} ${treeSel === n.id ? 'sel' : ''}" data-node="${n.id}"><div class="tn"><span>${n.name}</span><span class="tc">${st.have ? '✓ 已建成' : cur() + ' ' + n.cost}</span></div><div class="tt">${n.tags.join(' · ')}</div></button>`;
+      }
+      h += '</div>';
+    }
+    h += '</div>';
+    if (sel) {
+      const { n, st } = sel;
+      const reqNames = (n.req || []).map((id) => { for (const b of T) for (const q of b.nodes) if (q.id === id) return q.name; return null; }).filter(Boolean);
+      h += `<div class="tdetail"><div class="tx"><b>${n.name}</b><br>${n.text}<div class="tags">${n.tags.join(' · ')}</div>
+        ${G.side === 'movement' && n.alert ? `<div class="warn">当局警觉 +${n.alert}</div>` : ''}
+        ${!st.reqOk && reqNames.length ? `<div class="warn">需要先建成:${reqNames.join(n.reqAny ? ' 或 ' : ' 和 ')}</div>` : ''}</div>
+        <button class="btn primary" id="tree-buy" ${st.ok ? '' : 'disabled'}>${st.have ? '已建成' : `建设 · ${cur()} ${n.cost}`}</button></div>`;
+    }
+    box.innerHTML = h;
+    $('tree-close').addEventListener('click', closeTree);
+    box.querySelectorAll('[data-node]').forEach((b) => b.addEventListener('click', () => {
+      treeSel = b.dataset.node;
+      const n = G.tree().flatMap((q) => q.nodes).find((q) => q.id === treeSel);
+      if (n && G.nodeState(n).ok && (b.classList.contains('sel') || Coach.active)) return buyNode(treeSel);
+      renderTree();
+    }));
+    const bb = $('tree-buy'); if (bb) bb.addEventListener('click', () => buyNode(treeSel));
+  }
+  function buyNode(id) {
+    if (!G.buy(id)) return;
+    processFx(); renderAll(); renderTree();
+    Coach.notify('tree:' + id);
+    if (G.L.id === 'tutorial') setTimeout(closeTree, 500);
+  }
+  $('tree-btn').addEventListener('click', openTree);
+  $('ov-tree').addEventListener('click', (e) => { if (e.target === $('ov-tree')) closeTree(); });
+
   function dots(lv, max) { let h = ''; for (let i = 0; i < max; i++) h += `<i style="${i < lv ? `background:${sevColor(lv, max)}` : ''}"></i>`; return h; }
   function sevColor(lv, max) { const t = lv / max; return t < 0.34 ? '#7fa7d6' : t < 0.6 ? '#e8c46a' : t < 0.85 ? '#f0964c' : '#ef6a5e'; }
 
   function renderReadouts() {
     const r = G.readout(), L = G.L, lab = L.labels || {};
     const rows = [];
-    rows.push({ id: 'crowd', i: '👥', l: lab.crowd || '街头', v: r.crowd.count < 1 ? '空无一人' : r.crowd.text, s: r.crowd.words, lv: r.crowd.level, max: 5 });
     rows.push({ id: 'risk', i: '⚠️', l: '此刻站出来', v: r.risk.words, s: '被抓的后果:' + r.pen.words, lv: r.risk.level, max: 4 });
     rows.push({ id: 'legit', i: '⚖️', l: '执法在人们眼中', v: r.legit.words, s: r.legit.level ? '越界的处罚会被记住' : '', lv: r.legit.level, max: 3 });
     rows.push({ id: 'army', i: '🪖', l: lab.army || '军警', tag: r.army.rumor ? '传闻' : '', v: r.army.words, lv: r.army.level, max: 4 });
     rows.push({ id: 'mood', i: '💢', l: '民间情绪', tag: G.side === 'regime' ? '可信度:' + r.mood.conf.split(':')[0] : '传闻', v: r.mood.words,
       s: G.side === 'regime' && r.mood.bias >= 0.15 ? r.mood.conf.split(':')[1] || '' : '', lv: r.mood.level, max: 4 });
-    if (G.side === 'movement') rows.push({ id: 'tip', i: '🔥', l: '临界点', tag: '估计', v: r.tip.text, s: r.tip.sub, lv: null });
-    else rows.push({ id: 'tip', i: '🏛', l: '局面', tag: '据报', v: r.tip.words, s: '越接近"岌岌可危",一件小事就越可能失控', lv: 4 - r.tip.level, max: 4 });
-    if (L.id === 'pyongyang') {
-      const e = G.exposure; const ew = e < 25 ? '低' : e < 50 ? '中' : e < 75 ? '高' : '危险';
-      rows.push({ id: 'exposure', i: '🕵️', l: '暴露风险', v: ew, s: '到顶就会被一网打尽', lv: Math.min(4, Math.floor(e / 20)), max: 4 });
-    }
     $('readouts').innerHTML = rows.map((o) => {
       const changed = prevWords[o.id] != null && prevWords[o.id] !== o.v;
       return `<div class="ro ${changed ? 'flash' : ''}" id="ro-${o.id}" data-tip="${esc(RO_TIPS[o.id] || '')}">
@@ -301,13 +500,12 @@
     const st = G.me, cap = G.apCap;
     const inc = G.income(G.side);
     const raw = G.side === 'regime' ? G.regimeRawIncome() : inc;
-    let pips = '';
-    for (let i = 0; i < cap; i++) { const f = clamp(st.ap - i, 0, 1); pips += `<span class="pip"><i style="height:${(f * 100).toFixed(0)}%"></i></span>`; }
     const nm = G.side === 'regime' ? '政治资本' : '组织力';
-    const incText = G.side === 'regime' && raw < 0 ? '<span style="color:var(--red2)">入不敷出!代价正转嫁给百姓</span>' : `每轮恢复 ${inc >= 1.5 ? '较快' : inc >= 0.8 ? '约一点' : inc >= 0.4 ? '较慢' : '很慢'}`;
+    const incText = G.side === 'regime' && raw < 0 ? '<span style="color:var(--red2)">入不敷出!代价正转嫁给百姓</span>' : `每轮 +${inc.toFixed(1)} · 另有气泡可收集`;
+    const frac = clamp(st.ap - Math.floor(st.ap), 0, 1);
     $('res').className = 'res ' + G.side;
-    $('res').innerHTML = `<div><div class="nm">${nm}</div><div class="inc">${incText}</div></div><div class="pips">${pips}</div>`;
-    $('res').dataset.tip = G.side === 'regime' ? '政治资本:出牌、切换强硬政策都要花。强硬政策每轮都有维持开销;人群越大、军心越乱,收入越少。' : '组织力:出牌要花。每轮恢复,街上的人越多恢复越快。';
+    $('res').innerHTML = `<div><div class="nm">${nm}</div><div class="inc">${incText}</div></div><div class="big">${cur()} ${Math.floor(st.ap)}<span class="frac"><i style="width:${(frac * 100).toFixed(0)}%"></i></span></div>`;
+    $('res').dataset.tip = G.side === 'regime' ? '政治资本:出牌、切换强硬政策、建设都要花。强硬政策每轮都有维持开销;人群越大、军心越乱,收入越少。点击城市里的「安定」「情报」气泡收集。' : '组织力:出牌、建设都要花。每轮恢复一点;街上的人越多恢复越快。点击城市里冒出的气泡收集。';
   }
 
   const polName = (k, id) => {
@@ -348,7 +546,7 @@
       const cs = G.cardState(c);
       const free = cs.cost === 0 && c.cost > 0;
       let cost = '';
-      if (free) cost = '<span class="free">免费</span>'; else for (let i = 0; i < cs.cost; i++) cost += '<i></i>';
+      if (free) cost = '<span class="free">免费</span>'; else cost = `<span class="num">${cur()} ${cs.cost}</span>`;
       const warn = !cs.cond ? (c.whenText || '条件未满足') : cs.cd > 0 ? `冷却中:还要 ${cs.cd} 轮` : G.me.ap < cs.cost ? '资源不足' : '';
       const tip = `<b>${c.icon} ${c.name}</b><br>${c.text}<div class="tt-tags">${(c.tags || []).join(' · ')}${c.cd ? ` · 冷却 ${c.cd} 轮` : ''}${c.once ? ' · 只能用一次' : ''}</div>${warn ? `<div class="tt-warn">${warn}</div>` : ''}`;
       return `<button class="card ${G.side} ${c.special ? 'special' : ''} ${free && cs.ok ? 'freebie' : ''}" data-card="${c.id}" ${cs.ok ? '' : 'disabled'} data-tip="${esc(tip)}">
@@ -507,6 +705,9 @@
   $('mm-resume').addEventListener('click', () => $('ov-menu').classList.remove('show'));
   $('mm-restart').addEventListener('click', () => { $('ov-menu').classList.remove('show'); startLevel(curLevel, curOpts); });
   $('mm-help').addEventListener('click', () => { $('ov-menu').classList.remove('show'); $('ov-help').classList.add('show'); });
+  const autoLabel = () => { $('mm-auto').textContent = '自动收集气泡(只得一半):' + (SAVE.autoCollect ? '开' : '关'); };
+  autoLabel();
+  $('mm-auto').addEventListener('click', () => { SAVE.autoCollect = !SAVE.autoCollect; persist(); autoLabel(); });
   $('mm-levels').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('levels'); });
   $('mm-title').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('title'); });
   $('g-help').addEventListener('click', () => { setSpeed(0); $('ov-help').classList.add('show'); });
@@ -519,12 +720,13 @@
   /* ---------- 键盘 ---------- */
   document.addEventListener('keydown', (e) => {
     if (current !== 'game' || !G) return;
-    if (anyOverlay()) { if (e.key === 'Escape') { $('ov-menu').classList.remove('show'); $('ov-help').classList.remove('show'); } return; }
+    if (anyOverlay()) { if (e.key === 'Escape' || (e.key === 'b' && $('ov-tree').classList.contains('show'))) { $('ov-menu').classList.remove('show'); $('ov-help').classList.remove('show'); closeTree(); } return; }
     if (Coach.locked()) return;
     if (e.key === ' ') { e.preventDefault(); setSpeed(speed > 0 ? 0 : lastSpeed || 1); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); $('btn-step').click(); }
     else if (e.key === 'Escape') { $('g-menu').click(); }
     else if (/^[1-9]$/.test(e.key)) { const c = G.hand()[+e.key - 1]; if (c) playCard(c.id); }
+    else if (e.key === 'b' || e.key === 'B') openTree();
   });
 
   /* ---------- 提示框 ---------- */
@@ -546,24 +748,40 @@
   /* ================= 新手引导 ================= */
   // wait: 'click'(按继续) | 'play:ID' | 'round' | 'ap:N' | 'speed' | 'policy:KEY'
   const TUTORIAL = [
-    { target: '#stage', text: '这是一所一千人的学校。<b>每个小点是一个学生</b>:灰色的在教室里沉默,亮起来的站到了操场上,被带去教导处的会变成红色。<br>左上角蓝色的小方块,是老师们。' },
-    { target: '#ro-risk', text: '看左边的"此刻站出来"。教导主任一节课间<b>最多只能处理二十个人</b>。现在没人站出来——谁第一个出头,谁就一定被抓。' },
-    { target: '#res', text: '右边是你能做的事。每张牌要花<b>组织力</b>(这些圆点),每一轮恢复一点。' },
-    { target: '[data-card="t_small"]', text: '先试试看:打出<b>「几个人先站出来」</b>——你和九个最要好的同学。', wait: 'play:t_small', allow: ['t_small'] },
+    { target: '#stage', text: '周一的升旗仪式。一千名学生<b>按班级站在操场上</b>,每个小点是一个学生。<br>站出来提异议的人会<b>走出队列,站到主席台前</b>;被点名的会被带去左上角的<b>教导处</b>(变红)。台上和过道里的蓝色方块是老师。' },
+    { target: '#ro-risk', text: '看"此刻站出来"。教导主任一分钟<b>最多只能处理二十个人</b>。现在没人站出来——谁第一个出头,谁就一定被点名。' },
+    { target: '#m-main', text: '最上面这根条是关键。<b>黄色</b>是站出来的人,<b>紫色框</b>是"临界点":大约要这么多人同时站出来,风险才会被摊薄,连锁反应才会开始。' },
+    { target: '#res', text: '这是你的<b>组织力</b>。出牌、建设都要花它,每分钟恢复一点。' },
+    { target: '[data-card="t_small"]', text: '先试试看:打出<b>「几个人先站出来」</b>——你和同班九个最要好的同学。', wait: 'play:t_small', allow: ['t_small'] },
     { target: '#btn-step', text: '点<b>「下一轮」</b>,看看会发生什么。', wait: 'round', allowSel: ['#btn-step'] },
-    { target: '#btn-step', text: '你们十个人站到了操场上。再点一次<b>「下一轮」</b>。', wait: 'round', allowSel: ['#btn-step'] },
-    { target: '#stage', text: '十个人<b>全被带走了</b>。其他同学看在眼里——更不敢动了。<br>人太少的时候,每个站出来的人都会被抓。<b>这就是沉默的原因</b>:不是没人不满,而是没人愿意当那少数几个。' },
-    { target: '#ro-tip', text: '看"临界点":大约需要<b>二十多个人同时</b>站出来。低于它,行动会被吸回沉默;超过它,教导主任抓不过来,每个人被抓的机会变小,更多人会加入——<b>连锁反应</b>。' },
-    { target: '#btn-step', text: '「全年级串联」能带出二十五个人,但要三点组织力。<b>点「下一轮」</b>,把组织力攒满。', wait: 'ap:3', allowSel: ['#btn-step'] },
-    { target: '[data-card="t_big"]', text: '组织力够了。打出<b>「全年级串联」</b>。', wait: 'play:t_big', allow: ['t_big'] },
+    { target: '.bubble', text: '你们十个人走到了台前,操场上冒出一个<b>「士气」气泡</b>。点它,收集组织力。<br>(局势变化时就会冒气泡,别让它们消失。)', wait: 'collect', allowSel: ['.bubble'] },
+    { target: '#btn-step', text: '再点一次<b>「下一轮」</b>。', wait: 'round', allowSel: ['#btn-step'] },
+    { target: '#stage', text: '十个人<b>全被点名带走了</b>。其他同学看在眼里——更不敢动了。<br>人太少的时候,每个站出来的人都会被抓。<b>这就是沉默的原因</b>:不是没人不满,而是没人愿意当那少数几个。' },
+    { target: '#tree-btn', text: '右边的<b>「组织建设」</b>是永久的升级,像给你的组织加技能。打开它。', wait: 'tree-open', allowSel: ['#tree-btn'] },
+    { target: '[data-node="m_net"]', text: '建成<b>「联络网」</b>:之后每次行动,带出的人多 25%。点它。', wait: 'tree:m_net', allow: ['tree:m_net'] },
+    { target: '#btn-step', text: '「全年级串联」要 3 点组织力。<b>点「下一轮」</b>,攒够它。', wait: 'ap:3', allowSel: ['#btn-step'] },
+    { target: '[data-card="t_big"]', text: '看最上面的条:斜纹已经越过了紫框——够了。打出<b>「全年级串联」</b>。', wait: 'play:t_big', allow: ['t_big'] },
     { target: '.speed', text: '这次按 <b>▶</b>,让时间走起来,看着吧。', wait: 'speed', allowSel: ['.speed'] },
   ];
+  const SYS = {
+    movement: [
+      { target: '#m-main', text: '最上面左边这根条最重要:<b>黄色</b>是站出来的人,<b>斜纹</b>是你手里的组织力一次还能带出的人,<b>紫框</b>是临界点。<br><b>黄色加斜纹越过紫框,就是全力出手的时候。</b>' },
+      { target: '#m-opp', text: '右边是<b>当局警觉</b>。街上的每一次聚集、你的每个动作都会推高它;到 25 / 50 / 75,当局会依次升级为警戒、严打、全面镇压。安静时它会慢慢回落。' },
+      { target: '#tree-btn', text: '<b>组织建设</b>:传播、记忆、韧性三条路线的永久升级。它们同样会推高当局警觉——先闷声发展,还是先打出声势?(快捷键 B)' },
+      { target: '#stage', text: '局势变化时,城市里会冒出<b>气泡</b>:愤怒、士气、同情、消息。<b>点击收集</b>——它们是组织力最重要的来源。每隔几轮,还会有<b>突发事件</b>逼你做选择。' },
+    ],
+    regime: [
+      { target: '#m-main', text: '左边是你还要撑多久。撑到最后就算胜利——但星级要看积怨深不深、抓了多少人。' },
+      { target: '#m-opp', text: '右边是<b>反对派组织度</b>(据报)。它满了,对方就会发动一次大规模行动。积怨越深涨得越快;抓串联者、对话让步能压下去。<b>注意:你越凶,这个数字报得越低。</b>' },
+      { target: '#tree-btn', text: '<b>政权建设</b>:铁拳、天网、民心三条路线的永久升级。(快捷键 B)' },
+      { target: '#stage', text: '平静的日子会冒出<b>「安定」</b>气泡,抓人会冒出<b>「情报」</b>气泡。点击收集政治资本。' },
+    ],
+  };
   const COACH = {
     liwang: [
-      { target: '#policies', text: '这一关你是君主。右上是你的<b>常设政策</b>:执法多重、卫士多少、抓谁、言路开闭、囹圄松紧。<b>越强硬,上街越可怕——但每轮都要花钱维持。</b>' },
+      { target: '#policies', text: '这一关你是君主。右边是你的<b>常设政策</b>:执法多重、卫士多少、抓谁、言路开闭、囹圄松紧。<b>越强硬,上街越可怕——但每轮都要花钱维持。</b>' },
       { target: '#ro-mood', text: '这是下面报上来的"民间情绪"。注意<b>可信度</b>:你越凶,下面的人越不敢说真话,报上来的就越平静。' },
-      { target: '#cards', text: '这些是你能做的事。「卫巫监谤」能让你<b>暂时听到真话</b>,还能看见每家每户心里的怨气(红色)。' },
-      { target: '#stage', text: '国人一聚集,你就可以增派卫士、加重刑罚——可每一次越界的处罚,都会被人记住。<b>按 ▶ 开始。</b>' },
+      { target: '#cards', text: '「卫巫监谤」能让你<b>暂时听到真话</b>,还能看见每家每户心里的怨气(红色)。<b>按 ▶ 开始。</b>' },
     ],
     petrograd: [{ target: '#ro-army', text: '注意<b>驻军</b>。街上的人越多,士兵越动摇;士兵一动摇,能抓人的就少了,街上又会更安全——两层反馈会互相放大。「劝说士兵」要在人多的时候打。' }],
     iran: [{ target: '#cards', text: '每一次镇压之后,大约<b>六周</b>会迎来一次"四十日"悼念。记忆在那时最强——那也是你出手的最好时机。' }],
@@ -572,8 +790,8 @@
     leipzig: [{ target: '#cards', text: '每周一的<b>「和平祈祷」免费</b>。教会圈里的人彼此信任,一个人出来能带出另一个。' }],
     baizhi: [{ target: '#cards', text: '你手里有一张只能用一次的牌:<b>「桥上的横幅」</b>。它不会让很多人上街,却会让很多人<b>记住</b>。' }],
     pyongyang: [
-      { target: '#ro-exposure', text: '在这里,<b>别上街</b>。你的每一次行动都会增加暴露风险;到顶,你的网络会被一网打尽。' },
-      { target: '#ro-tip', text: '你的目标是这一行:让"临界点"从"看不到转机"变成一个<b>真实存在、而且不太高</b>的数字。' },
+      { target: '#m-opp', text: '在这里,<b>别上街</b>。你的每一次行动都会增加暴露风险;到顶,你的网络会被一网打尽。' },
+      { target: '#m-main', text: '你的目标是这根条:让"临界点"从"看不到转机"变成一个<b>真实存在、而且不太高</b>的数字。' },
     ],
   };
 
@@ -604,13 +822,17 @@
         document.body.classList.add('coach-lock');
         (st.allowSel || []).concat(st.allow ? st.allow.map((id) => `[data-card="${id}"]`) : []).forEach((sel) => document.querySelectorAll(sel).forEach((e) => e.classList.add('coach-allow')));
       } else document.body.classList.remove('coach-lock');
-      if (G) renderCards();
+      if (G) { renderCards(); renderTreeBtn(); }
       reposition();
-      if (waiting) setTimeout(() => {   // 卡牌重绘后重新标记
-        (st.allow || []).forEach((id) => document.querySelectorAll(`[data-card="${id}"]`).forEach((e) => e.classList.add('coach-allow')));
-        reposition();
-      }, 30);
+      if (waiting) setTimeout(remark, 30);
       if (st.wait && st.wait.startsWith('ap:') && G && G.me.ap >= +st.wait.slice(3)) setTimeout(next, 200);
+      if (st.wait === 'collect' && G && !G.bubbles.length) { G.spawnBubble('morale', 1, 'plaza'); processFx(); }
+    }
+    function remark() {   // 重绘之后重新标记可点的控件, 并重新定位
+      const st = steps[i]; if (!active || !st) return;
+      (st.allowSel || []).forEach((sel) => document.querySelectorAll(sel).forEach((e) => e.classList.add('coach-allow')));
+      (st.allow || []).forEach((id) => document.querySelectorAll(`[data-card="${id}"]`).forEach((e) => e.classList.add('coach-allow')));
+      reposition();
     }
     function reposition(noScroll) {
       if (!active) return;
@@ -648,7 +870,7 @@
     }
     $('coach-next').addEventListener('click', next);
     return {
-      start, end, notify, reposition,
+      start, end, notify, reposition, remark,
       get active() { return active; },
       blocking: () => active && !(steps[i] && steps[i].wait === 'speed'),
       locked: () => active && document.body.classList.contains('coach-lock'),
