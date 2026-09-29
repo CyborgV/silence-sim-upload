@@ -1,4 +1,4 @@
-/* 道路以目 · 沉默相变模拟器 —— UI 控制器
+/* 道路以目 · 模型实验室 —— 沙盒场景与全部参数(原"沉默相变模拟器"界面)
  * 依赖 model.js (window.SilenceSim)
  */
 'use strict';
@@ -148,17 +148,10 @@ function rebuildWorld() {
 }
 
 /* ================= 运行循环 ================= */
-let game = null;   // 对局模式状态(非空时接管 sim)
-
 function tick() {
   if (!running) return;
   const spd = +$('spd').value;
   for (let s = 0; s < spd; s++) {
-    if (game) {
-      game.step();
-      if (game.over) { endGame(); break; }
-      continue;
-    }
     let seedCount = 0, seedMode = 'random';
     // 计划事件与种子
     for (const p of seedPlan) {
@@ -167,64 +160,14 @@ function tick() {
         if (p.count) { seedCount += p.count; seedMode = p.mode || 'random'; }
         p.done = true;
       }
-    }    seedPlan = seedPlan.filter(p => !p.done);
+    }
+    seedPlan = seedPlan.filter(p => !p.done);
     if (recur && sim.t > 0 && sim.t % recur.every === 0) seedCount += recur.count;
     if (pendingSeeds.length) { for (const ps of pendingSeeds) { seedCount += ps.count; seedMode = ps.mode; } pendingSeeds = []; }
     sim.step(seedCount, seedMode);
   }
   drawAll();
-  if (game) drawGame();
   requestAnimationFrame(tick);
-}
-
-/* ================= 对局模式 ================= */
-function startGame() {
-  game = new window.SilenceGame.Game($('g_side').value, $('g_diff').value);
-  sim = game.sim;                       // 接管主视图
-  seedPlan = []; recur = null; pendingSeeds = [];
-  bifCache.key = null; anaCache.data = null;
-  $('g_status').style.display = 'block';
-  $('g_hand').style.display = 'grid';
-  $('g_news').style.display = 'block';
-  $('g_goal').textContent = game.side === 'court' ? '🏛 压住局面' : '📣 点火成功';
-  $('scenDesc').innerHTML = '<b>对局进行中。</b>出牌在左下角,AI 对手会自动行动。';
-  renderHand(); drawGame(true);
-  if (!running) { running = true; $('btnRun').textContent = '⏸ 暂停'; requestAnimationFrame(tick); }
-}
-function endGame() {
-  running = false; $('btnRun').textContent = '▶ 运行';
-  const o = game.over;
-  const ov = $('g_overlay');
-  ov.className = o.win ? 'win' : 'lose'; ov.style.display = 'flex';
-  $('go_title').textContent = o.title;
-  $('go_detail').textContent = o.detail;
-  $('go_stats').textContent = o.stats || '';
-}
-function quitGame() {
-  game = null;
-  $('g_overlay').style.display = 'none';
-  $('g_status').style.display = 'none';
-  $('g_hand').style.display = 'none';
-  $('g_news').style.display = 'none';
-  applyScenario(curKey);
-}
-function renderHand() {
-  const hand = game.hand();
-  $('g_hand').innerHTML = '';
-  for (const c of hand) {
-    const b = document.createElement('button');
-    const cd = game.cool[c.id] > 0 ? ` ⏳${game.cool[c.id]}` : '';
-    b.innerHTML = `${c.name} <small>${c.desc} · ${c.cost}🎴${cd}</small>`;
-    b.disabled = !game.canPlay(c);
-    b.onclick = () => { if (game.play(c.id)) { renderHand(); drawGame(true); } };
-    $('g_hand').appendChild(b);
-  }
-}
-function drawGame(force) {
-  $('g_ap').textContent = `🎴 行动点 ${game.ap}/${game.apCap}`;
-  $('g_round').textContent = game.sim.t;
-  $('g_news').innerHTML = game.news.join('<br>');
-  if (force || frameNo % 10 === 0) renderHand();
 }
 
 function fireEvent(ev) {
@@ -536,10 +479,6 @@ window.addEventListener('DOMContentLoaded', () => {
   };
   $('btnTest').onclick = runInPageTests;
 
-  $('btnGameStart').onclick = () => { quitGame(); startGame(); };
-  $('btnGameEnd').onclick = () => { if (game) quitGame(); };
-  $('go_again').onclick = () => { $('g_overlay').style.display = 'none'; startGame(); };
-  $('go_back').onclick = () => quitGame();
 
   window.addEventListener('resize', drawAll);
   applyScenario('playground');

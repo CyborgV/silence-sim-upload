@@ -101,7 +101,7 @@
     events: [
       { at: 0, title: '国人谤王', art: '🗣️', text: '都城里的人都在议论你的"专利"。有人说你与民争利,有人说荣夷公迟早要坏事。<br><br>这是第一个月。你打算怎么办?(左边是你的政策,右边是你能做的事。)', choices: [{ label: '先看看再说' }] },
       { at: 2, title: '召公谏', art: '🧓', quote: '民不堪命矣!', text: '召公来见你,说国人已经受不了了。', choices: [
-        { label: '听召公的:放宽刑罚', hint: '执法力度 → 宽松', run: (g) => g.forcePolicy('enforce', 'lenient') },
+        { label: '听召公的:让人说话', hint: '立即「宣之使言」:积怨下降,民众认可的界线上移', run: (g) => g.selfCard('dialogue', '王召集公卿,听国人之言。') },
         { label: '找卫巫来,监视议论的人', hint: '获得一次免费的「卫巫监谤」,执法 → 严厉', run: (g) => { g.forcePolicy('enforce', 'harsh'); g.giveFree('informants', 3); } },
       ] },
       { at: 9, title: '防民之口', art: '🌊', quote: '防民之口,甚于防川。川壅而溃,伤人必多,民亦如之。', text: g => {
@@ -301,7 +301,7 @@
     ],
     goalText: '在6月4日前,让戒严部队倒戈(军心"成建制倒戈"并维持两天)。',
     tips: ['街上的人数会影响士兵,但光靠人多压不垮军队。', '戒严后,「拦阻军车」和「劝说士兵」是你最重要的牌。', '当局可能调来与本地毫无联系的部队——他们不会和人群说话。'],
-    rounds: 50, scale: 1000, arrestScale: 30, moodScale: 0.2, tipSpread: 0.35,
+    rounds: 50, scale: 1000, arrestScale: 8, moodScale: 0.2, tipSpread: 0.35,
     world: { N: 2000, tolType: 'bell', tolMul: 0.9, tolAdd: -0.45, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.9, K0: 30, M: 200, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.8, memDecay: 0.1, vis: 0.9, omega: 0.7, globalScale: 0.8, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 3.0 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin', enforce: 'lenient', police: 'lean' }) },
     troopPsi: 1.5,
@@ -313,7 +313,7 @@
     goal: { d: 0.5, hold: 2, dHold: 2 },
     stars: [
       { text: '在戒严后十天内成功(5月30日前)', test: (g) => g.round <= 45 },
-      { text: '被抓走的人少于六千', test: (g) => g.sim.R < 0.1 },
+      { text: '被抓走的人少于一千六', test: (g) => g.sim.R < 0.1 },
     ],
     dateFmt: dayFmt(1989, 4, 15),
     events: [

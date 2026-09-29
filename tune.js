@@ -1,9 +1,9 @@
 /* 场景叙事调校 harness: 模拟各场景的“预期玩法”, 输出检查点 */
 'use strict';
-const path = '/Users/wuyuheng/Desktop/沉默相变模拟器/';
+const path = __dirname + '/';
 const { Sim, theory } = require(path + 'model.js');
 const fs = require('fs');
-const src = fs.readFileSync(path + 'ui.js', 'utf8');
+const src = fs.readFileSync(path + 'lab.js', 'utf8');
 const SCENARIOS = eval('(' + src.match(/const SCENARIOS = \{[\s\S]*?\n\};/)[0].replace('const SCENARIOS = ', '').replace(/;$/, '') + ')');
 
 let pass = 0, fail = 0;

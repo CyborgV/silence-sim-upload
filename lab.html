@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>道路以目 · 模型实验室</title>
+<style>
+  :root {
+    --bg: #0f1318; --panel: #161b22; --panel2: #1c232c; --line: #2b333d;
+    --fg: #d6dde5; --dim: #8b97a5; --acc: #58a6ff; --org: #d2a032;
+    --red: #ef6a5e; --grn: #7ec699; --pur: #c09aff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 13px/1.55 -apple-system, "PingFang SC", "Hiragino Sans GB", sans-serif; }
+  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+           padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+           position: sticky; top: 0; z-index: 5; }
+  header h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+  header h1 small { color: var(--dim); font-weight: normal; font-size: 12px; margin-left: 8px; }
+  button, select { background: var(--panel2); color: var(--fg); border: 1px solid var(--line);
+                   border-radius: 6px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; }
+  button:hover, select:hover { border-color: var(--acc); }
+  button.primary { background: #1f3a5f; border-color: #31659f; }
+  button.warn { background: #4a2723; border-color: #8a3d34; }
+  button.act  { background: #234233; border-color: #2f6b4c; }
+  main { display: grid; grid-template-columns: 348px 1fr; gap: 0; height: calc(100vh - 53px); }
+  aside { overflow-y: auto; padding: 10px 12px 40px; border-right: 1px solid var(--line); background: var(--panel); }
+  aside::-webkit-scrollbar { width: 8px; } aside::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  section { overflow-y: auto; padding: 12px 16px 60px; }
+  details { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; background: var(--panel2); }
+  details[open] { background: #171d24; }
+  summary { cursor: pointer; padding: 7px 10px; font-weight: 600; color: var(--fg); user-select: none; }
+  summary .tag { float: right; font-weight: normal; color: var(--dim); font-size: 11px; }
+  .body { padding: 4px 10px 10px; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+  .row label { flex: 0 0 118px; color: var(--dim); font-size: 12px; }
+  .row label:hover { color: var(--fg); }
+  .row input[type=range] { flex: 1; accent-color: var(--acc); }
+  .row .val { flex: 0 0 52px; text-align: right; font-variant-numeric: tabular-nums; color: var(--acc); }
+  .row select { flex: 1; padding: 3px 6px; }
+  .btnrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+  .btnrow button { flex: 1 1 auto; white-space: nowrap; }
+  .note { color: var(--dim); font-size: 11.5px; margin: 6px 0; }
+  .note b { color: var(--org); font-weight: 600; }
+  #statusbar { display: flex; flex-wrap: wrap; gap: 6px 18px; background: var(--panel);
+               border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; margin-bottom: 10px; }
+  #statusbar .item { white-space: nowrap; }
+  #statusbar .item b { color: var(--acc); font-variant-numeric: tabular-nums; }
+  #statusbar .item.alert b { color: var(--red); }
+  canvas.chart { display: block; background: var(--panel); border: 1px solid var(--line);
+                 border-radius: 8px; margin-bottom: 10px; width: 100%; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 1100px) { .grid2 { grid-template-columns: 1fr; } main { grid-template-columns: 300px 1fr; } }
+  .charttitle { font-size: 12px; color: var(--dim); margin: 2px 2px 4px; }
+  .charttitle b { color: var(--fg); }
+  #tests { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+           padding: 8px 12px; font-size: 12px; white-space: pre-wrap; }
+
+  #scenDesc { background: #1a2030; border: 1px solid #31405c; border-radius: 8px;
+              padding: 8px 12px; margin-bottom: 10px; color: #c4d2e8; font-size: 12.5px; }
+  #scenDesc b { color: var(--acc); }
+  .kbd { background:#0b0e12; border:1px solid var(--line); border-radius:4px; padding:0 5px; font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" style="color:var(--org);text-decoration:none;white-space:nowrap">← 返回游戏</a>
+  <h1>模型实验室 <small>全部参数与图表 · 依据《道路以目——沉默相变模型》方程实现</small></h1>
+  <label style="color:var(--dim)">场景</label>
+  <select id="scenario" style="min-width:220px"></select>
+  <button id="btnStep" class="primary">单步</button>
+  <button id="btnRun" class="primary">▶ 运行</button>
+  <button id="btnReset">重置</button>
+  <button id="btnRebuild" title="按左侧参数重新生成人口/网络">重建世界</button>
+  <span style="color:var(--dim)">速度 <span id="spdVal" class="val" style="display:inline">1</span> 轮/帧</span>
+  <input id="spd" type="range" min="1" max="30" value="1" style="width:90px">
+  <button id="btnCsv">导出 CSV</button>
+</header>
+
+<main>
+<aside>
+  <div id="scenDesc">选择场景开始。</div>
+
+  <details open><summary>🏛 镇压机器 <span class="tag">政策</span></summary><div class="body">
+    <div class="row"><label>处罚强度 P</label><input id="o_P" type="range" min="0.2" max="2" step="0.01"><span class="val" id="v_P"></span></div>
+    <div class="row"><label>警力编制 K₀(人/轮)</label><input id="o_K0" type="range" min="0" max="200" step="1"><span class="val" id="v_K0"></span></div>
+    <div class="row"><label>合法性阈值 P̄</label><input id="o_Pbar" type="range" min="0" max="1.5" step="0.01"><span class="val" id="v_Pbar"></span></div>
+    <div class="row"><label>执法方式</label><select id="o_targetMode">
+      <option value="uniform">均匀抽取</option><option value="organizer">针对组织者(断联)</option><option value="zealot">针对最坚定者</option><option value="preventive">预防性拘捕(按名单)</option></select></div>
+    <div class="row"><label>断联强度</label><input id="o_netDamage" type="range" min="0" max="1" step="0.05"><span class="val" id="v_netDamage"></span></div>
+    <div class="row"><label>每轮释放概率</label><input id="o_releaseProb" type="range" min="0" max="1" step="0.05"><span class="val" id="v_releaseProb"></span></div>
+    <div class="note">P 与 P̄ 共同决定“越界”程度 (P−P̄)₊: 记忆累积与执行者抗命都由它驱动。P̄ 是<b>社会认可的界线</b>,不是技术性参数。</div>
+  </div></details>
+
+  <details><summary>🪖 执行者 <span class="tag">政策</span></summary><div class="body">
+    <div class="row"><label>人数 M</label><input id="o_M" type="range" min="10" max="2000" step="10"><span class="val" id="v_M"></span></div>
+    <div class="row"><label>门槛尺度 ψ~U(0,·)</label><input id="o_psiScale" type="range" min="0.2" max="3" step="0.05"><span class="val" id="v_psiScale"></span></div>
+    <div class="row"><label>人群压力 α</label><input id="o_alpha" type="range" min="0" max="1.5" step="0.05"><span class="val" id="v_alpha"></span></div>
+    <div class="row"><label>同僚影响 β</label><input id="o_beta" type="range" min="0" max="1.5" step="0.05"><span class="val" id="v_beta"></span></div>
+    <div class="row"><label>抗命系数 δ</label><input id="o_delta" type="range" min="0" max="1.5" step="0.05"><span class="val" id="v_delta"></span></div>
+    <div class="row"><label>初始拒执行 d₀</label><input id="o_d0" type="range" min="0" max="1" step="0.05"><span class="val" id="v_d0"></span></div>
+    <div class="note">拒执行规则: α·x + β·d + δ(P−P̄)₊ ≥ ψ。两层各自稳定、合起来可能失稳(性质四)。</div>
+  </div></details>
+
+  <details><summary>📺 信息环境 <span class="tag">政策</span></summary><div class="body">
+    <div class="row"><label>全局信息权重 ω</label><input id="o_omega" type="range" min="0" max="1" step="0.05"><span class="val" id="v_omega"></span></div>
+    <div class="row"><label>宣传压缩</label><input id="o_globalScale" type="range" min="0" max="1" step="0.05"><span class="val" id="v_globalScale"></span></div>
+    <div class="row"><label>谣言噪声</label><input id="o_noise" type="range" min="0" max="0.3" step="0.01"><span class="val" id="v_noise"></span></div>
+    <div class="note">x̂=(1−ω)·熟人参与率+ω·(压缩后的全局比例)。ω 越小越依赖身边(教会圈)。信息更准确未必增加参与——取决于原先偏哪个方向(性质五)。</div>
+  </div></details>
+
+  <details><summary>🧠 记忆与情绪 <span class="tag">结构</span></summary><div class="body">
+    <div class="row"><label>消退率 ρ</label><input id="o_memDecay" type="range" min="0" max="1" step="0.05"><span class="val" id="v_memDecay"></span></div>
+    <div class="row"><label>转化强度 γ</label><input id="o_gamma" type="range" min="0" max="6" step="0.1"><span class="val" id="v_gamma"></span></div>
+    <div class="row"><label>事件可见度 w</label><input id="o_vis" type="range" min="0" max="1" step="0.05"><span class="val" id="v_vis"></span></div>
+    <div class="row"><label>记忆核</label><select id="o_kernel">
+      <option value="exp">指数衰减(默认)</option><option value="memorial">纪念峰(四十日)</option></select></div>
+    <div class="row"><label>纪念峰时距</label><input id="o_memPeak" type="range" min="2" max="30" step="1"><span class="val" id="v_memPeak"></span></div>
+    <div class="row"><label>纪念峰强度</label><input id="o_memPeakAmp" type="range" min="0" max="4" step="0.1"><span class="val" id="v_memPeakAmp"></span></div>
+    <div class="note">b←(1−ρ)b+γw(P−P̄)₊ζ。同样的公开记录可掩盖不同的记忆累积——<b>镇压债务</b>(性质二)。</div>
+  </div></details>
+
+  <details><summary>🕸 社会结构 <span class="tag">重建后生效</span></summary><div class="body">
+    <div class="row"><label>人口 N</label><input id="o_N" type="range" min="200" max="8000" step="100"><span class="val" id="v_N"></span></div>
+    <div class="row"><label>承受上限分布</label><select id="o_tolType">
+      <option value="uniform">均匀 [0,1]</option><option value="bell">钟形(中间大)</option>
+      <option value="bimodal">双峰(温和/激进)</option><option value="ladder">格兰诺维特阶梯</option>
+      <option value="low">高压社会(整体压低)</option></select></div>
+    <div class="row"><label>网络</label><select id="o_netType">
+      <option value="full">完全混合(人人互见)</option><option value="random">随机网络</option>
+      <option value="clusters">紧密小团体(教会圈)</option><option value="grid">空间广场网格</option></select></div>
+    <div class="row"><label>平均度数</label><input id="o_netDeg" type="range" min="2" max="30" step="1"><span class="val" id="v_netDeg"></span></div>
+    <div class="row"><label>团体数</label><input id="o_netGroups" type="range" min="4" max="100" step="1"><span class="val" id="v_netGroups"></span></div>
+    <div class="row"><label>永久参与者 x₀</label><input id="o_hardCore" type="range" min="0" max="0.05" step="0.001"><span class="val" id="v_hardCore"></span></div>
+    <div class="row"><label>随机种子</label><input id="o_seed" type="range" min="1" max="999" step="1"><span class="val" id="v_seed"></span></div>
+    <div class="note">均匀抽取假设下处罚针对个人;换网络或分布需<b>重建世界</b>。永久参与者=愿承担完整处罚、不等别人的人(性质六)。</div>
+  </div></details>
+
+  <details open><summary>📣 对策(行动方)<span class="tag">按钮</span></summary><div class="body">
+    <div class="row"><label>行动规模(人)</label><input id="seedCount" type="range" min="1" max="200" step="1" value="30"><span class="val" id="v_seedCount">30</span></div>
+    <div class="row"><label>投放方式</label><select id="seedMode"><option value="random">随机</option><option value="near">瞄准门槛边(只差一步的人)</option></select></div>
+    <div class="btnrow">
+      <button id="btnSeed" class="act">发起行动(下轮生效)</button>
+      <button id="btnRecur" title="每轮自动投入小规模行动">例行小动作: 关</button>
+    </div>
+    <div class="btnrow">
+      <button id="btnTV" title="一轮内可见度与全局信息恢复(如莱比锡录像在西德播出)">录像外泄📼</button>
+      <button id="btnLink" title="增加随机联系(串联织网)">串联织网🕸</button>
+    </div>
+    <div class="btnrow">
+      <button id="btnAmnesty" class="warn">大赦(全部释放)</button>
+      <button id="btnSpike" class="warn" title="一轮高可见度的流血事件">流血事件🩸</button>
+      <button id="btnCrack" class="warn" title="三轮加压: P×1.3">加压命令📢</button>
+    </div>
+    <div class="note">临界种子 x₋ 是“最后一道障碍”(性质八)。小行动反复失败不证明大行动也会失败——先看 x₋ 与门槛附近人数(右下分布图)。</div>
+  </div></details>
+
+  <details><summary>🧪 模型自检</summary><div class="body">
+    <div class="btnrow"><button id="btnTest">运行论文数值自检</button></div>
+    <div id="tests">尚未运行。</div>
+    <div class="note">完整 37 项(node): <span class="kbd">node tests.js</span></div>
+  </div></details>
+</aside>
+
+<section>
+  <div id="statusbar">
+    <span class="item">轮次 <b id="s_t">0</b></span>
+    <span class="item">参与 x <b id="s_x">0</b></span>
+    <span class="item">拒执行 d <b id="s_d">0</b></span>
+    <span class="item">执行能力 k <b id="s_k">0</b></span>
+    <span class="item">本轮拘押 p <b id="s_p">0</b></span>
+    <span class="item">累计拘押 R <b id="s_R">0</b></span>
+    <span class="item">平均记忆 b̄ <b id="s_b">0</b></span>
+    <span class="item" id="s_mu_item">反作用系数 μ <b id="s_mu">0</b></span>
+    <span class="item">临界种子 x₋ <b id="s_xc">—</b></span>
+    <span class="item alert">低位恢复 <b id="s_rec">1 轮</b></span>
+  </div>
+
+  <div class="charttitle"><b>时间序列</b> · 参与 xₜ(蓝) 拒执行 dₜ(橙) 拘押 pₜ(红) 平均记忆 b̄(绿)</div>
+  <canvas id="chTime" class="chart" height="240"></canvas>
+
+  <div class="grid2">
+    <div>
+      <div class="charttitle"><b>反应函数 F(x)</b> · 与对角线交点即不动点; ●稳定 ○不稳定(=临界种子); 阴影=被吸回区</div>
+      <canvas id="chReact" class="chart" height="300"></canvas>
+    </div>
+    <div>
+      <div class="charttitle"><b>分岔图</b> · 固定 P 扫描执行能力 k: 参与稳态随 k 的变化(鞍结分岔)</div>
+      <canvas id="chBif" class="chart" height="300"></canvas>
+    </div>
+  </div>
+
+  <div class="charttitle"><b>有效承受上限分布</b> τ+b(自由人口) · 竖线=当前代价; 阴影带=门槛附近人数(决定 μ,性质三/十)</div>
+  <canvas id="chDist" class="chart" height="190"></canvas>
+
+  <div class="note" style="margin-top:14px">
+    实现方程(原文 p1–p8): c(x)=P·min(1,k/x); 参与条件 τ+b≥c(x̂); 拒执行 αx+βd+δ(P−P̄)₊≥ψ;
+    记忆 b←(1−ρ)b+γw(P−P̄)₊ζ; 更新顺序: 读态→按当前能力拘押→更新可行动与记忆→两层各自重定。
+    扩展: 释放/大赦/纪念延迟核为原文指明的可补转移规则; 针对性执法的断联效应对应波兰戒严讨论。
+  </div>
+</section>
+</main>
+
+<script src="model.js"></script>
+<script src="lab.js"></script>
+
+</body>
+</html>
