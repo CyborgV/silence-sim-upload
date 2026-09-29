@@ -72,6 +72,7 @@
       <button id="sp3" data-sp="3" title="很快">▶▶▶</button>
       <button id="btn-step" class="step" title="只推进一轮 (→)">下一轮 ⏭</button>
     </div>
+    <button class="guide-btn" id="g-guide" title="新手引导:召公讲解这一关的界面和要点">💡 引导</button>
     <button class="icon-btn" id="g-help" title="怎么玩">?</button>
   </header>
   <div id="meters">
@@ -115,6 +116,7 @@
   <div class="choices">
     <button class="choice" id="mm-resume">继续</button>
     <button class="choice" id="mm-restart">重新开始本关</button>
+    <button class="choice" id="mm-guide">💡 新手引导</button>
     <button class="choice" id="mm-help">怎么玩</button>
     <button class="choice" id="mm-auto">自动收集气泡:关</button>
     <button class="choice" id="mm-levels">返回关卡选择</button>
@@ -143,12 +145,13 @@
     <li><b>政策</b>(当局):常设的执法力度、警力、抓捕方式、舆论、关押。越强硬越贵。</li>
     <li><b>突发事件</b>与<b>历史事件</b>会逼你做选择。每一天都有当日要闻。</li>
     <li>时间:暂停(空格)、一轮一轮走(→)、加速。数字键 1–9 出牌。关卡结束后,<b>复盘</b>揭晓你看不到的真实数值。</li>
+    <li>不知道从哪下手?点上方的<b>「💡 引导」</b>,召公会讲解这一关的界面和要点。不点它就不会弹出。</li>
   </ul>
   <div class="actions" style="justify-content:center;display:flex;margin-top:14px"><button class="btn primary" id="help-close">知道了</button></div>
 </div></div>
 
 <div id="coach-layer"><div id="coach-blocker"></div><div id="coach-hole"></div><div id="coach">
-  <div class="who"><span class="av">🧓</span><span>召公</span></div>
+  <div class="who"><span class="av">🧓</span><span>召公</span><button id="coach-close" title="关闭引导 (Esc)">✕</button></div>
   <div class="txt" id="coach-txt"></div>
   <div class="row"><span class="prog" id="coach-prog"></span><span><span class="wait" id="coach-wait"></span> <button class="btn primary" id="coach-next" style="padding:6px 14px">继续</button></span></div>
 </div></div>

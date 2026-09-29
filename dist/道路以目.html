@@ -119,6 +119,12 @@ b { font-weight: 600; }
 .speed button.on { color: #fff; background: #3a2c14; border-color: var(--amber); }
 .speed button:hover { color: var(--fg); }
 .speed .step { color: var(--fg); }
+.guide-btn { height: 34px; padding: 0 10px; border-radius: 8px; background: var(--panel2); border: 1px solid var(--line2); font-size: 13px; flex: none; white-space: nowrap; }
+.guide-btn:hover { border-color: var(--amber); }
+/* 本关还没看过引导: 只是轻轻提醒, 不弹出 */
+.guide-btn.fresh { border-color: var(--amber); color: var(--amber2); animation: guidePulse 2.2s ease-in-out infinite; }
+@keyframes guidePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(240,180,76,0); } 50% { box-shadow: 0 0 0 4px rgba(240,180,76,.28); } }
+@media (prefers-reduced-motion: reduce) { .guide-btn.fresh { animation: none; } }
 
 #hud-main { display: grid; grid-template-columns: 290px minmax(0, 1fr) 330px; min-height: 0; }
 #hud-left, #hud-right { overflow-y: auto; background: var(--panel); padding: 12px; min-height: 0; }
@@ -287,6 +293,8 @@ b { font-weight: 600; }
 #coach { position: fixed; width: min(360px, calc(100vw - 32px)); background: #17140d; border: 1px solid var(--amber); border-radius: 14px; padding: 14px 16px; pointer-events: auto; box-shadow: 0 16px 40px rgba(0,0,0,.6); transition: all .35s ease; }
 #coach .who { display: flex; align-items: center; gap: 8px; font-family: var(--serif); color: var(--amber2); font-size: 14px; margin-bottom: 6px; }
 #coach .who .av { font-size: 24px; }
+#coach-close { margin-left: auto; width: 28px; height: 28px; border-radius: 7px; background: none; border: 1px solid transparent; color: var(--dim); font-size: 14px; }
+#coach-close:hover { color: var(--fg); border-color: var(--line2); }
 #coach .txt { font-size: 14.5px; line-height: 1.75; color: #f1e7d0; }
 #coach .txt b { color: var(--amber2); }
 #coach .row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
@@ -395,6 +403,8 @@ b { font-weight: 600; }
   #hud-top { position: sticky; top: 0; z-index: 10; flex-wrap: wrap; }
   .lvl-title { flex: 1 1 auto; }
   .datebox { order: 3; flex-basis: 100%; }
+  #g-menu, .lvl-title { order: -2; }
+  #g-guide { order: -1; }   /* 窄屏: 引导按钮放在标题那一行 */
   #hud-main { display: flex; flex-direction: column; }
   #stage { height: 52vh; min-height: 280px; order: 1; }
   #hud-right { order: 2; border: 0; border-top: 1px solid var(--line); }
@@ -475,6 +485,7 @@ b { font-weight: 600; }
       <button id="sp3" data-sp="3" title="很快">▶▶▶</button>
       <button id="btn-step" class="step" title="只推进一轮 (→)">下一轮 ⏭</button>
     </div>
+    <button class="guide-btn" id="g-guide" title="新手引导:召公讲解这一关的界面和要点">💡 引导</button>
     <button class="icon-btn" id="g-help" title="怎么玩">?</button>
   </header>
   <div id="meters">
@@ -518,6 +529,7 @@ b { font-weight: 600; }
   <div class="choices">
     <button class="choice" id="mm-resume">继续</button>
     <button class="choice" id="mm-restart">重新开始本关</button>
+    <button class="choice" id="mm-guide">💡 新手引导</button>
     <button class="choice" id="mm-help">怎么玩</button>
     <button class="choice" id="mm-auto">自动收集气泡:关</button>
     <button class="choice" id="mm-levels">返回关卡选择</button>
@@ -546,12 +558,13 @@ b { font-weight: 600; }
     <li><b>政策</b>(当局):常设的执法力度、警力、抓捕方式、舆论、关押。越强硬越贵。</li>
     <li><b>突发事件</b>与<b>历史事件</b>会逼你做选择。每一天都有当日要闻。</li>
     <li>时间:暂停(空格)、一轮一轮走(→)、加速。数字键 1–9 出牌。关卡结束后,<b>复盘</b>揭晓你看不到的真实数值。</li>
+    <li>不知道从哪下手?点上方的<b>「💡 引导」</b>,召公会讲解这一关的界面和要点。不点它就不会弹出。</li>
   </ul>
   <div class="actions" style="justify-content:center;display:flex;margin-top:14px"><button class="btn primary" id="help-close">知道了</button></div>
 </div></div>
 
 <div id="coach-layer"><div id="coach-blocker"></div><div id="coach-hole"></div><div id="coach">
-  <div class="who"><span class="av">🧓</span><span>召公</span></div>
+  <div class="who"><span class="av">🧓</span><span>召公</span><button id="coach-close" title="关闭引导 (Esc)">✕</button></div>
   <div class="txt" id="coach-txt"></div>
   <div class="row"><span class="prog" id="coach-prog"></span><span><span class="wait" id="coach-wait"></span> <button class="btn primary" id="coach-next" style="padding:6px 14px">继续</button></span></div>
 </div></div>
@@ -2760,7 +2773,7 @@ b { font-weight: 600; }
       '这个念头,就是整个游戏的核心——<b>每个人都根据别人的行动决定自己是否行动,而自己的行动又会改变别人的决定。</b>',
     ],
     goalText: '让全校一半以上的学生站出来提异议,并坚持两分钟。',
-    tips: ['跟着召公的提示走。'],
+    tips: ['想让召公一步步带你玩?点「💡 带引导开始」;对局中也可以随时点上方的「💡 引导」。'],
     rounds: 30, scale: 1, moodScale: 1, tipSpread: 0.1, tipNoise: 0, econ: 1, randomEvents: false,
     tree: { only: ['m_net'], costMul: 0.22 },
     layout: 'assembly',
@@ -3772,6 +3785,7 @@ b { font-weight: 600; }
       ${L.tips && L.tips.length ? `<div class="goalbox"><h4>提示</h4><ul>${L.tips.map((t) => `<li>${t}</li>`).join('')}</ul></div>` : ''}
       <div class="actions">
         <button class="btn primary" id="brief-start">开始 ▶</button>
+        ${L.id === 'tutorial' ? '<button class="btn" id="brief-guide">💡 带引导开始</button>' : ''}
         ${L.id !== 'tutorial' ? `<span class="era">难度</span><div class="seg-sm" id="brief-diff">
           <button data-v="easy" class="${diff === 'easy' ? 'on' : ''}">简单</button>
           <button data-v="normal" class="${diff === 'normal' ? 'on' : ''}">标准</button>
@@ -3783,6 +3797,7 @@ b { font-weight: 600; }
       SAVE.diff = b.dataset.v; persist();
     }));
     $('brief-start').addEventListener('click', () => startLevel(L, Object.assign({ diff: SAVE.diff || 'normal' }, skOpts || {})));
+    if ($('brief-guide')) $('brief-guide').addEventListener('click', () => startLevel(L, { diff: SAVE.diff || 'normal', guide: true }));
     show('brief');
   }
 
@@ -3820,19 +3835,39 @@ b { font-weight: 600; }
     renderAll(true);
     running = true; lastTs = 0; acc = 0;
     requestAnimationFrame(loop);
-    // 开场: 教程 / 首次进入某关的引导 / 事件
+    renderGuideBtn();
+    // 开场: 引导只在玩家点了「引导」按钮时才出现; 否则直接进入开场事件
     setTimeout(() => {
-      if (L.id === 'tutorial') Coach.start(TUTORIAL, { lock: true });
-      else {
-        const steps = [];
-        const sk = 'sys_' + G.side;
-        if (!SAVE.coach[sk] && G.tree().length) { SAVE.coach[sk] = 1; steps.push(...SYS[G.side]); }
-        if (COACH[L.id] && !SAVE.coach[L.id]) { SAVE.coach[L.id] = 1; steps.push(...COACH[L.id]); }
-        persist();
-        if (steps.length) Coach.start(steps, { lock: false, after: () => { if (G && G.popup) showEvent(); } });
-      }
+      if (curOpts.guide) startGuide();
       if (G.popup && !Coach.active) showEvent();
     }, 350);
+  }
+
+  /* 新手引导: 点「💡 引导」才弹出 */
+  function renderGuideBtn() {
+    const b = $('g-guide'); if (!G) return;
+    b.classList.toggle('fresh', !SAVE.coach['lv_' + G.L.id]);
+    b.title = G.L.id === 'tutorial' ? '召公一步步带你玩(已经开始的话,会从头重来)' : '新手引导:召公讲解这一关的界面和要点';
+  }
+  function startGuide() {
+    if (!G || G.over) return;
+    if (Coach.active) { Coach.end(); return; }
+    const L = G.L;
+    SAVE.coach['lv_' + L.id] = 1;
+    if (L.id === 'tutorial') {
+      // 教程的每一步都假定从第一分钟开始; 已经玩过几步就从头来
+      if (G.round > 0 || G.actions.length || Object.keys(G.bought || {}).length) { persist(); startLevel(curLevel, Object.assign({}, curOpts, { guide: true })); return; }
+      persist(); renderGuideBtn();
+      Coach.start(TUTORIAL, { lock: true });
+      return;
+    }
+    const visible = (st) => { const el = st.target && document.querySelector(st.target); return !st.target || (el && el.getClientRects().length > 0); };
+    const sys = (SYS[G.side] || []).filter(visible), lv = (COACH[L.id] || []).filter(visible);
+    // 通用界面讲解只在第一次放在前面; 之后先讲本关要点
+    const steps = SAVE.coach['sys_' + G.side] ? lv.concat(sys) : sys.concat(lv);
+    SAVE.coach['sys_' + G.side] = 1;
+    persist(); renderGuideBtn();
+    if (steps.length) Coach.start(steps, { lock: false, after: () => { if (G && G.popup) showEvent(); } });
   }
 
   function setSpeed(s) {
@@ -4389,6 +4424,8 @@ b { font-weight: 600; }
   $('mm-levels').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('levels'); });
   $('mm-title').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('title'); });
   $('g-help').addEventListener('click', () => { setSpeed(0); $('ov-help').classList.add('show'); });
+  $('g-guide').addEventListener('click', startGuide);
+  $('mm-guide').addEventListener('click', () => { $('ov-menu').classList.remove('show'); startGuide(); });
   $('help-close').addEventListener('click', () => $('ov-help').classList.remove('show'));
   $('m-help').addEventListener('click', () => $('ov-help').classList.add('show'));
   $('m-campaign').addEventListener('click', () => show('levels'));
@@ -4399,6 +4436,7 @@ b { font-weight: 600; }
   document.addEventListener('keydown', (e) => {
     if (current !== 'game' || !G) return;
     if (anyOverlay()) { if (e.key === 'Escape' || (e.key === 'b' && $('ov-tree').classList.contains('show'))) { $('ov-menu').classList.remove('show'); $('ov-help').classList.remove('show'); closeTree(); } return; }
+    if (Coach.active && e.key === 'Escape') { Coach.end(); return; }
     if (Coach.locked()) return;
     if (e.key === ' ') { e.preventDefault(); setSpeed(speed > 0 ? 0 : lastSpeed || 1); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); $('btn-step').click(); }
@@ -4459,7 +4497,7 @@ b { font-weight: 600; }
     liwang: [
       { target: '#policies', text: '这一关你是君主。右边是你的<b>常设政策</b>:执法多重、卫士多少、抓谁、言路开闭、囹圄松紧。<b>越强硬,上街越可怕——但每轮都要花钱维持。</b>' },
       { target: '#ro-mood', text: '这是下面报上来的"民间情绪"。注意<b>可信度</b>:你越凶,下面的人越不敢说真话,报上来的就越平静。' },
-      { target: '#cards', text: '「卫巫监谤」能让你<b>暂时听到真话</b>,还能看见每家每户心里的怨气(红色)。<b>按 ▶ 开始。</b>' },
+      { target: '#cards', text: '「卫巫监谤」能让你<b>暂时听到真话</b>,还能看见每家每户心里的怨气(红色)。' },
     ],
     petrograd: [{ target: '#ro-army', text: '注意<b>驻军</b>。街上的人越多,士兵越动摇;士兵一动摇,能抓人的就少了,街上又会更安全——两层反馈会互相放大。「劝说士兵」要在人多的时候打。' }],
     iran: [{ target: '#cards', text: '每一次镇压之后,大约<b>六周</b>会迎来一次"四十日"悼念。记忆在那时最强——那也是你出手的最好时机。' }],
@@ -4481,7 +4519,7 @@ b { font-weight: 600; }
       active = false; layer.classList.remove('show');
       document.body.classList.remove('coach-lock');
       document.querySelectorAll('.coach-allow').forEach((e) => e.classList.remove('coach-allow'));
-      if (G) G.allowCards = null;
+      if (G) { G.allowCards = null; if (current === 'game') { renderCards(); renderTreeBtn(); } }   // 中途关闭引导: 解锁并重画
       if (opts.after) { const f = opts.after; opts.after = null; f(); }
     }
     function showStep() {
@@ -4547,6 +4585,7 @@ b { font-weight: 600; }
       else if (st.wait === 'speed' && ev === 'speed' && speed > 0) next();
     }
     $('coach-next').addEventListener('click', next);
+    $('coach-close').addEventListener('click', () => end());
     return {
       start, end, notify, reposition, remark,
       get active() { return active; },

@@ -40,7 +40,7 @@
       '这个念头,就是整个游戏的核心——<b>每个人都根据别人的行动决定自己是否行动,而自己的行动又会改变别人的决定。</b>',
     ],
     goalText: '让全校一半以上的学生站出来提异议,并坚持两分钟。',
-    tips: ['跟着召公的提示走。'],
+    tips: ['想让召公一步步带你玩?点「💡 带引导开始」;对局中也可以随时点上方的「💡 引导」。'],
     rounds: 30, scale: 1, moodScale: 1, tipSpread: 0.1, tipNoise: 0, econ: 1, randomEvents: false,
     tree: { only: ['m_net'], costMul: 0.22 },
     layout: 'assembly',

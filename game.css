@@ -108,6 +108,12 @@ b { font-weight: 600; }
 .speed button.on { color: #fff; background: #3a2c14; border-color: var(--amber); }
 .speed button:hover { color: var(--fg); }
 .speed .step { color: var(--fg); }
+.guide-btn { height: 34px; padding: 0 10px; border-radius: 8px; background: var(--panel2); border: 1px solid var(--line2); font-size: 13px; flex: none; white-space: nowrap; }
+.guide-btn:hover { border-color: var(--amber); }
+/* 本关还没看过引导: 只是轻轻提醒, 不弹出 */
+.guide-btn.fresh { border-color: var(--amber); color: var(--amber2); animation: guidePulse 2.2s ease-in-out infinite; }
+@keyframes guidePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(240,180,76,0); } 50% { box-shadow: 0 0 0 4px rgba(240,180,76,.28); } }
+@media (prefers-reduced-motion: reduce) { .guide-btn.fresh { animation: none; } }
 
 #hud-main { display: grid; grid-template-columns: 290px minmax(0, 1fr) 330px; min-height: 0; }
 #hud-left, #hud-right { overflow-y: auto; background: var(--panel); padding: 12px; min-height: 0; }
@@ -276,6 +282,8 @@ b { font-weight: 600; }
 #coach { position: fixed; width: min(360px, calc(100vw - 32px)); background: #17140d; border: 1px solid var(--amber); border-radius: 14px; padding: 14px 16px; pointer-events: auto; box-shadow: 0 16px 40px rgba(0,0,0,.6); transition: all .35s ease; }
 #coach .who { display: flex; align-items: center; gap: 8px; font-family: var(--serif); color: var(--amber2); font-size: 14px; margin-bottom: 6px; }
 #coach .who .av { font-size: 24px; }
+#coach-close { margin-left: auto; width: 28px; height: 28px; border-radius: 7px; background: none; border: 1px solid transparent; color: var(--dim); font-size: 14px; }
+#coach-close:hover { color: var(--fg); border-color: var(--line2); }
 #coach .txt { font-size: 14.5px; line-height: 1.75; color: #f1e7d0; }
 #coach .txt b { color: var(--amber2); }
 #coach .row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
@@ -384,6 +392,8 @@ b { font-weight: 600; }
   #hud-top { position: sticky; top: 0; z-index: 10; flex-wrap: wrap; }
   .lvl-title { flex: 1 1 auto; }
   .datebox { order: 3; flex-basis: 100%; }
+  #g-menu, .lvl-title { order: -2; }
+  #g-guide { order: -1; }   /* 窄屏: 引导按钮放在标题那一行 */
   #hud-main { display: flex; flex-direction: column; }
   #stage { height: 52vh; min-height: 280px; order: 1; }
   #hud-right { order: 2; border: 0; border-top: 1px solid var(--line); }

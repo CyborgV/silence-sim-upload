@@ -94,6 +94,7 @@
       ${L.tips && L.tips.length ? `<div class="goalbox"><h4>提示</h4><ul>${L.tips.map((t) => `<li>${t}</li>`).join('')}</ul></div>` : ''}
       <div class="actions">
         <button class="btn primary" id="brief-start">开始 ▶</button>
+        ${L.id === 'tutorial' ? '<button class="btn" id="brief-guide">💡 带引导开始</button>' : ''}
         ${L.id !== 'tutorial' ? `<span class="era">难度</span><div class="seg-sm" id="brief-diff">
           <button data-v="easy" class="${diff === 'easy' ? 'on' : ''}">简单</button>
           <button data-v="normal" class="${diff === 'normal' ? 'on' : ''}">标准</button>
@@ -105,6 +106,7 @@
       SAVE.diff = b.dataset.v; persist();
     }));
     $('brief-start').addEventListener('click', () => startLevel(L, Object.assign({ diff: SAVE.diff || 'normal' }, skOpts || {})));
+    if ($('brief-guide')) $('brief-guide').addEventListener('click', () => startLevel(L, { diff: SAVE.diff || 'normal', guide: true }));
     show('brief');
   }
 
@@ -142,19 +144,39 @@
     renderAll(true);
     running = true; lastTs = 0; acc = 0;
     requestAnimationFrame(loop);
-    // 开场: 教程 / 首次进入某关的引导 / 事件
+    renderGuideBtn();
+    // 开场: 引导只在玩家点了「引导」按钮时才出现; 否则直接进入开场事件
     setTimeout(() => {
-      if (L.id === 'tutorial') Coach.start(TUTORIAL, { lock: true });
-      else {
-        const steps = [];
-        const sk = 'sys_' + G.side;
-        if (!SAVE.coach[sk] && G.tree().length) { SAVE.coach[sk] = 1; steps.push(...SYS[G.side]); }
-        if (COACH[L.id] && !SAVE.coach[L.id]) { SAVE.coach[L.id] = 1; steps.push(...COACH[L.id]); }
-        persist();
-        if (steps.length) Coach.start(steps, { lock: false, after: () => { if (G && G.popup) showEvent(); } });
-      }
+      if (curOpts.guide) startGuide();
       if (G.popup && !Coach.active) showEvent();
     }, 350);
+  }
+
+  /* 新手引导: 点「💡 引导」才弹出 */
+  function renderGuideBtn() {
+    const b = $('g-guide'); if (!G) return;
+    b.classList.toggle('fresh', !SAVE.coach['lv_' + G.L.id]);
+    b.title = G.L.id === 'tutorial' ? '召公一步步带你玩(已经开始的话,会从头重来)' : '新手引导:召公讲解这一关的界面和要点';
+  }
+  function startGuide() {
+    if (!G || G.over) return;
+    if (Coach.active) { Coach.end(); return; }
+    const L = G.L;
+    SAVE.coach['lv_' + L.id] = 1;
+    if (L.id === 'tutorial') {
+      // 教程的每一步都假定从第一分钟开始; 已经玩过几步就从头来
+      if (G.round > 0 || G.actions.length || Object.keys(G.bought || {}).length) { persist(); startLevel(curLevel, Object.assign({}, curOpts, { guide: true })); return; }
+      persist(); renderGuideBtn();
+      Coach.start(TUTORIAL, { lock: true });
+      return;
+    }
+    const visible = (st) => { const el = st.target && document.querySelector(st.target); return !st.target || (el && el.getClientRects().length > 0); };
+    const sys = (SYS[G.side] || []).filter(visible), lv = (COACH[L.id] || []).filter(visible);
+    // 通用界面讲解只在第一次放在前面; 之后先讲本关要点
+    const steps = SAVE.coach['sys_' + G.side] ? lv.concat(sys) : sys.concat(lv);
+    SAVE.coach['sys_' + G.side] = 1;
+    persist(); renderGuideBtn();
+    if (steps.length) Coach.start(steps, { lock: false, after: () => { if (G && G.popup) showEvent(); } });
   }
 
   function setSpeed(s) {
@@ -711,6 +733,8 @@
   $('mm-levels').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('levels'); });
   $('mm-title').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('title'); });
   $('g-help').addEventListener('click', () => { setSpeed(0); $('ov-help').classList.add('show'); });
+  $('g-guide').addEventListener('click', startGuide);
+  $('mm-guide').addEventListener('click', () => { $('ov-menu').classList.remove('show'); startGuide(); });
   $('help-close').addEventListener('click', () => $('ov-help').classList.remove('show'));
   $('m-help').addEventListener('click', () => $('ov-help').classList.add('show'));
   $('m-campaign').addEventListener('click', () => show('levels'));
@@ -721,6 +745,7 @@
   document.addEventListener('keydown', (e) => {
     if (current !== 'game' || !G) return;
     if (anyOverlay()) { if (e.key === 'Escape' || (e.key === 'b' && $('ov-tree').classList.contains('show'))) { $('ov-menu').classList.remove('show'); $('ov-help').classList.remove('show'); closeTree(); } return; }
+    if (Coach.active && e.key === 'Escape') { Coach.end(); return; }
     if (Coach.locked()) return;
     if (e.key === ' ') { e.preventDefault(); setSpeed(speed > 0 ? 0 : lastSpeed || 1); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); $('btn-step').click(); }
@@ -781,7 +806,7 @@
     liwang: [
       { target: '#policies', text: '这一关你是君主。右边是你的<b>常设政策</b>:执法多重、卫士多少、抓谁、言路开闭、囹圄松紧。<b>越强硬,上街越可怕——但每轮都要花钱维持。</b>' },
       { target: '#ro-mood', text: '这是下面报上来的"民间情绪"。注意<b>可信度</b>:你越凶,下面的人越不敢说真话,报上来的就越平静。' },
-      { target: '#cards', text: '「卫巫监谤」能让你<b>暂时听到真话</b>,还能看见每家每户心里的怨气(红色)。<b>按 ▶ 开始。</b>' },
+      { target: '#cards', text: '「卫巫监谤」能让你<b>暂时听到真话</b>,还能看见每家每户心里的怨气(红色)。' },
     ],
     petrograd: [{ target: '#ro-army', text: '注意<b>驻军</b>。街上的人越多,士兵越动摇;士兵一动摇,能抓人的就少了,街上又会更安全——两层反馈会互相放大。「劝说士兵」要在人多的时候打。' }],
     iran: [{ target: '#cards', text: '每一次镇压之后,大约<b>六周</b>会迎来一次"四十日"悼念。记忆在那时最强——那也是你出手的最好时机。' }],
@@ -803,7 +828,7 @@
       active = false; layer.classList.remove('show');
       document.body.classList.remove('coach-lock');
       document.querySelectorAll('.coach-allow').forEach((e) => e.classList.remove('coach-allow'));
-      if (G) G.allowCards = null;
+      if (G) { G.allowCards = null; if (current === 'game') { renderCards(); renderTreeBtn(); } }   // 中途关闭引导: 解锁并重画
       if (opts.after) { const f = opts.after; opts.after = null; f(); }
     }
     function showStep() {
@@ -869,6 +894,7 @@
       else if (st.wait === 'speed' && ev === 'speed' && speed > 0) next();
     }
     $('coach-next').addEventListener('click', next);
+    $('coach-close').addEventListener('click', () => end());
     return {
       start, end, notify, reposition, remark,
       get active() { return active; },
