@@ -159,14 +159,14 @@
     goalText: '在俄历3月1日前,让驻军倒戈(并维持两个半天),或让全城一半的人走上街头。',
     tips: ['士兵也在看街上有多少人。人越多,他们越动摇;他们越动摇,街上越安全。', '「劝说士兵」要趁人多的时候打。'],
     rounds: 32, scale: 600, arrestScale: 40, moodScale: 0.2,
-    world: { N: 1500, tolType: 'bell', tolMul: 0.42, netType: 'full', P: 1.0, Pbar: 0.7, K0: 47, M: 160, alpha: 0.4, beta: 0.55, delta: 0.1, gamma: 2, memDecay: 0.08, vis: 1, omega: 1, globalScale: 0.9, noise: 0, hardCore: 0.003, seed: 1917, psiScale: 1.25 },
+    world: { N: 1500, tolType: 'bell', tolMul: 0.41, netType: 'full', P: 1.0, Pbar: 0.7, K0: 47, M: 160, alpha: 0.4, beta: 0.55, delta: 0.1, gamma: 2, memDecay: 0.08, vis: 1, omega: 1, globalScale: 0.9, noise: 0, hardCore: 0.003, seed: 1917, psiScale: 1.25 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin' }) },
     labels: { army: '驻军', crowd: '街头', plaza: '兹纳缅斯卡亚广场', prison: '克列斯特监狱', barracks: '兵营', avenue: '涅瓦大街' },
     slogans: ['面包!', '打倒战争!', '打倒专制!', '士兵兄弟们!'],
     cards: ['rally', 'march', 'strike', 'fraternize', 'samizdat', 'legal', 'memorial'],
     cardNames: { samizdat: { name: '传单', text: '夜里在工厂和兵营外面散发传单。' } },
     startAP: 2, income: 1.0,
-    ai: { aggression: 0.7, income: 1.1, lag: 2, hold: 2, start: { enforce: 'normal', police: 'normal', info: 'spin' }, max: { police: 'surge' }, cards: ['editorial', 'bonus', 'informants'] },
+    ai: { aggression: 0.7, income: 1.1, lag: 2, hold: 2, alertMul: 0.5, start: { enforce: 'normal', police: 'normal', info: 'spin' }, max: { police: 'surge', info: 'spin' }, cards: ['editorial', 'bonus', 'informants'] },
     goal: { x: 0.5, d: 0.6, hold: 3, dHold: 2 },
     stars: [
       { text: '在2月27日夜之前成功', test: (g) => g.round <= 27 },
@@ -213,7 +213,7 @@
     goalText: '在1979年2月前,让军队宣布中立,或让全国一半的人走上街头。',
     tips: ['每次镇压,都会在大约六周后迎来一次"四十日"悼念高峰——提前做好准备。', '石油工人的罢工能掐断国王的钱袋。'],
     rounds: 57, scale: 3000, arrestScale: 60, moodScale: 0.25,
-    world: { N: 2000, tolType: 'bimodal', tolMul: 0.45, netType: 'random', netDeg: 8, P: 1.0, Pbar: 0.7, K0: 50, M: 150, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.0, memDecay: 0.5, vis: 0.8, omega: 0.8, globalScale: 0.7, noise: 0.01, hardCore: 0.003, seed: 1978, psiScale: 1.35, kernel: 'memorial', memPeak: 6, memPeakAmp: 3 },
+    world: { N: 2000, tolType: 'bimodal', tolMul: 0.45, netType: 'random', netDeg: 8, P: 1.0, Pbar: 0.7, K0: 50, M: 150, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.0, memDecay: 0.5, vis: 0.8, omega: 0.8, globalScale: 0.7, noise: 0.01, hardCore: 0.003, seed: 1978, psiScale: 1.7, kernel: 'memorial', memPeak: 6, memPeakAmp: 3 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin', target: 'organizer' }) },
     labels: { army: '军队', crowd: '街头', plaza: '贾勒广场', prison: '埃文监狱', barracks: '军营', avenue: '国王大道' },
     slogans: ['四十日!', '打倒国王!', '独立,自由!'],
@@ -269,7 +269,7 @@
     slogans: ['团结!', '冬天是你们的,春天是我们的!', '释放被拘押者!'],
     cards: ['informants', 'editorial', 'crackdown', 'amnesty', 'dialogue', 'subsidy', 'bonus', 'cutnet'],
     startAP: 4, income: 1.15,
-    ai: { income: 1.0, every: 3, base: 0.012, smart: 0.65, aggression: 0.75, cards: ['rally', 'march', 'strike', 'samizdat', 'memorial', 'leak', 'legal'],
+    ai: { income: 1.0, every: 3, base: 0.012, smart: 0.65, aggression: 0.75, orgRate: 1.6, cards: ['rally', 'march', 'strike', 'samizdat', 'memorial', 'leak', 'legal'],
       chatter: ['地下刊物在工厂里传阅。', '有人在墙上刷了一个 V 字。', '教堂里的弥撒比平时人多。', '晚上七点半,有人关掉电视、上街散步——抵制官方新闻。'] },
     goal: { x: 0.3, d: 0.5, hold: 3, dHold: 2 },
     stars: [
@@ -284,8 +284,8 @@
         { label: '包围,断水断电,等他们出来', hint: '对方士气 ↑', run: (g) => { g.opp.ap = Math.min(g.apCap, g.opp.ap + 2); } },
       ] },
       { at: 18, news: '地下团结工会成立了临时协调委员会。', kind: 'event', run: (g) => { g.L.ai.income = 1.25; } },
-      { at: 20, title: '5月3日', art: '🇵🇱', text: '宪法纪念日。线人报告:各大城市可能有示威。', choices: [{ label: '知道了' }], run: (g) => g.addSeeds(0.035) },
-      { at: 37, title: '8月31日', art: '⚓', text: '格但斯克协议签署两周年。团结工会地下领导号召全国示威。', choices: [{ label: '准备应对' }], run: (g) => g.addSeeds(0.05) },
+      { at: 20, title: '5月3日', art: '🇵🇱', text: '宪法纪念日。线人报告:各大城市可能有示威。', choices: [{ label: '知道了' }], run: (g) => g.addSeeds(0.02 + 0.03 * Math.min(1.5, g.meanGrievance() / g.moodScale)) },
+      { at: 37, title: '8月31日', art: '⚓', text: '格但斯克协议签署两周年。团结工会地下领导号召全国示威。', choices: [{ label: '准备应对' }], run: (g) => g.addSeeds(0.025 + 0.045 * Math.min(1.5, g.meanGrievance() / g.moodScale)) },
       { at: 43, news: '议会通过新工会法,团结工会被正式取缔。', kind: 'event' },
     ],
     endings: {
@@ -318,7 +318,7 @@
     rounds: 50, scale: 1000, arrestScale: 8, moodScale: 0.2, tipSpread: 0.35,
     world: { N: 2000, tolType: 'bell', tolMul: 0.9, tolAdd: -0.45, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.9, K0: 30, M: 200, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.8, memDecay: 0.1, vis: 0.9, omega: 0.7, globalScale: 0.8, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 3.0 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin', enforce: 'lenient', police: 'lean' }) },
-    troopPsi: 1.5,
+    troopPsi: 2.4,
     labels: { army: '军警', crowd: '广场上', plaza: '天安门广场', prison: '收容审查', barracks: '城郊营地', avenue: '长安街' },
     slogans: ['反腐败!', '新闻自由!', '对话!', '人民军队爱人民!', '民主万岁!'],
     cards: ['rally', 'march', 'mobilize', 'hunger', 'fraternize', 'blockade', 'goddess', 'memorial', 'samizdat', 'legal'],
@@ -396,8 +396,8 @@
     ],
     goalText: '在10月16日前,让周一游行达到全城的四成(约12万人),并坚持两天。',
     tips: ['周一的「和平祈祷」是免费的。', '当局把新闻压得越狠,一次「曝光真相」就越有力。', '教会、学校、工厂之间的联系(「串联织网」)会让人更容易互相带动。'],
-    rounds: 42, scale: 150, arrestScale: 5, moodScale: 0.2,
-    world: { N: 2000, tolType: 'uniform', tolMul: 0.5, tolAdd: -0.15, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.75, K0: 50, M: 150, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.5, memDecay: 0.15, vis: 0.8, omega: 0.6, globalScale: 0.75, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 1.3 },
+    rounds: 42, scale: 150, arrestScale: 5, moodScale: 0.2, randomEvents: ['death', 'mole', 'press', 'writer', 'letter', 'release', 'split'],
+    world: { N: 2000, tolType: 'uniform', tolMul: 0.37, tolAdd: -0.15, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.75, K0: 50, M: 150, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.5, memDecay: 0.15, vis: 0.8, omega: 0.6, globalScale: 0.75, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 1.3 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin', target: 'organizer' }) },
     labels: { army: '警察与战斗队', crowd: '环城大道上', plaza: '卡尔·马克思广场', prison: '斯塔西看守所', barracks: '人民警察营地', avenue: '环城大道' },
     slogans: ['我们是人民!', '不要暴力!', '我们要留下来!', '新闻自由!'],
@@ -446,8 +446,8 @@
     ],
     goalText: '在12月7日前,让各地同时站出来的人达到一个足以被看见的规模(约 1.2 万人),并坚持两天。',
     tips: ['审查让每个人都低估了别人的愤怒——「翻墙转发」和「曝光真相」能打破它。', '举白纸的风险比喊口号小。', '悲剧会发生。那时候,人们的心里会有一个很大的缺口。'],
-    rounds: 55, scale: 100, arrestScale: 2, moodScale: 0.2, tipSpread: 0.4,
-    world: { N: 2000, tolType: 'uniform', tolMul: 0.55, netType: 'random', netDeg: 10, P: 1.0, Pbar: 0.85, K0: 42, M: 200, alpha: 0.08, beta: 0.4, delta: 0.15, gamma: 2.5, memDecay: 0.08, vis: 0.6, omega: 0.5, globalScale: 0.7, noise: 0.02, hardCore: 0.001, seed: 2022, psiScale: 2.0 },
+    rounds: 55, scale: 100, arrestScale: 2, moodScale: 0.2, tipSpread: 0.4, randomEvents: ['death', 'mole', 'prices', 'split', 'release', 'writer'],
+    world: { N: 2000, tolType: 'uniform', tolMul: 0.46, netType: 'random', netDeg: 10, P: 1.0, Pbar: 0.85, K0: 42, M: 200, alpha: 0.08, beta: 0.4, delta: 0.15, gamma: 2.5, memDecay: 0.08, vis: 0.6, omega: 0.5, globalScale: 0.7, noise: 0.02, hardCore: 0.001, seed: 2022, psiScale: 2.0 },
     policies: { start: { enforce: 'harsh', police: 'surge', target: 'organizer', info: 'blackout', release: 'long' } },
     labels: { army: '警察与"大白"', crowd: '街头', plaza: '乌鲁木齐中路', prison: '派出所', barracks: '维稳指挥部', avenue: '亮马河' },
     slogans: ['', '', '不要核酸要吃饭', '不要封控要自由', '……'],
@@ -497,8 +497,8 @@
     ],
     goalText: '在2022年底前,让临界点出现,并降到"约两成人一起站出来就够"以下(维持三个月)。同时,别让你的网络暴露。',
     tips: ['别上街——在这里公开行动只是送死。', '「U盘里的韩剧」让人们不再相信官方说法,也让人知道邻居也在看。', '每一次行动都会增加暴露风险。暴露太高,109 常务组会找上门。', '处罚越被看作不正当,每一次处罚留下的记忆就越深。'],
-    rounds: 48, scale: 12500, arrestScale: 200, moodScale: 0.15, tipSpread: 0.35,
-    world: { N: 2000, tolType: 'low', netType: 'clusters', netGroups: 60, P: 1.0, Pbar: 2.2, K0: 40, M: 200, alpha: 0.05, beta: 0.4, delta: 0.3, gamma: 3, memDecay: 0.03, vis: 0.35, omega: 0.9, globalScale: 0.3, noise: 0.02, hardCore: 0, seed: 1948, psiScale: 1.8, netDamage: 0.6 },
+    rounds: 48, scale: 12500, arrestScale: 200, moodScale: 0.15, tipSpread: 0.35, randomEvents: ['death', 'mole', 'prices'],
+    world: { N: 2000, tolType: 'low', netType: 'clusters', netGroups: 60, P: 1.0, Pbar: 2.9, K0: 40, M: 200, alpha: 0.05, beta: 0.4, delta: 0.3, gamma: 3, memDecay: 0.03, vis: 0.35, omega: 0.9, globalScale: 0.3, noise: 0.02, hardCore: 0, seed: 1948, psiScale: 1.8, netDamage: 0.6 },
     policies: { start: { enforce: 'terror', police: 'surge', target: 'preventive', info: 'blackout', release: 'long' } },
     labels: { army: '保卫部与军队', crowd: '街头', plaza: '广场', prison: '管理所', barracks: '保卫部', avenue: '大街' },
     theme: 'night',
@@ -514,7 +514,7 @@
     goal: {},
     stars: [
       { text: '暴露风险从未超过一半', test: (g) => !g.flags.exposedHalf },
-      { text: '在2021年内完成', test: (g) => g.round <= 35 },
+      { text: '在2022年6月之前完成', test: (g) => g.round <= 41 },
     ],
     dateFmt: monthFmt(2019, 1),
     setup: (g) => { for (const k of ['enforce', 'police', 'target', 'info', 'release']) g.forcePolicy(k, g.pol[k], 999, '朝鲜'); g.exposure = 10; g.flagTop(0.02); },
@@ -535,12 +535,12 @@
       { at: 12, title: '国境封锁', art: '🚧', text: '新冠疫情暴发。朝鲜关闭了与中国的边境,下令边境一公里内接近者格杀勿论。<br><br>走私几乎断绝。你的每一次行动都更危险了。', choices: [{ label: '继续' }], run: (g) => { g.exposureMul = 1.6; g.bonusIncome -= 0.25; } },
       { at: 23, title: '反动思想文化排斥法', art: '⚖️', text: '最高人民会议通过新法:传播韩国影视作品,最高可判处死刑;观看者判处劳动教养;家人、单位负责人连带受罚。', choices: [{ label: '继续' }], run: (g) => { g.base.P *= 1.25; } },
       { at: 27, news: '金正恩在党的会议上说,要进行"更艰难的苦难行军"。', kind: 'event', run: (g) => g.griefAll(0.02) },
-      { at: 30, title: '公开处决', art: '⚫', text: '据传,某地举行了公开处决。被处决者被指传播外国影视。附近的居民、学生被组织去观看。<br><br>如果人们仍然觉得这是"应得的",这只会让他们更害怕;如果他们已经不再相信——他们会记住这一天。', choices: [{ label: '……' }], run: (g) => { g.forceOpp('crackdown', false); g.addSeeds(0.004); g.addEffect({ id: 'forcedwatch', name: '被组织观看', icon: '👁️', side: 'regime', rounds: 2, mod(m) { m.vis = 1.2; m.omega = 1; } }); } },
+      { at: 30, title: '公开处决', art: '⚫', text: '据传,某地举行了公开处决。被处决者被指传播外国影视。附近的居民、学生被组织去观看。<br><br>如果人们仍然觉得这是"应得的",这只会让他们更害怕;如果他们已经不再相信——他们会记住这一天。', choices: [{ label: '……' }], run: (g) => { g.addSeeds(0.004); g.addEffect({ id: 'forcedwatch', name: '被组织观看', icon: '👁️', side: 'regime', rounds: 1, mod(m) { m.P *= 1.4; m.vis = 1; m.omega = 0.9; } }); } },
       { at: 40, news: '官方首次承认国内出现新冠疫情,全国封锁。', kind: 'event', run: (g) => g.griefAll(0.02) },
     ],
     check: (g) => {
       const t = g.tipping();
-      g.streak.tip = t <= 0.22 ? g.streak.tip + 1 : 0;
+      g.streak.tip = t <= 0.2 ? g.streak.tip + 1 : 0;
       if (g.streak.tip >= 3) return { win: true, key: 'crack' };
       return null;
     },
@@ -556,11 +556,12 @@
   /* ============================================================
    * 自由对局
    * ============================================================ */
+  // mov / reg: 玩家分别扮演行动方 / 当局时的承受上限倍率(两边的电脑对手强弱不同, 分开校准)
   const SOCIETIES = {
-    ordinary: { name: '普通城市', desc: '门槛均匀分布,随机熟人网络。', world: { tolType: 'uniform', tolMul: 0.9, netType: 'random', netDeg: 8 } },
-    fearful: { name: '高压社会', desc: '人人都怕,承受上限整体很低。', world: { tolType: 'low', tolMul: 1.4, netType: 'random', netDeg: 8 } },
-    divided: { name: '撕裂社会', desc: '大多数温和,少数激进。', world: { tolType: 'bimodal', netType: 'random', netDeg: 8 } },
-    tight: { name: '紧密社区', desc: '小团体内部紧密,团体之间联系少。', world: { tolType: 'bell', netType: 'clusters', netGroups: 30 } },
+    ordinary: { name: '普通城市', desc: '门槛均匀分布,随机熟人网络。', mov: 0.33, reg: 0.7, world: { tolType: 'uniform', netType: 'random', netDeg: 8 } },
+    fearful: { name: '高压社会', desc: '人人都怕,承受上限整体很低。', mov: 0.45, reg: 1.4, world: { tolType: 'low', netType: 'random', netDeg: 8 } },
+    divided: { name: '撕裂社会', desc: '大多数温和,少数激进。', mov: 0.33, reg: 0.8, world: { tolType: 'bimodal', netType: 'random', netDeg: 8 } },
+    tight: { name: '紧密社区', desc: '小团体内部紧密,团体之间联系少。', mov: 0.33, reg: 0.8, world: { tolType: 'bell', netType: 'clusters', netGroups: 30 } },
   };
   function makeSkirmish(side, societyKey) {
     const S = SOCIETIES[societyKey] || SOCIETIES.ordinary;
@@ -570,7 +571,8 @@
       intro: [S.desc, side === 'movement' ? '60 轮内,让一半的人走上街头,或让军警倒戈。' : '撑过 60 轮,别让局面失控。'],
       goalText: side === 'movement' ? '60 轮内,让一半的人站出来并坚持三轮,或让军警倒戈。' : '撑过 60 轮,别让一半的人站出来,也别让军警倒戈。',
       rounds: 60, scale: 500, arrestScale: 20, moodScale: 0.2,
-      world: Object.assign({ N: 2000, P: 1.0, Pbar: 0.8, K0: 40, M: 150, alpha: 0.25, beta: 0.5, delta: 0.25, gamma: 2, memDecay: 0.1, vis: 0.9, omega: 0.8, globalScale: 1, noise: 0.01, hardCore: 0.003, seed: 99, psiScale: 1.3 }, S.world),
+      // 玩家当局时 δ 更大: 一味加码的处罚会让执行者动摇, 铁腕不是免费的
+      world: Object.assign({ N: 2000, P: 1.0, Pbar: 0.8, K0: 40, M: 150, alpha: 0.25, beta: 0.5, delta: side === 'movement' ? 0.2 : 0.4, gamma: 2, memDecay: 0.1, vis: 0.9, omega: 0.8, globalScale: 1, noise: 0.01, hardCore: 0.003, seed: 99, psiScale: 1.3 }, S.world, { tolMul: side === 'movement' ? S.mov : S.reg }),
       policies: { start: STD_POL },
       labels: { army: '军警', crowd: '街头', plaza: '中心广场', prison: '看守所', barracks: '兵营', avenue: '大街' },
       slogans: ['自由!', '对话!', '释放被捕者!'],

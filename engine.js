@@ -630,7 +630,7 @@
       this.org = level.orgStart != null ? level.orgStart : 15;
       // 气泡与突发事件
       this.bubbles = []; this._bid = 0;
-      this.nextRandom = level.firstRandom != null ? level.firstRandom : 4 + ((Math.random() * 3) | 0);
+      this.nextRandom = level.firstRandom != null ? level.firstRandom : 4 + ((this.rng() * 3) | 0);
       this.usedRandom = {};
       this.lastIgnite = -99;
       this.freebies = {};                                // cardId -> rounds left(免费)
