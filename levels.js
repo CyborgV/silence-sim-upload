@@ -497,7 +497,7 @@
     ],
     goalText: '在2022年底前,让临界点出现,并降到"约两成人一起站出来就够"以下(维持三个月)。同时,别让你的网络暴露。',
     tips: ['别上街——在这里公开行动只是送死。', '「U盘里的韩剧」让人们不再相信官方说法,也让人知道邻居也在看。', '每一次行动都会增加暴露风险。暴露太高,109 常务组会找上门。', '处罚越被看作不正当,每一次处罚留下的记忆就越深。'],
-    rounds: 48, scale: 12500, arrestScale: 200, moodScale: 0.15, tipSpread: 0.35, randomEvents: ['death', 'mole', 'prices'],
+    rounds: 48, scale: 12500, arrestScale: 200, moodScale: 0.15, tipSpread: 0.35, randomEvents: ['death', 'mole', 'prices'], structuralTip: true,
     world: { N: 2000, tolType: 'low', netType: 'clusters', netGroups: 60, P: 1.0, Pbar: 2.9, K0: 40, M: 200, alpha: 0.05, beta: 0.4, delta: 0.3, gamma: 3, memDecay: 0.03, vis: 0.35, omega: 0.9, globalScale: 0.3, noise: 0.02, hardCore: 0, seed: 1948, psiScale: 1.8, netDamage: 0.6 },
     policies: { start: { enforce: 'terror', police: 'surge', target: 'preventive', info: 'blackout', release: 'long' } },
     labels: { army: '保卫部与军队', crowd: '街头', plaza: '广场', prison: '管理所', barracks: '保卫部', avenue: '大街' },
@@ -539,7 +539,7 @@
       { at: 40, news: '官方首次承认国内出现新冠疫情,全国封锁。', kind: 'event', run: (g) => g.griefAll(0.02) },
     ],
     check: (g) => {
-      const t = g.tipping();
+      const t = g.structuralTipping();   // 一次广播带来的短暂松动不算数(structuralTip: 界面上的估计也不含它)
       g.streak.tip = t <= 0.2 ? g.streak.tip + 1 : 0;
       if (g.streak.tip >= 3) return { win: true, key: 'crack' };
       return null;

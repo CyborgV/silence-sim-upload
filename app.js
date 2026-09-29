@@ -306,7 +306,7 @@
       if (G.streak.x > 0 || G.streak.d > 0) sub = `<span style="color:var(--red2)">⚠ 局面正在失控(${Math.max(G.streak.x, G.streak.d)}/${g.hold || 3})</span> · ` + sub;
     } else if (L.id === 'pyongyang') {
       const r = G.readout();
-      prog = r.tip.kind === 'none' ? 0.03 : clamp((1 - r.tip.shownFrac) / (1 - 0.22), 0, 1);
+      prog = r.tip.kind === 'none' ? 0.03 : clamp((1 - r.tip.shownFrac) / (1 - 0.2), 0, 1);
       sub = `据估计 · 剩余 ${left} 个月`;
       if (G.streak.tip > 0) sub = `<span style="color:var(--green)">裂缝已经出现(${G.streak.tip}/3)</span> · ` + sub;
     } else {
@@ -350,8 +350,8 @@
           <div class="mbar"><div class="fill" style="width:${pct(dS / (gd * 1.25))}"></div><div class="band" style="left:${pct(gd / (gd * 1.25))};width:1%"></div></div>
           <div class="ms">${G.streak.d > 0 ? `<span class="go">已经坚持 ${G.streak.d}/${L.goal.dHold || L.goal.hold || 2} 轮!</span>` : `紫线是目标:成建制倒戈 · 街上的人越多,士兵越动摇`}</div>`;
       } else if (L.id === 'pyongyang') {
-        main = `<div class="mh" data-tip="${esc('需要多少人同时站出来,局面才会改变。你的目标是让它从「看不到转机」降到约两成人。')}"><b>🔥 让临界点出现</b><span class="mv">需要 ${tipTxt} · 目标:降到约 ${cnt(0.22)} 以下</span></div>
-          <div class="mbar"><div class="fill" style="width:${lo == null ? '2%' : pct(clamp((1 - t.est) / 0.78, 0, 1))}"></div></div>
+        main = `<div class="mh" data-tip="${esc('需要多少人同时站出来,局面才会改变。你的目标是让它从「看不到转机」降到约两成人。')}"><b>🔥 让临界点出现</b><span class="mv">需要 ${tipTxt} · 目标:降到约 ${cnt(0.2)} 以下</span></div>
+          <div class="mbar"><div class="fill" style="width:${lo == null ? '2%' : pct(clamp((1 - t.est) / 0.8, 0, 1))}"></div></div>
           <div class="ms">${G.streak.tip > 0 ? `<span class="go">裂缝已经出现(${G.streak.tip}/3)</span>` : '别上街:在这里,公开行动只是送死'}</div>`;
       } else {
         main = `<div class="mh" data-tip="${esc('黄色:此刻站出来的人。斜纹:你手里的组织力一次还能带出的人。紫框:临界点——大约要这么多人同时站出来,风险才被摊薄、连锁才会开始(估计值)。')}"><b>🔥 离临界点</b><span class="mv">${lab.crowd || '街上'} ${crowdTxt} · 需要 ${tipTxt}</span></div>

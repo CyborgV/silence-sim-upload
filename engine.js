@@ -992,6 +992,16 @@
       this.tipCache = { t: this.round, v };
       return v;
     }
+    /** 去掉行动方的临时效果(传单、记者……)之后的临界点: 衡量"持久的"变化 */
+    structuralTipping() {
+      const keep = this.effects, cache = this.tipCache;
+      this.effects = keep.filter((e) => e.side !== 'movement');
+      if (this.effects.length === keep.length) return this.tipping();
+      this._applyParams(); this.tipCache = { t: -1 };
+      const v = this.tipping();
+      this.effects = keep; this._applyParams(); this.tipCache = cache;
+      return v;
+    }
 
     /* ---------- 战争迷雾: 玩家看到的读数 ---------- */
     intelBias() {
@@ -1031,7 +1041,7 @@
       mood.conf = this.side === 'regime'
         ? (bias >= 0.4 ? '低:下面的人不敢说真话' : bias >= 0.15 ? '中:报喜多于报忧' : '高')
         : '传闻';
-      const tipTrue = this.tipping();
+      const tipTrue = this.L.structuralTip ? this.structuralTipping() : this.tipping();
       let tip;
       if (this.side === 'movement') {
         if (tipTrue === Infinity) tip = { kind: 'none', text: '看不到转机', sub: '即使全城一起站出来,眼下也会被压下去' };
