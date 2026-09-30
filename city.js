@@ -275,9 +275,17 @@
         else { this.jailAge[i] = 0; if (a[i]) { tx = this.qx[i]; ty = this.qy[i]; } else { tx = this.hx[i]; ty = this.hy[i]; } }
         px[i] += (tx - px[i]) * k; py[i] += (ty - py[i]) * k;
       }
-      // 家里的人
+      // 家里的人; 暗流图层打开时, "在观望"(橙)与"蠢蠢欲动"(红)的人家被标出来——点的疏密就是离爆发还有多远
+      const uc = this.layerOn && g.undercurrent ? g.undercurrent().tier : null;
       ctx.fillStyle = T.home;
-      for (let i = 0; i < N; i++) if (!a[i] && !r[i]) ctx.fillRect(X(px[i]) - d / 2, Y(py[i]) - d / 2, d, d);
+      for (let i = 0; i < N; i++) if (!a[i] && !r[i] && !(uc && uc[i])) ctx.fillRect(X(px[i]) - d / 2, Y(py[i]) - d / 2, d, d);
+      if (uc) {
+        ctx.fillStyle = night ? 'rgba(240,170,70,0.5)' : 'rgba(240,180,76,0.62)';
+        for (let i = 0; i < N; i++) if (uc[i] === 1 && !a[i] && !r[i]) ctx.fillRect(X(px[i]) - d / 2, Y(py[i]) - d / 2, d, d);
+        ctx.fillStyle = night ? 'rgba(255,100,70,0.8)' : 'rgba(255,96,70,0.95)';
+        const d2 = d * 1.35;
+        for (let i = 0; i < N; i++) if (uc[i] === 2 && !a[i] && !r[i]) ctx.fillRect(X(px[i]) - d2 / 2, Y(py[i]) - d2 / 2, d2, d2);
+      }
       if (night) {        // 夜里: 看过外面世界的人家亮着一盏小灯
         ctx.fillStyle = 'rgba(255,214,140,0.55)';
         for (let i = 0; i < N; i++) if (glow[i] && !r[i]) ctx.fillRect(X(px[i]) - d / 2, Y(py[i]) - d / 2, d, d);

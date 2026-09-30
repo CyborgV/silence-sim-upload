@@ -82,6 +82,12 @@
   <div id="hud-main">
     <aside id="hud-left">
       <div class="goalcard" id="goalcard"><div class="g1" id="goal-text"></div><div class="gbar"><i id="goal-bar"></i></div><div class="g2" id="goal-sub"></div></div>
+      <button class="trendbox" id="trendbox" title="点击放大:走势图与参谋分析 (A)">
+        <div class="sec-t">走势 <span class="tag">点击放大 · A</span></div>
+        <canvas id="trend"></canvas>
+        <div class="trend-legend" id="trend-legend"></div>
+      </button>
+      <div id="advice"></div>
       <div id="build"></div>
       <div class="sec-t">态势 <span class="tag" id="intel-tag"></span></div>
       <div id="readouts"></div>
@@ -93,6 +99,7 @@
       <div id="bubbles"></div>
       <div id="headline"></div>
       <div id="banner"></div>
+      <button id="layer-btn" class="layer-btn" title="暗流:城里有多少人离站出来只差一点(传闻,可能有错)。开 / 关 (L)"></button>
       <div id="toasts"></div>
       <div class="pausetag" id="pausetag">已暂停 · 按 ▶ 或空格继续</div>
     </div>
@@ -111,6 +118,7 @@
 <div class="overlay" id="ov-event"><div class="modal" id="ev-box"></div></div>
 <div class="overlay" id="ov-end"><div class="modal end" id="end-box"></div></div>
 <div class="overlay" id="ov-tree"><div class="modal treebox" id="tree-box"></div></div>
+<div class="overlay" id="ov-analysis"><div class="modal analysis" id="an-box"></div></div>
 <div class="overlay" id="ov-menu"><div class="modal" style="width:min(360px,100%)">
   <h3>暂停</h3>
   <div class="choices">
@@ -136,6 +144,14 @@
     <li><b>封锁</b>:压住的不是记忆,只是记忆的公开。一旦曝光,会加倍兑现。</li>
     <li><b>执行者也在看</b>:街上的人数、同僚的态度、命令是否过火,都会让士兵和警察犹豫。他们一倒戈,能抓的人就少了。</li>
   </ul>
+  <h4>怎么知道自己哪里做错了</h4>
+  <ul>
+    <li><b>走势图</b>(左侧,点击或按 A 放大):街上的人 vs 估计的临界点,你和对手每一次出手都标在时间轴上。放大后还能看积怨、军心、警觉的走向,鼠标移上去看那一轮发生了什么。</li>
+    <li><b>参谋</b>:把"眼下最大的阻力"(或当局一方"最大的隐患")排个序——是人太少、代价太重、怨气不够,还是人们看不见彼此——并提示手里哪些牌对症。</li>
+    <li><b>暗流图层</b>(城市右上角,L 键):橙色是"在观望"的人,红色是"蠢蠢欲动"的人。点越来越密,说明离爆发越来越近;变稀,说明你的策略在失效。它是传闻,会有错。</li>
+    <li><b>回报</b>:每次出牌或改政策,两轮后新闻栏里会有一条紫色的「回报」:人数怎么变了、被抓了多少、临界点和暗流是升是降。</li>
+    <li>态势读数旁边的 ↑↓ 是最近两轮的变化方向:绿色对你有利,红色对你不利。</li>
+  </ul>
   <h4>像《瘟疫公司》一样玩</h4>
   <ul>
     <li><b>最上面两根条</b>:左边是你的进度(民间:离临界点还差多少;当局:还要撑多久),右边是对手(当局警觉 / 反对派组织度 / 暴露风险)。</li>
@@ -145,6 +161,7 @@
     <li><b>政策</b>(当局):常设的执法力度、警力、抓捕方式、舆论、关押。越强硬越贵。</li>
     <li><b>突发事件</b>与<b>历史事件</b>会逼你做选择。每一天都有当日要闻。</li>
     <li>时间:暂停(空格)、一轮一轮走(→)、加速。数字键 1–9 出牌。关卡结束后,<b>复盘</b>揭晓你看不到的真实数值。</li>
+    <li>时间一直在走(默认 ▶)。打开事件、建设、菜单这类面板时自动停住,关掉后片刻继续。空格暂停,→ 只走一轮。</li>
     <li>不知道从哪下手?点上方的<b>「💡 引导」</b>,召公会讲解这一关的界面和要点。不点它就不会弹出。</li>
   </ul>
   <div class="actions" style="justify-content:center;display:flex;margin-top:14px"><button class="btn primary" id="help-close">知道了</button></div>

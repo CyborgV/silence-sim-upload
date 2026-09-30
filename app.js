@@ -125,13 +125,14 @@
 
   /* ================= 对局 ================= */
   let G = null, city = null, running = false, speed = 0, lastSpeed = 1, acc = 0, lastTs = 0, curLevel = null, curOpts = {};
-  let lastAutoPause = -99, endShown = false, prevWords = {};
-  const ROUND_MS = [Infinity, 1500, 750, 300];
+  let endShown = false, prevWords = {}, resumeIn = 0;
+  // 每一轮的真实时长(毫秒)。时间默认一直在走; 只有弹窗/面板/引导打开时停下, 关掉后稍等片刻再继续
+  const ROUND_MS = [Infinity, 3400, 1800, 850], RESUME_MS = 450;
 
   function startLevel(L, opts) {
     curLevel = L; curOpts = opts || {};
     G = new Game(L, { diff: curOpts.diff || 'normal' });
-    endShown = false; prevWords = {}; lastAutoPause = -99;
+    endShown = false; prevWords = {}; resumeIn = 900;
     show('game');
     $('g-chapter').textContent = L.chapter + ' · ';
     $('g-title').textContent = L.title;
@@ -140,7 +141,7 @@
     Bub.clear(); $('headline').innerHTML = ''; $('banner').innerHTML = ''; $('ov-tree').classList.remove('show');
     if (!city) city = new window.SilenceCity($('city'));
     requestAnimationFrame(() => { city.setGame(G); city.resize(); });
-    setSpeed(0);
+    setSpeed(lastSpeed || 1);
     renderAll(true);
     running = true; lastTs = 0; acc = 0;
     requestAnimationFrame(loop);
@@ -192,12 +193,16 @@
   function loop(ts) {
     if (!running) return;
     const dt = Math.min(80, ts - (lastTs || ts)); lastTs = ts;
-    const live = G && speed > 0 && !G.popup && !G.over && !Coach.blocking() && !anyOverlay();
+    const held = !G || !!G.popup || !!G.over || Coach.blocking() || anyOverlay();
+    if (held) resumeIn = Math.max(resumeIn, RESUME_MS);
+    else if (resumeIn > 0) resumeIn -= dt;
+    const live = !held && resumeIn <= 0 && speed > 0;
     if (live) {
       acc += dt;
       if (acc >= ROUND_MS[speed]) { acc = 0; doStep(); }
     }
     Bub.tick(dt, live);
+    if (G) $('g-timefill').style.width = (100 * Math.min(1, (G.round + (speed > 0 ? acc / ROUND_MS[speed] : 0)) / G.maxRound)).toFixed(2) + '%';
     if (city && G) city.frame(dt);
     requestAnimationFrame(loop);
   }
@@ -213,14 +218,12 @@
       const imp = G.news.find((n) => n.round === G.round && ['crowd', 'army', 'opp', 'arrest', 'event'].includes(n.kind));
       if (imp) headline(imp.text, imp.kind, true);
     }
-    // 街头突然聚集大量人群 → 自动暂停, 给玩家反应时间
-    if (G.side === 'regime' && G.x - x0 > 0.04 && G.round - lastAutoPause > 3 && speed > 0) autoPause('⚠ 街头突然聚集了大量人群!');
+    if (G.side === 'regime' && G.x - x0 > 0.04) toast('⚠ 街头突然聚集了大量人群!', 'crowd');
     renderAll();
     Coach.notify('round');
     if (G.popup) showEvent();
     if (G.over) setTimeout(showEnd, 1100);
   }
-  function autoPause(msg) { lastAutoPause = G.round; setSpeed(0); toast(msg + '(已暂停)', 'crowd'); }
 
   /* ---------- 特效与新闻 ---------- */
   function processFx() {
@@ -228,7 +231,7 @@
     const fx = G.fx.splice(0);
     const slogans = (G.L.slogans || []).filter(Boolean);
     for (const f of fx) {
-      if (f.type === 'crackdown') { city.flash('#ff2a1a', 900); city.shake(); $('stage').classList.remove('shake'); void $('stage').offsetWidth; $('stage').classList.add('shake'); if (G.side === 'movement' && G.round - lastAutoPause > 2 && speed > 0) autoPause('💥 当局动手了'); }
+      if (f.type === 'crackdown') { city.flash('#ff2a1a', 900); city.shake(); $('stage').classList.remove('shake'); void $('stage').offsetWidth; $('stage').classList.add('shake'); if (G.side === 'movement') toast('💥 当局动手了', 'opp'); }
       else if (f.type === 'raid') { city.flash('#ff4030', 500); }
       else if (f.type === 'defect') { city.flash('#57c28a', 500); }
       else if (f.type === 'reveal') { city.flash('#b392f0', 600); }
@@ -243,11 +246,12 @@
       else if (f.type === 'ignite') { banner('连锁反应!', '越来越多的人加入了', 'ignite'); city.flash('#ffb347', 700); }
       else if (f.type === 'nearmiss') banner('差一点', '人群散去了——再多一些人,也许就不一样了', 'miss');
       else if (f.type === 'stage') {
-        if (f.up) { banner(`当局:${STAGES[f.stage].name}`, STAGES[f.stage].tip, 'stage'); city.flash('#ff3b2f', 500); if (speed > 0 && G.round - lastAutoPause > 2) autoPause('当局升级了'); }
+        if (f.up) { banner(`当局:${STAGES[f.stage].name}`, STAGES[f.stage].tip, 'stage'); city.flash('#ff3b2f', 500); }
         else toast(`当局的戒备降到「${STAGES[f.stage].name}」`, 'good');
       }
-      else if (f.type === 'push') { banner('反对派发动了!', '一次大规模行动——压不压得住,取决于你看不见的临界点', 'stage'); if (G.side === 'regime' && speed > 0) autoPause('反对派发动了大规模行动'); }
+      else if (f.type === 'push') { banner('反对派发动了!', '一次大规模行动——压不压得住,取决于你看不见的临界点', 'stage'); }
       else if (f.type === 'buy') toast(`建成:${f.name}`, 'crowd');
+      else if (f.type === 'report') toast('📋 ' + (f.text.length > 64 ? f.text.slice(0, 62) + '…' : f.text), 'report');
     }
     if (G.x > 0.004 && slogans.length && Math.random() < Math.min(0.9, 0.25 + G.x * 2)) city.say(slogans[(Math.random() * slogans.length) | 0]);
   }
@@ -313,10 +317,181 @@
   function renderAll(first) {
     if (!G) return;
     $('g-date').textContent = G.dateLabel();
-    $('g-timefill').style.width = (100 * G.round / G.maxRound).toFixed(1) + '%';
     renderGoal(); renderMeters(); renderBuild(); renderReadouts(); renderEffects(); renderRes(); renderTreeBtn(); renderPolicies(); renderCards(); renderNews();
+    renderAdvice(); drawTrend($('trend'), false); renderLayerBtn();
+    if ($('ov-analysis').classList.contains('show')) renderAnalysis();
     $('pausetag').classList.toggle('hidden', speed > 0 || !!G.over);
   }
+
+  /* ================= 看清自己的策略: 趋势、走势图、参谋、暗流 ================= */
+  // 最近 lag 轮的变化; goodIfUp: 上升对玩家有利(true) / 不利(false) / 说不上(null)
+  const delta = (arr, lag) => { lag = lag || 2; const n = arr.length; return n > lag ? arr[n - 1] - arr[n - 1 - lag] : 0; };
+  function arrow(dv, eps, goodIfUp, words) {
+    if (Math.abs(dv) < eps) return words ? '<span class="trend flat">→ 平稳</span>' : '';
+    const up = dv > 0, good = goodIfUp == null ? null : up === goodIfUp;
+    return `<span class="trend ${good == null ? '' : good ? 'good' : 'bad'}">${up ? '↑' : '↓'}${words ? (up ? ' 上升' : ' 下降') : ''}</span>`;
+  }
+  const MOV = () => G.side === 'movement';
+
+  function renderAdvice() {
+    const d = G.diagnose();
+    const lv = (v) => (v >= 0.8 ? '很大' : v >= 0.55 ? '较大' : v >= 0.3 ? '一般' : v > 0.05 ? '较小' : '—');
+    const hand = G.hand().map((c) => c.id);
+    const sugg = (d.top && d.top.v > 0.05 ? d.top.cards : []).filter((id) => hand.includes(id)).map((id) => G.card(id));
+    $('advice').innerHTML = `<div class="advice ${d.side}">
+      <div class="ah"><span>🧭 参谋 · ${d.title}</span><button class="lnk" id="adv-more">详细 ›</button></div>
+      ${d.head ? `<div class="ahd ${d.head.kind}">${d.head.text}</div>` : ''}
+      ${d.factors.slice(0, 3).map((f) => `<div class="af"><span class="an">${f.name}</span><span class="abar"><i style="width:${Math.max(3, f.v * 100).toFixed(0)}%"></i></span><span class="alv">${lv(f.v)}</span></div>`).join('')}
+      ${d.top && d.top.v > 0.05 ? `<div class="at">${d.top.advice}</div>` : ''}
+      ${sugg.length ? `<div class="ac"><span>对症的牌:</span>${sugg.map((c) => `<button class="chip" data-play="${c.id}" data-tip="${esc('<b>' + c.icon + ' ' + c.name + '</b><br>' + c.text)}">${c.icon} ${c.name}</button>`).join('')}</div>` : ''}
+    </div>`;
+    $('advice').querySelectorAll('[data-play]').forEach((b) => b.addEventListener('click', () => playCard(b.dataset.play)));
+    $('adv-more').addEventListener('click', openAnalysis);
+  }
+
+  /* 走势图: 上半 = 街上的人 vs 估计的临界点(人口比例, 平方根刻度); 下半(大图) = 积怨、军心、警觉、暗流。全部是你的所见所闻。 */
+  const moodW = (v) => (v < 0.1 ? '平静' : v < 0.3 ? '隐忍' : v < 0.55 ? '积怨' : v < 0.8 ? '怨声载道' : '一触即发');
+  const armyW = (v) => (v < 0.05 ? '令行禁止' : v < 0.15 ? '私下抱怨' : v < 0.35 ? '人心浮动' : v < 0.6 ? '公开抗命' : '成建制倒戈');
+  function drawTrend(cv, big, hoverI) {
+    if (!cv || !G) return;
+    const dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, H = cv.clientHeight;
+    if (!w || !H) return;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(H * dpr); }
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const h = G.hist, n = h.x.length, total = big ? Math.max(G.maxRound + 1, n) : Math.max(n + 3, 14);   // 小图只看走过的路
+    const L = G.L, sp = L.tipSpread != null ? L.tipSpread : 0.3, mov = MOV();
+    const pl = big ? 46 : 4, pr = big ? 14 : 4;
+    const X = (i) => pl + (w - pl - pr) * (total <= 1 ? 0 : i / (total - 1));
+    ctx.clearRect(0, 0, w, H);
+    ctx.fillStyle = '#0e131a'; ctx.fillRect(0, 0, w, H);
+    const P1 = big ? { y0: 10, y1: H * 0.56 } : { y0: 4, y1: H - 9 };
+    const Ys = (v) => P1.y1 - (P1.y1 - P1.y0) * Math.sqrt(clamp(v, 0, 1));
+    ctx.font = '10px sans-serif';
+    // 网格
+    for (const g of [0.01, 0.1, 0.25, 0.5]) {
+      const y = Ys(g); ctx.strokeStyle = '#1d2530'; ctx.beginPath(); ctx.moveTo(pl, y); ctx.lineTo(w - pr, y); ctx.stroke();
+      if (big) { ctx.fillStyle = '#6d7885'; ctx.fillText(g * 100 + '%', 6, y + 3); }
+    }
+    // 现在
+    if (n > 0) { ctx.fillStyle = 'rgba(255,255,255,.035)'; ctx.fillRect(X(n - 1), P1.y0, w - pr - X(n - 1), (big ? H - 22 : P1.y1) - P1.y0); }
+    // 目标线
+    if (mov && L.goal && L.goal.x != null) { ctx.strokeStyle = 'rgba(240,180,76,.35)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(pl, Ys(L.goal.x)); ctx.lineTo(w - pr, Ys(L.goal.x)); ctx.stroke(); ctx.setLineDash([]); }
+    // 临界点(估计)
+    if (mov) {
+      ctx.fillStyle = 'rgba(179,146,240,.22)';
+      for (let i = 0; i < n; i++) {
+        const t = h.tipSeen[i]; if (t >= 1) { ctx.fillStyle = 'rgba(179,146,240,.08)'; ctx.fillRect(X(i) - 1, P1.y0, Math.max(2, X(1) - X(0)), 6); ctx.fillStyle = 'rgba(179,146,240,.22)'; continue; }
+        const x0 = X(Math.max(0, i - 0.5)), x1 = X(Math.min(total - 1, i + 0.5));
+        ctx.fillRect(x0, Ys(t * (1 + sp)), x1 - x0, Ys(t * (1 - sp)) - Ys(t * (1 + sp)));
+      }
+    }
+    ctx.lineWidth = 1.6; ctx.strokeStyle = '#b392f0'; ctx.setLineDash(mov ? [] : [4, 3]); ctx.beginPath();
+    let on = false;
+    for (let i = 0; i < n; i++) { const t = h.tipSeen[i]; if (t >= 1) { on = false; continue; } on ? ctx.lineTo(X(i), Ys(t)) : ctx.moveTo(X(i), Ys(t)); on = true; }
+    ctx.stroke(); ctx.setLineDash([]);
+    // 街上的人
+    ctx.beginPath(); ctx.moveTo(X(0), P1.y1);
+    for (let i = 0; i < n; i++) ctx.lineTo(X(i), Ys(h.x[i]));
+    ctx.lineTo(X(Math.max(0, n - 1)), P1.y1); ctx.closePath();
+    ctx.fillStyle = 'rgba(255,207,112,.28)'; ctx.fill();
+    ctx.strokeStyle = '#ffcf70'; ctx.lineWidth = 1.8; ctx.beginPath();
+    for (let i = 0; i < n; i++) i ? ctx.lineTo(X(i), Ys(h.x[i])) : ctx.moveTo(X(i), Ys(h.x[i]));
+    ctx.stroke();
+    // 出手标记: 你(琥珀, 下) / 对手(红, 上)
+    for (const a of G.actions) {
+      const x = X(Math.min(total - 1, a.round + 0.5)), mine = a.side === G.side;
+      ctx.fillStyle = mine ? '#f0b44c' : '#e5534b';
+      ctx.beginPath();
+      if (mine) { ctx.moveTo(x, P1.y1 - 7); ctx.lineTo(x - 3.5, P1.y1); ctx.lineTo(x + 3.5, P1.y1); }
+      else { ctx.moveTo(x, P1.y0 + 6); ctx.lineTo(x - 3, P1.y0); ctx.lineTo(x + 3, P1.y0); }
+      ctx.fill();
+    }
+    if (big) {
+      const P2 = { y0: H * 0.64, y1: H - 22 };
+      const Y2 = (v) => P2.y1 - (P2.y1 - P2.y0) * clamp(v, 0, 1);
+      for (const g of [0, 0.5, 1]) { ctx.strokeStyle = '#1d2530'; ctx.beginPath(); ctx.moveTo(pl, Y2(g)); ctx.lineTo(w - pr, Y2(g)); ctx.stroke(); }
+      ctx.fillStyle = '#6d7885'; ctx.fillText('高', 6, Y2(1) + 4); ctx.fillText('低', 6, Y2(0));
+      const line = (arr, col, dash, f) => {
+        ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.setLineDash(dash || []); ctx.beginPath();
+        for (let i = 0; i < n; i++) { const v = f(arr[i]); i ? ctx.lineTo(X(i), Y2(v)) : ctx.moveTo(X(i), Y2(v)); }
+        ctx.stroke(); ctx.setLineDash([]);
+      };
+      line(h.moodSeen, '#ef6a5e', [5, 3], (v) => v / 1.1);
+      line(h.dSeen, '#57c28a', [5, 3], (v) => v / 0.7);
+      line(h.uc, '#ff8a65', [], (v) => v / 0.5);
+      if (mov) { if (!L.noAI) line(h.alert, '#8f99a6', [], (v) => v / 100); }
+      else line(h.orgSeen, '#8f99a6', [], (v) => v / 100);
+      ctx.fillStyle = '#6d7885'; ctx.fillText(G.dateLabel(0), pl, H - 6);
+      ctx.textAlign = 'right'; ctx.fillText(G.dateLabel(total - 1), w - pr, H - 6); ctx.textAlign = 'left';
+    }
+    if (hoverI != null && hoverI < n) { ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(hoverI), 4); ctx.lineTo(X(hoverI), H - (big ? 20 : 4)); ctx.stroke(); }
+    cv._X = X; cv._total = total;
+    if (!big) $('trend-legend').innerHTML = `<span><i style="background:#ffcf70"></i>${(L.labels && L.labels.crowd) || '街上'}</span><span><i style="background:#b392f0"></i>${mov ? '临界点(估计)' : '局势(据报)'}</span><span class="tri a">▲</span>你 <span class="tri o">▼</span>对手`;
+  }
+
+  function openAnalysis() { if (!G) return; $('ov-analysis').classList.add('show'); renderAnalysis(); }
+  function closeAnalysis() { $('ov-analysis').classList.remove('show'); }
+  $('ov-analysis').addEventListener('click', (e) => { if (e.target === $('ov-analysis')) closeAnalysis(); });
+  $('trendbox').addEventListener('click', openAnalysis);
+  function renderAnalysis() {
+    const d = G.diagnose(), mov = MOV(), lab = G.L.labels || {};
+    const lv = (v) => (v >= 0.8 ? '很大' : v >= 0.55 ? '较大' : v >= 0.3 ? '一般' : v > 0.05 ? '较小' : '—');
+    const reps = G.news.filter((q) => q.kind === 'report').slice(0, 6);
+    $('an-box').innerHTML = `<div class="an-head"><h3>局势分析 <small>${G.dateLabel()}</small></h3><button class="icon-btn" id="an-close" title="关闭 (Esc)">✕</button></div>
+      <div class="an-chart"><canvas id="an-cv"></canvas><div class="an-tip" id="an-tip"></div></div>
+      <div class="legend">
+        <span><i style="background:#ffcf70"></i>${lab.crowd || '街上'}的人</span>
+        <span><i style="background:#b392f0"></i>${mov ? '临界点(估计范围)' : '你估计的临界点(据报)'}</span>
+        <span style="color:#f0b44c">▲ 你的出手</span><span style="color:#e5534b">▼ 对手的出手</span>
+        <span style="color:#ef6a5e"><i class="dash"></i>积怨(${mov ? '传闻' : '据报'})</span>
+        <span style="color:#57c28a"><i class="dash"></i>${lab.army || '军警'}动摇(${mov ? '传闻' : '实情'})</span>
+        <span><i style="background:#ff8a65"></i>暗流</span>
+        <span><i style="background:#8f99a6"></i>${mov ? '当局警觉' : '反对派组织度(据报)'}</span>
+      </div>
+      <div class="an-note">上半:人口比例(平方根刻度,1% · 10% · 25% · 50%)。下半:高低只看走向。<b>鼠标移到图上</b>,看那一轮发生了什么。</div>
+      <div class="an-cols">
+        <div class="an-diag"><h4>🧭 参谋 · ${d.title}</h4>
+          ${d.head ? `<div class="ahd ${d.head.kind}">${d.head.text}</div>` : ''}
+          ${d.factors.map((f) => `<div class="af"><span class="an">${f.name}</span><span class="abar"><i style="width:${Math.max(3, f.v * 100).toFixed(0)}%"></i></span><span class="alv">${lv(f.v)}</span></div>`).join('')}
+          ${d.factors.slice(0, 2).filter((f) => f.v > 0.05).map((f) => `<p class="at"><b>${f.name}:</b>${f.advice}</p>`).join('')}
+          <p class="an-fine">${mov ? '参谋的判断来自一个简单的推演:同样"一步"的改变——抓捕能力少三成、处罚轻四分之一、怨气多一档、消息多传开四分之一——哪一个能让临界点降得最多。它只比强弱,不给数字。' : '这些判断和你的情报一样,来自下面的报告:执法越凶,越"报喜不报忧"。'}</p>
+        </div>
+        <div class="an-reps"><h4>📋 最近的回报</h4>${reps.length ? reps.map((q) => `<div class="rp"><span class="d">${q.date}</span>${q.text}</div>`).join('') : '<div class="rp dim">出牌或调整政策两轮之后,这里会告诉你发生了什么。</div>'}</div>
+      </div>`;
+    $('an-close').addEventListener('click', closeAnalysis);
+    const cv = $('an-cv');
+    requestAnimationFrame(() => drawTrend(cv, true));
+    cv.addEventListener('mousemove', (e) => {
+      const r = cv.getBoundingClientRect(), X = cv._X; if (!X) return;
+      const n = G.hist.x.length, total = cv._total;
+      const i = clamp(Math.round(((e.clientX - r.left) - X(0)) / ((X(total - 1) - X(0)) / (total - 1))), 0, n - 1);
+      drawTrend(cv, true, i);
+      const h = G.hist, cnt = (v) => fmtCount(Math.max(0, v) * G.N * G.scale);
+      const sp = G.L.tipSpread != null ? G.L.tipSpread : 0.3;
+      const acts = G.actions.filter((a) => a.round === i).map((a) => `<span class="${a.side === G.side ? 'me' : 'op'}">${a.id.includes(':') ? polLabel(a.id) : (CARDS[a.id] ? CARDS[a.id].icon + ' ' + G.card(a.id).name : a.id)}</span>`);
+      const news = G.news.filter((q) => q.round === i && !['mine', 'report'].includes(q.kind)).slice(0, 3).map((q) => q.text);
+      const tip = h.tipSeen[i];
+      $('an-tip').innerHTML = `<b>${G.dateLabel(i)}</b><br>${lab.crowd || '街上'}约 ${cnt(h.x[i])} 人 · ${mov ? (tip >= 1 ? '看不到转机' : `临界点约 ${cnt(tip * (1 - sp))}～${cnt(tip * (1 + sp))} 人`) : ''}
+        <br>积怨(${mov ? '传闻' : '据报'}):${moodW(h.moodSeen[i])} · ${lab.army || '军警'}:${armyW(h.dSeen[i])}
+        ${acts.length ? `<div class="acts">${acts.join(' ')}</div>` : ''}${news.length ? `<div class="nws">${news.join('<br>')}</div>` : ''}`;
+      const tx = clamp(e.clientX - r.left + 14, 0, r.width - 260);
+      $('an-tip').style.left = tx + 'px'; $('an-tip').classList.add('show');
+    });
+    cv.addEventListener('mouseleave', () => { $('an-tip').classList.remove('show'); drawTrend(cv, true); });
+  }
+  const polLabel = (aid) => { const [k, v] = aid.split(':'); return POLICIES[k] ? `${POLICIES[k].icon} ${polTitle(k)}→${polName(k, v)}` : aid; };
+
+  /* 暗流图层开关 */
+  if (SAVE.layer == null) SAVE.layer = true;
+  function renderLayerBtn() {
+    const b = $('layer-btn'); if (!G) return;
+    const on = !!SAVE.layer;
+    const dv = delta(G.hist.uc, 2);
+    b.classList.toggle('on', on);
+    b.innerHTML = on ? `<b>🌊 暗流</b><span class="lg"><i class="c1"></i>观望 <i class="c2"></i>欲动</span>${arrow(dv, 0.006, MOV(), true).replace('上升', '扩大').replace('下降', '收缩')}` : '<b>🌊 暗流</b> <span class="lg">关</span>';
+    if (city) city.layerOn = on;
+  }
+  $('layer-btn').addEventListener('click', () => { SAVE.layer = !SAVE.layer; persist(); renderLayerBtn(); });
 
   function renderGoal() {
     const L = G.L, g = L.goal || {};
@@ -376,7 +551,7 @@
           <div class="mbar"><div class="fill" style="width:${lo == null ? '2%' : pct(clamp((1 - t.est) / 0.8, 0, 1))}"></div></div>
           <div class="ms">${G.streak.tip > 0 ? `<span class="go">裂缝已经出现(${G.streak.tip}/3)</span>` : '别上街:在这里,公开行动只是送死'}</div>`;
       } else {
-        main = `<div class="mh" data-tip="${esc('黄色:此刻站出来的人。斜纹:你手里的组织力一次还能带出的人。紫框:临界点——大约要这么多人同时站出来,风险才被摊薄、连锁才会开始(估计值)。')}"><b>🔥 离临界点</b><span class="mv">${lab.crowd || '街上'} ${crowdTxt} · 需要 ${tipTxt}</span></div>
+        main = `<div class="mh" data-tip="${esc('黄色:此刻站出来的人。斜纹:你手里的组织力一次还能带出的人。紫框:临界点——大约要这么多人同时站出来,风险才被摊薄、连锁才会开始(估计值)。')}"><b>🔥 离临界点</b><span class="mv">${lab.crowd || '街上'} ${crowdTxt} · 需要 ${tipTxt}${t.kind === 'est' ? ' ' + arrow(delta(G.hist.tipSeen), 0.004, false, true).replace('上升', '在升高').replace('下降', '在降低') : ''}</span></div>
           <div class="mbar"><div class="fill" style="width:${P(x)}"></div><div class="ghost" style="left:${P(x)};width:${P(cap)}"></div>${band}</div>
           <div class="ms">${ready ? '<span class="go">够了!现在全力行动,可能点燃连锁反应</span>' : cap > 0 ? `你的组织力一次还能带出约 ${cnt(cap)} 人` : '组织力不够发起行动——收集气泡,或等一等'}</div>`;
       }
@@ -482,16 +657,17 @@
   function renderReadouts() {
     const r = G.readout(), L = G.L, lab = L.labels || {};
     const rows = [];
-    rows.push({ id: 'risk', i: '⚠️', l: '此刻站出来', v: r.risk.words, s: '被抓的后果:' + r.pen.words, lv: r.risk.level, max: 4 });
-    rows.push({ id: 'legit', i: '⚖️', l: '执法在人们眼中', v: r.legit.words, s: r.legit.level ? '越界的处罚会被记住' : '', lv: r.legit.level, max: 3 });
-    rows.push({ id: 'army', i: '🪖', l: lab.army || '军警', tag: r.army.rumor ? '传闻' : '', v: r.army.words, lv: r.army.level, max: 4 });
+    const h = G.hist, mv = MOV();
+    rows.push({ id: 'risk', i: '⚠️', l: '此刻站出来', v: r.risk.words, s: '被抓的后果:' + r.pen.words, lv: r.risk.level, max: 4, tr: arrow(delta(h.risk), 0.04, !mv) });
+    rows.push({ id: 'legit', i: '⚖️', l: '执法在人们眼中', v: r.legit.words, s: r.legit.level ? '越界的处罚会被记住' : '', lv: r.legit.level, max: 3, tr: arrow(delta(h.over), 0.05, mv ? null : false) });
+    rows.push({ id: 'army', i: '🪖', l: lab.army || '军警', tag: r.army.rumor ? '传闻' : '', v: r.army.words, lv: r.army.level, max: 4, tr: arrow(delta(h.dSeen), 0.02, mv) });
     rows.push({ id: 'mood', i: '💢', l: '民间情绪', tag: G.side === 'regime' ? '可信度:' + r.mood.conf.split(':')[0] : '传闻', v: r.mood.words,
-      s: G.side === 'regime' && r.mood.bias >= 0.15 ? r.mood.conf.split(':')[1] || '' : '', lv: r.mood.level, max: 4 });
+      s: G.side === 'regime' && r.mood.bias >= 0.15 ? r.mood.conf.split(':')[1] || '' : '', lv: r.mood.level, max: 4, tr: arrow(delta(h.moodSeen), 0.03, mv) });
     $('readouts').innerHTML = rows.map((o) => {
       const changed = prevWords[o.id] != null && prevWords[o.id] !== o.v;
       return `<div class="ro ${changed ? 'flash' : ''}" id="ro-${o.id}" data-tip="${esc(RO_TIPS[o.id] || '')}">
         <div class="i">${o.i}</div><div class="l"><span>${o.l}</span>${o.tag ? `<span class="tag">${o.tag}</span>` : ''}</div>
-        <div class="v ${o.lv != null ? 'lv' + Math.min(5, Math.round((o.lv / (o.max || 4)) * 4)) : ''}">${o.v}</div>
+        <div class="v ${o.lv != null ? 'lv' + Math.min(5, Math.round((o.lv / (o.max || 4)) * 4)) : ''}">${o.v}${o.tr ? ' ' + o.tr : ''}</div>
         ${o.s ? `<div class="s">${o.s}</div>` : ''}
         ${o.lv != null ? `<div class="dots">${dots(o.lv, o.max)}</div>` : ''}</div>`;
     }).join('');
@@ -590,7 +766,8 @@
   }
 
   function renderNews() {
-    $('news').innerHTML = G.news.slice(0, 40).map((n) => `<div class="n ${n.kind}"><span class="d">${n.date}</span><span>${n.text}</span></div>`).join('');
+    const K = { opp: G.side === 'movement' ? '当局' : '对方', crowd: '街头', mine: '你', army: (G.L.labels && G.L.labels.army && G.L.labels.army.length <= 3) ? G.L.labels.army : '军警', event: '事件', intel: '情报', arrest: '抓捕', calm: '平静', report: '回报', info: '消息' };
+    $('news').innerHTML = G.news.slice(0, 50).map((n) => `<div class="n ${n.kind} ${n.round >= G.round ? 'now' : ''}"><span class="d">${n.date}</span><span class="k">${K[n.kind] || '消息'}</span><span class="t">${n.text}</span></div>`).join('');
   }
 
   /* ---------- 事件弹窗 ---------- */
@@ -723,7 +900,7 @@
   }
 
   /* ---------- 菜单与帮助 ---------- */
-  $('g-menu').addEventListener('click', () => { setSpeed(0); $('ov-menu').classList.add('show'); });
+  $('g-menu').addEventListener('click', () => $('ov-menu').classList.add('show'));
   $('mm-resume').addEventListener('click', () => $('ov-menu').classList.remove('show'));
   $('mm-restart').addEventListener('click', () => { $('ov-menu').classList.remove('show'); startLevel(curLevel, curOpts); });
   $('mm-help').addEventListener('click', () => { $('ov-menu').classList.remove('show'); $('ov-help').classList.add('show'); });
@@ -732,7 +909,7 @@
   $('mm-auto').addEventListener('click', () => { SAVE.autoCollect = !SAVE.autoCollect; persist(); autoLabel(); });
   $('mm-levels').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('levels'); });
   $('mm-title').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('title'); });
-  $('g-help').addEventListener('click', () => { setSpeed(0); $('ov-help').classList.add('show'); });
+  $('g-help').addEventListener('click', () => $('ov-help').classList.add('show'));
   $('g-guide').addEventListener('click', startGuide);
   $('mm-guide').addEventListener('click', () => { $('ov-menu').classList.remove('show'); startGuide(); });
   $('help-close').addEventListener('click', () => $('ov-help').classList.remove('show'));
@@ -744,7 +921,7 @@
   /* ---------- 键盘 ---------- */
   document.addEventListener('keydown', (e) => {
     if (current !== 'game' || !G) return;
-    if (anyOverlay()) { if (e.key === 'Escape' || (e.key === 'b' && $('ov-tree').classList.contains('show'))) { $('ov-menu').classList.remove('show'); $('ov-help').classList.remove('show'); closeTree(); } return; }
+    if (anyOverlay()) { if (e.key === 'Escape' || (e.key === 'b' && $('ov-tree').classList.contains('show')) || ((e.key === 'a' || e.key === 'A') && $('ov-analysis').classList.contains('show'))) { $('ov-menu').classList.remove('show'); $('ov-help').classList.remove('show'); closeTree(); closeAnalysis(); } return; }
     if (Coach.active && e.key === 'Escape') { Coach.end(); return; }
     if (Coach.locked()) return;
     if (e.key === ' ') { e.preventDefault(); setSpeed(speed > 0 ? 0 : lastSpeed || 1); }
@@ -752,6 +929,8 @@
     else if (e.key === 'Escape') { $('g-menu').click(); }
     else if (/^[1-9]$/.test(e.key)) { const c = G.hand()[+e.key - 1]; if (c) playCard(c.id); }
     else if (e.key === 'b' || e.key === 'B') openTree();
+    else if (e.key === 'a' || e.key === 'A') openAnalysis();
+    else if (e.key === 'l' || e.key === 'L') $('layer-btn').click();
   });
 
   /* ---------- 提示框 ---------- */
@@ -767,7 +946,7 @@
     tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
   });
   document.addEventListener('mouseout', (e) => { if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('[data-tip]')) tipEl.style.display = 'none'; });
-  window.addEventListener('resize', () => { if (city && current === 'game') city.resize(); Coach.reposition(); });
+  window.addEventListener('resize', () => { if (city && current === 'game') { city.resize(); drawTrend($('trend'), false); } Coach.reposition(); });
   window.addEventListener('scroll', () => Coach.reposition(true), { passive: true });
 
   /* ================= 新手引导 ================= */
@@ -823,7 +1002,7 @@
   const Coach = (() => {
     const layer = $('coach-layer'), hole = $('coach-hole'), box = $('coach'), blocker = $('coach-blocker');
     let steps = [], i = 0, opts = {}, active = false;
-    function start(s, o) { steps = s; opts = o || {}; i = 0; active = true; layer.classList.add('show'); setSpeed(0); showStep(); }
+    function start(s, o) { steps = s; opts = o || {}; i = 0; active = true; layer.classList.add('show'); showStep(); }   // 引导打开期间时间自动停住(见 blocking)
     function end() {
       active = false; layer.classList.remove('show');
       document.body.classList.remove('coach-lock');
@@ -851,6 +1030,7 @@
       reposition();
       if (waiting) setTimeout(remark, 30);
       if (st.wait && st.wait.startsWith('ap:') && G && G.me.ap >= +st.wait.slice(3)) setTimeout(next, 200);
+      if (st.wait === 'speed' && speed > 0) setTimeout(next, 1200);   // 时间本来就在走
       if (st.wait === 'collect' && G && !G.bubbles.length) { G.spawnBubble('morale', 1, 'plaza'); processFx(); }
     }
     function remark() {   // 重绘之后重新标记可点的控件, 并重新定位

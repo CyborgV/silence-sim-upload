@@ -650,7 +650,9 @@
       this.intelNoise = { mood: 0, army: 0, tip: 0 };
       this.prevX = 0; this.prevD = 0;
       this.tipCache = { t: -1, v: null };
-      this.hist = { x: [], d: [], mood: [], moodSeen: [], tip: [], tipSeen: [], R: [], p: [], P: [], alert: [], org: [] };
+      this.hist = { x: [], d: [], mood: [], moodSeen: [], tip: [], tipSeen: [], R: [], p: [], P: [], alert: [], org: [], dSeen: [], risk: [], over: [], orgSeen: [], uc: [] };
+      this.reports = [];                                 // 行动回报: 出牌/改政策两轮后告诉玩家发生了什么
+      this.diagCache = { t: -1, v: null }; this.ucCache = { t: -1, v: null };
       this.allowCards = null;                            // 教程用: 只允许这些牌
       if (level.setup) level.setup(this);
       this.aiStage = this.stage();
@@ -805,6 +807,7 @@
       this.actions.push({ round: this.round, id, side: this.side });
       this.fx.push({ type: 'card', id, side: this.side });
       this.log(`你:「${this.card(id).name}」`, 'mine');
+      this._noteAction(this.card(id).name);
       this.sim.tauDirty = true;
       this.tipCache.t = -1;
       this._applyParams();
@@ -848,6 +851,7 @@
       this.polCd[key] = 2;
       this.actions.push({ round: this.round, id: key + ':' + id, side: this.side });
       this.log(`你把「${POLICIES[key].name}」改为「${ps.opt.name}」`, 'mine');
+      this._noteAction(`${POLICIES[key].name}→${ps.opt.name}`);
       this.tipCache.t = -1;
       this._applyParams();
       if (this.onPlay) this.onPlay('policy:' + key);
@@ -974,23 +978,192 @@
     /* ---------- 临界点: 真值 ---------- */
     tipping() {
       if (this.tipCache.t === this.round) return this.tipCache.v;
-      const o = this.sim.o;
-      const inf = this.sim.net ? o.omega * o.globalScale + (1 - o.omega) : o.globalScale;
-      const ana = this.sim.analysis({ useMem: true, kScale: 1 / Math.max(0.05, inf) });
-      let v;
-      const roots = ana.roots.filter(q => !q.boundary);
-      const unstable = roots.find(q => !q.stable);
-      if (unstable) v = unstable.x;
-      else {
-        const high = roots.find(q => q.stable && q.x > 0.05);
-        if (high) {
-          // 没有分界: 若零点附近 F(x)>x → 一点就着; 否则(只有低位稳定点)是极高门槛
-          const f = this.sim.frozenF(0.002, o.P, ana.k, true);
-          v = f > 0.002 ? 0 : Infinity;
-        } else v = Infinity;
-      }
+      const v = this._tipCalc();
       this.tipCache = { t: this.round, v };
       return v;
+    }
+    /** 临界点; ov 给出假想的改变(敏感性分析): kMul 执行能力倍率, Pmul 处罚倍率, gsAdd 消息可见度, shift 怨气(承受上限整体上移) */
+    _tipCalc(ov) {
+      ov = ov || {};
+      const o = this.sim.o;
+      const gs = clamp(o.globalScale + (ov.gsAdd || 0), 0, 1);
+      const inf = this.sim.net ? o.omega * gs + (1 - o.omega) : gs;
+      const P = ov.Pmul ? this.sim.eff().P * ov.Pmul : undefined;
+      const ana = this.sim.analysis({ useMem: true, kScale: (ov.kMul || 1) / Math.max(0.05, inf), P, shift: ov.shift || 0 });
+      const roots = ana.roots.filter(q => !q.boundary);
+      const unstable = roots.find(q => !q.stable);
+      if (unstable) return unstable.x;
+      const high = roots.find(q => q.stable && q.x > 0.05);
+      if (!high) return Infinity;
+      // 没有分界: 若零点附近 F(x)>x → 一点就着; 否则(只有低位稳定点)是极高门槛
+      const f = this.sim.frozenF(0.002, P != null ? P : o.P, ana.k, true, ov.shift || 0);
+      return f > 0.002 ? 0 : Infinity;
+    }
+
+    /* ---------- 参谋: 眼下的主要阻力 / 隐患 ----------
+     * 行动方: 对临界点做敏感性分析——同样"一步"的改变(抓捕能力 −30%、处罚 −25%、怨气 +一档、消息 +25%),
+     * 哪一个能让临界点降得最多, 它就是眼下最大的阻力。只给定性的强弱, 不给数字。
+     * 当局: 列出正在侵蚀安全边际的因素; 它们和你的情报一样会"报喜不报忧"。 */
+    diagnose() {
+      if (this.diagCache.t === this.round && !this.diagDirty) return this.diagCache.v;
+      this.diagDirty = false;
+      const v = this.side === 'movement' ? this._diagMovement() : this._diagRegime();
+      this.diagCache = { t: this.round, v };
+      return v;
+    }
+    _diagMovement() {
+      const CAP = 1.2, T = (ov) => { const t = this._tipCalc(ov); return t === Infinity ? CAP : t; };
+      const base = this.tipping(), B = base === Infinity ? CAP : base;
+      const ms = this.moodScale || 0.2;
+      const f = [
+        { id: 'capacity', name: '当局抓得过来', drop: B - T({ kMul: 0.7 }),
+          advice: '人太少,当局抓得过来。需要一次带出更多人(攒够组织力、同一轮打出几张牌),或者先动摇执行者——同样的警力被更多人摊薄,每个人的风险才会下降。',
+          cards: ['strike', 'march', 'mobilize', 'fraternize', 'blockade', 'prayer', 'blankpaper'] },
+        { id: 'penalty', name: '被抓的代价太重', drop: B - T({ Pmul: 0.75 }),
+          advice: '被抓的后果太重,很少有人承受得起。营救被捕者、低调的参与方式能降低代价;当局一旦越界,重罚也会变成积怨,反过来压低临界点。',
+          cards: ['legal', 'lowkey', 'hide', 'prayer'] },
+        { id: 'anger', name: '怨气还不够', drop: B - T({ shift: 0.25 * ms }),
+          advice: '人们还不够愤怒,或者愤怒被封锁压着没有浮出来。悼念与曝光能让记忆浮出水面;当局每一次越界的处罚,也都会被记住。',
+          cards: ['memorial', 'leak', 'hunger', 'banner', 'cassette'] },
+        { id: 'info', name: '人们看不见彼此', drop: B - T({ gsAdd: 0.25 }),
+          advice: '人们看不见彼此——每个人都以为只有自己这么想。地下刊物、串联织网、传播类的建设能让人知道"别人也在"。',
+          cards: ['samizdat', 'network', 'usb', 'market', 'cassette'] },
+      ];
+      const mx = Math.max(...f.map((q) => q.drop));
+      for (const q of f) q.v = mx > 1e-4 ? clamp(q.drop / mx, 0, 1) : 0;
+      f.sort((a, b) => b.v - a.v);
+      let head;
+      if (base === 0) head = { kind: 'go', text: '一点就着:任何一点火星都可能燎原。现在就是出手的时候。' };
+      else if (mx <= 1e-4 && base === Infinity) head = { kind: 'stuck', text: '看不到转机:任何单独一项改变都不够。多管齐下,或者等待时机(一次越界的镇压、一个纪念日……)。' };
+      else {
+        const r = this.readout(), cap = this.pushCapacity();
+        const est = r.tip.kind === 'est' ? r.tip.est : null;
+        if (est != null && this.x + cap >= est) head = { kind: 'go', text: '你手里的组织力,一次能带出的人已经够到估计的临界点了。' };
+        else if (est != null) head = { kind: 'gap', text: `你一次最多能带出约 ${fmtCount(Math.max(1, (this.x + cap) * this.N * this.scale))} 人,估计需要 ${r.tip.text.replace('约 ', '')}。` };
+      }
+      const g = this.L.goal || {};
+      if (g.d != null && g.x == null) {
+        // 这一关靠执行者倒戈取胜: 先说军心
+        const r = this.readout();
+        head = { kind: 'army', text: `这一关要赢,靠的是执行者倒戈。${(this.L.labels && this.L.labels.army) || '军警'}眼下「${r.army.words}」(传闻),目标是「成建制倒戈」。街上的人越多、越和士兵说话,他们越动摇。` };
+      }
+      return { side: 'movement', title: '眼下的主要阻力', factors: f, head, top: f[0] };
+    }
+    _diagRegime() {
+      const bias = this.intelBias(), o = this.sim.o;
+      const moodSeen = (this.meanGrievance() / this.moodScale) * (1 - bias);
+      const raw = this.regimeRawIncome();
+      const f = [
+        { id: 'grievance', name: '积怨在侵蚀安全边际', v: clamp(moodSeen / 0.9, 0, 1),
+          advice: '积怨不会表现为上街,却在把临界点往下压。把执法降到人们认可的界线以内;对话、特赦、安抚类的建设能让它慢慢消退。',
+          cards: ['dialogue', 'amnesty', 'subsidy'] },
+        { id: 'overline', name: '处罚越过了界线', v: clamp((o.P - o.Pbar) / 0.6, 0, 1),
+          advice: '你的处罚已经越过人们认可的界线:每抓一个人,旁观者都记在心里,执行者也会不安。把「执法」降到常规或以下。',
+          cards: [] },
+        { id: 'army', name: '执行者在动摇', v: clamp(this.d / 0.35, 0, 1),
+          advice: '执行者在动摇。越界的命令、街上的人数、同僚的态度都会让他们犹豫。发饷、轮换能暂时稳住,但治标不治本。',
+          cards: ['bonus', 'rotate'] },
+        { id: 'money', name: '财政入不敷出', v: raw < 0 ? clamp(-raw / (0.6 * this.econ), 0.2, 1) : 0,
+          advice: '强硬政策的开销超过了收入,代价正转嫁给百姓,变成积怨。关掉最贵、却最不必要的那一项。',
+          cards: [] },
+        { id: 'org', name: '反对派在组织', v: clamp(this.orgShown() / 100, 0, 1),
+          advice: '反对派的组织度满了就会发动大规模行动。抓串联者、对话让步都能把它压下去。',
+          cards: ['informants', 'cutnet', 'dialogue'] },
+        { id: 'intel', name: '情报失真', v: clamp(bias / 0.5, 0, 1),
+          advice: '下面的人不敢说真话——你看到的"平静"可能是假的,上面几条也可能被低估了。「线人」这类牌能暂时听到真话。',
+          cards: ['informants'] },
+      ];
+      f.sort((a, b) => b.v - a.v);
+      const r = this.readout();
+      const head = { kind: bias >= 0.3 ? 'warn' : 'info', text: `下面报上来的局势:「${r.tip.words}」${bias >= 0.15 ? '(可信度' + (bias >= 0.4 ? '低' : '中') + ')' : ''}。` };
+      return { side: 'regime', title: '眼下的隐患', factors: f, head, top: f[0] };
+    }
+
+    /* ---------- 暗流: 城里有多少人"离站出来只差一点" ----------
+     * 性质十: 临界反馈由"门槛附近的人数"决定。对每个自由的人, 比较 τ+b 与两种假想人数下的代价:
+     *   2 = 只要约 5% 的人上街就会加入(蠢蠢欲动); 1 = 约四分之一的人上街才会加入(在观望)。
+     * 玩家看到的是经过迷雾的版本: 民间一方是传闻(有错有漏), 当局一方越凶, 越多的人藏起心思。 */
+    undercurrent() {
+      if (this.ucCache.t === this.round && this.ucCache.v) return this.ucCache.v;
+      const s = this.sim, N = this.N, o = s.o, P = s.eff().P;
+      const { k } = s.capacity(this.d);
+      const inf = s.net ? o.omega * o.globalScale + (1 - o.omega) : o.globalScale;
+      const kk = k / Math.max(0.05, inf);
+      const c5 = s.cost(kk, 0.05, P), c25 = s.cost(kk, 0.25, P);
+      const tier = new Uint8Array(N);
+      const rng = mulberry32((this.round + 1) * 7919 + (o.seed || 1));
+      const bias = this.intelBias();
+      let shown = 0, free = 0;
+      for (let i = 0; i < N; i++) {
+        if (s.r[i] || s.a[i]) continue;
+        free++;
+        const q = s.tau[i] + s.b[i];
+        let t = q >= c5 ? 2 : q >= c25 ? 1 : 0;
+        if (this.side === 'regime') { if (t && rng() < bias * 1.4) t--; }
+        else { const u = rng(); if (u < 0.12) t = Math.max(0, t - 1); else if (u > 0.95 && t < 2) t++; }
+        tier[i] = t;
+        if (t) shown += t === 2 ? 1 : 0.5;
+      }
+      const v = { tier, frac: free ? shown / free : 0 };
+      this.ucCache = { t: this.round, v };
+      return v;
+    }
+
+    /* ---------- 行动回报 ---------- */
+    _noteAction(name) {
+      const r = this.round;
+      let p = this.reports.find((q) => q.round === r);
+      if (!p) {
+        const ro = this.readout();
+        p = { round: r, due: r + 2, names: [], x0: this.x, peak: this.x, R0: this.sim.R, tip0: ro.tip, mood0: ro.mood, army0: ro.army, uc0: this.undercurrent().frac };
+        this.reports.push(p);
+      }
+      if (!p.names.includes(name)) p.names.push(name);
+      this.diagDirty = true;
+    }
+    _reports() {
+      for (const p of this.reports) p.peak = Math.max(p.peak, this.x);
+      const due = this.reports.filter((p) => this.round >= p.due);
+      if (!due.length) return;
+      this.reports = this.reports.filter((p) => this.round < p.due);
+      const ro = this.readout(), lab = this.L.labels || {};
+      const cnt = (v) => fmtCount(Math.max(0, v) * this.N * this.scale);
+      for (const p of due) {
+        const what = '「' + p.names.join('」「') + '」';
+        const parts = [];
+        const crowdL = lab.crowd || '街上';
+        if (p.peak > p.x0 + 0.002 || this.x > 0.002) parts.push(`${crowdL}最多约 ${cnt(p.peak)} 人,现在约 ${cnt(this.x)} 人`);
+        else parts.push(`${crowdL}依旧空无一人`);
+        const arrested = (this.sim.R - p.R0) * this.N * this.arrestScale;
+        if (arrested >= 1) parts.push(`这期间被带走约 ${fmtCount(arrested)} 人`);
+        let verdict = '';
+        if (this.side === 'movement') {
+          const t0 = p.tip0, t1 = ro.tip;
+          if (t1.kind === 'tinder' || (t1.kind === 'est' && this.x >= t1.est && this.x > 0.02)) verdict = '连锁反应已经开始。';
+          else if (p.peak > p.x0 + 0.004 && t0.kind === 'est') {
+            const ratio = p.peak / t0.est;
+            verdict = ratio < 0.5 ? `离估计的临界点(${t0.text.replace('约 ', '')})还差得远——人不够多,每个人面对的风险没有被摊薄。` : ratio < 1 ? '只差一点就到临界点了。' : '人数一度越过了估计的临界点,却没能留住——估计本身可能偏低。';
+          }
+          if (verdict.startsWith('连锁')) { /* 已经点着了, 临界点的变化不再重要 */ }
+          else if (t0.kind === 'est' && t1.kind === 'est') {
+            if (t1.est < t0.est * 0.88) verdict += `估计的临界点降低了(${cnt(t0.est)} → ${cnt(t1.est)} 人)。`;
+            else if (t1.est > t0.est * 1.12) verdict += `估计的临界点反而升高了(${cnt(t0.est)} → ${cnt(t1.est)} 人)。`;
+          } else if (t0.kind === 'none' && t1.kind === 'est') verdict += '临界点出现了——转机第一次变得可见。';
+          else if (t0.kind === 'est' && t1.kind === 'none') verdict += '临界点消失了——眼下看不到转机。';
+          const uc1 = this.undercurrent().frac;
+          if (uc1 > p.uc0 * 1.15 + 0.005) verdict += '暗流在扩大。';
+          else if (uc1 < p.uc0 * 0.85 - 0.005) verdict += '暗流在收缩。';
+          if (!verdict) verdict = '暂时看不出变化。';
+        } else {
+          if (p.mood0.words !== ro.mood.words) verdict += `据报民间情绪「${p.mood0.words}」→「${ro.mood.words}」${ro.mood.bias >= 0.15 ? '(可能报喜不报忧)' : ''}。`;
+          if (p.army0.words !== ro.army.words) verdict += `${lab.army || '军警'}「${p.army0.words}」→「${ro.army.words}」。`;
+          if (p.tip0.words !== ro.tip.words) verdict += `局势「${p.tip0.words}」→「${ro.tip.words}」。`;
+          if (!verdict) verdict = '据报一切如常。';
+        }
+        const text = `${what}之后:${parts.join(';')}。${verdict}`;
+        this.log(text, 'report');
+        this.fx.push({ type: 'report', text });
+      }
     }
     /** 去掉行动方的临时效果(传单、记者……)之后的临界点: 衡量"持久的"变化 */
     structuralTipping() {
@@ -1032,6 +1205,7 @@
       const dNoise = this.side === 'regime' ? 0 : this.intelNoise.army;
       const dShown = clamp(d + dNoise, 0, 1);
       const army = band(dShown, [0.05, 0.15, 0.35, 0.6], ['令行禁止', '私下抱怨', '人心浮动', '公开抗命', '成建制倒戈']);
+      army.shown = dShown;
       army.rumor = this.side !== 'regime';
       const moodTrue = this.meanGrievance() / this.moodScale;
       const bias = this.intelBias();
@@ -1284,6 +1458,7 @@
       this._applyParams();
       this._news(arrested, d0);
       this._record();
+      this._reports();
       this._check();
       if (!this.over) this._pollEvents();
     }
@@ -1297,6 +1472,8 @@
       h.tip.push(t === Infinity ? 1 : Math.min(1, t)); h.tipSeen.push(r.tip.shownFrac);
       h.P.push(this.sim.o.P);
       h.alert.push(this.alert); h.org.push(this.org);
+      h.dSeen.push(r.army.shown); h.risk.push(r.risk.p); h.over.push(r.legit.over); h.orgSeen.push(this.orgShown());
+      const uc = this.undercurrent(); h.uc.push(uc.frac);
     }
 
     /** 以当前资源, 一次最多能把多少人带上街(占人口比例, 含已安排的) */
