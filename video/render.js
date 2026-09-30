@@ -225,10 +225,33 @@ async function renderVideo() {
 }
 
 /* ---------- 字幕、配乐、封面、简介 ---------- */
+// 长句按标点拆成几条字幕(英文一条最多约两行, 中文一行), 时长按字数分配
+function splitCue(c) {
+  const zh = LANG === 'zh', max = zh ? 30 : 84, len = (s) => s.length;
+  if (len(c.text) <= max) return [c];
+  const bySentence = zh ? c.text.split(/(?<=[。?!;])/) : c.text.split(/(?<=[.?!;])\s+/);
+  const pieces = [];
+  for (const p of bySentence) {
+    if (len(p) <= max) { pieces.push(p); continue; }
+    pieces.push(...(zh ? p.split(/(?<=[,:])|(?<=——)/) : p.split(/(?<=,)\s+|\s+(?=—)/)));
+  }
+  const out = []; let cur = '';
+  for (const p of pieces.filter(Boolean)) {
+    const cand = cur ? cur + (zh ? '' : ' ') + p : p;
+    if (len(cand) <= max || !cur) cur = cand; else { out.push(cur); cur = p; }
+  }
+  if (cur) out.push(cur);
+  for (let i = out.length - 1; i > 0; i--) if (Math.min(len(out[i - 1]), len(out[i])) < (zh ? 7 : 16)) out.splice(i - 1, 2, out[i - 1] + (zh ? '' : ' ') + out[i]);   // 太短的一截并进相邻的
+  const total = out.reduce((a, s) => a + len(s), 0);
+  let t = c.start;
+  return out.map((text, i) => { const d = (c.end - c.start) * len(text) / total, e = i === out.length - 1 ? c.end : t + d; const r = { start: t, end: e, text }; t = e; return r; });
+}
+
 function writeCaptions(TL) {
-  const srt = TL.cues.map((c, i) => `${i + 1}\n${ts(c.start, ',')} --> ${ts(c.end, ',')}\n${c.text}\n`).join('\n');
+  const cues = TL.cues.flatMap(splitCue);
+  const srt = cues.map((c, i) => `${i + 1}\n${ts(c.start, ',')} --> ${ts(c.end, ',')}\n${c.text}\n`).join('\n');
   fs.writeFileSync(path.join(OUT, `${NAME}.srt`), srt);
-  const font = LANG === 'zh' ? 'WenQuanYi Zen Hei' : 'Liberation Sans', size = LANG === 'zh' ? 50 : 48;
+  const font = LANG === 'zh' ? 'WenQuanYi Zen Hei' : 'Liberation Sans', size = LANG === 'zh' ? 50 : 46;
   const ass = `[Script Info]
 ScriptType: v4.00+
 PlayResX: ${W}
@@ -238,11 +261,11 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,${font},${size},&H00F2EDE8,&H00F2EDE8,&H60000000,&H00000000,0,0,0,0,100,100,${LANG === 'zh' ? 2 : 0},0,3,14,0,2,220,220,46,1
+Style: Default,${font},${size},&H00F2EDE8,&H00F2EDE8,&H60000000,&H00000000,0,0,0,0,100,100,${LANG === 'zh' ? 2 : 0},0,3,14,0,2,120,120,46,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-${TL.cues.map((c) => `Dialogue: 0,${assTs(c.start)},${assTs(c.end)},Default,,0,0,0,,${c.text.replace(/\n/g, '\\N')}`).join('\n')}
+${cues.map((c) => `Dialogue: 0,${assTs(c.start)},${assTs(c.end)},Default,,0,0,0,,${c.text.replace(/\n/g, '\\N')}`).join('\n')}
 `;
   const assFile = path.join(OUT, `${NAME}.ass`);
   fs.writeFileSync(assFile, ass);
