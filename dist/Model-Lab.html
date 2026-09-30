@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glances on the Road · Model Lab</title>
+<style>
+  :root {
+    --bg: #0f1318; --panel: #161b22; --panel2: #1c232c; --line: #2b333d;
+    --fg: #d6dde5; --dim: #8b97a5; --acc: #58a6ff; --org: #d2a032;
+    --red: #ef6a5e; --grn: #7ec699; --pur: #c09aff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 13px/1.55 -apple-system, "PingFang SC", "Hiragino Sans GB", sans-serif; }
+  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+           padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+           position: sticky; top: 0; z-index: 5; }
+  header h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+  header h1 small { color: var(--dim); font-weight: normal; font-size: 12px; margin-left: 8px; }
+  button, select { background: var(--panel2); color: var(--fg); border: 1px solid var(--line);
+                   border-radius: 6px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; }
+  button:hover, select:hover { border-color: var(--acc); }
+  button.primary { background: #1f3a5f; border-color: #31659f; }
+  button.warn { background: #4a2723; border-color: #8a3d34; }
+  button.act  { background: #234233; border-color: #2f6b4c; }
+  main { display: grid; grid-template-columns: 348px 1fr; gap: 0; height: calc(100vh - 53px); }
+  aside { overflow-y: auto; padding: 10px 12px 40px; border-right: 1px solid var(--line); background: var(--panel); }
+  aside::-webkit-scrollbar { width: 8px; } aside::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  section { overflow-y: auto; padding: 12px 16px 60px; }
+  details { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; background: var(--panel2); }
+  details[open] { background: #171d24; }
+  summary { cursor: pointer; padding: 7px 10px; font-weight: 600; color: var(--fg); user-select: none; }
+  summary .tag { float: right; font-weight: normal; color: var(--dim); font-size: 11px; }
+  .body { padding: 4px 10px 10px; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+  .row label { flex: 0 0 118px; color: var(--dim); font-size: 12px; }
+  .row label:hover { color: var(--fg); }
+  .row input[type=range] { flex: 1; accent-color: var(--acc); }
+  .row .val { flex: 0 0 52px; text-align: right; font-variant-numeric: tabular-nums; color: var(--acc); }
+  .row select { flex: 1; padding: 3px 6px; }
+  .btnrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+  .btnrow button { flex: 1 1 auto; white-space: nowrap; }
+  .note { color: var(--dim); font-size: 11.5px; margin: 6px 0; }
+  .note b { color: var(--org); font-weight: 600; }
+  #statusbar { display: flex; flex-wrap: wrap; gap: 6px 18px; background: var(--panel);
+               border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; margin-bottom: 10px; }
+  #statusbar .item { white-space: nowrap; }
+  #statusbar .item b { color: var(--acc); font-variant-numeric: tabular-nums; }
+  #statusbar .item.alert b { color: var(--red); }
+  canvas.chart { display: block; background: var(--panel); border: 1px solid var(--line);
+                 border-radius: 8px; margin-bottom: 10px; width: 100%; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 1100px) { .grid2 { grid-template-columns: 1fr; } main { grid-template-columns: 300px 1fr; } }
+  .charttitle { font-size: 12px; color: var(--dim); margin: 2px 2px 4px; }
+  .charttitle b { color: var(--fg); }
+  #tests { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+           padding: 8px 12px; font-size: 12px; white-space: pre-wrap; }
+
+  #scenDesc { background: #1a2030; border: 1px solid #31405c; border-radius: 8px;
+              padding: 8px 12px; margin-bottom: 10px; color: #c4d2e8; font-size: 12.5px; }
+  #scenDesc b { color: var(--acc); }
+  .kbd { background:#0b0e12; border:1px solid var(--line); border-radius:4px; padding:0 5px; font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <a href="Glances-on-the-Road.html" style="color:var(--org);text-decoration:none;white-space:nowrap">← Back to game</a>
+  <h1>Model Lab <small>all parameters &amp; charts · implements the equations of “Glances on the Road: A Phase-Transition Model of Silence”</small></h1>
+  <label style="color:var(--dim)">Scenario</label>
+  <select id="scenario" style="min-width:220px"></select>
+  <button id="btnStep" class="primary">Step</button>
+  <button id="btnRun" class="primary">▶ Run</button>
+  <button id="btnReset">Reset</button>
+  <button id="btnRebuild" title="Regenerate the population/network from the parameters on the left">Rebuild world</button>
+  <span style="color:var(--dim)">Speed <span id="spdVal" class="val" style="display:inline">1</span> rounds/frame</span>
+  <input id="spd" type="range" min="1" max="30" value="1" style="width:90px">
+  <button id="btnCsv">Export CSV</button>
+</header>
+
+<main>
+<aside>
+  <div id="scenDesc">Choose a scenario to begin.</div>
+
+  <details open><summary>🏛 Repression apparatus <span class="tag">policy</span></summary><div class="body">
+    <div class="row"><label>Penalty P</label><input id="o_P" type="range" min="0.2" max="2" step="0.01"><span class="val" id="v_P"></span></div>
+    <div class="row"><label>Police capacity K₀ (people/round)</label><input id="o_K0" type="range" min="0" max="200" step="1"><span class="val" id="v_K0"></span></div>
+    <div class="row"><label>Legitimacy threshold P̄</label><input id="o_Pbar" type="range" min="0" max="1.5" step="0.01"><span class="val" id="v_Pbar"></span></div>
+    <div class="row"><label>Targeting</label><select id="o_targetMode">
+      <option value="uniform">Uniform random</option><option value="organizer">Organizers (cut ties)</option><option value="zealot">The most committed</option><option value="preventive">Preventive arrests (by list)</option></select></div>
+    <div class="row"><label>Tie-cutting strength</label><input id="o_netDamage" type="range" min="0" max="1" step="0.05"><span class="val" id="v_netDamage"></span></div>
+    <div class="row"><label>Release prob. per round</label><input id="o_releaseProb" type="range" min="0" max="1" step="0.05"><span class="val" id="v_releaseProb"></span></div>
+    <div class="note">P and P̄ together set how far things go “over the line”, (P−P̄)₊: it drives both memory accumulation and enforcer disobedience. P̄ is <b>the line society accepts</b>, not a technical parameter.</div>
+  </div></details>
+
+  <details><summary>🪖 Enforcers <span class="tag">policy</span></summary><div class="body">
+    <div class="row"><label>Headcount M</label><input id="o_M" type="range" min="10" max="2000" step="10"><span class="val" id="v_M"></span></div>
+    <div class="row"><label>Threshold scale ψ~U(0,·)</label><input id="o_psiScale" type="range" min="0.2" max="3" step="0.05"><span class="val" id="v_psiScale"></span></div>
+    <div class="row"><label>Crowd pressure α</label><input id="o_alpha" type="range" min="0" max="1.5" step="0.05"><span class="val" id="v_alpha"></span></div>
+    <div class="row"><label>Peer influence β</label><input id="o_beta" type="range" min="0" max="1.5" step="0.05"><span class="val" id="v_beta"></span></div>
+    <div class="row"><label>Disobedience coeff. δ</label><input id="o_delta" type="range" min="0" max="1.5" step="0.05"><span class="val" id="v_delta"></span></div>
+    <div class="row"><label>Initial refusal d₀</label><input id="o_d0" type="range" min="0" max="1" step="0.05"><span class="val" id="v_d0"></span></div>
+    <div class="note">Refusal rule: α·x + β·d + δ(P−P̄)₊ ≥ ψ. Each layer can be stable on its own and still become unstable when coupled (Property 4).</div>
+  </div></details>
+
+  <details><summary>📺 Information environment <span class="tag">policy</span></summary><div class="body">
+    <div class="row"><label>Global info weight ω</label><input id="o_omega" type="range" min="0" max="1" step="0.05"><span class="val" id="v_omega"></span></div>
+    <div class="row"><label>Propaganda compression</label><input id="o_globalScale" type="range" min="0" max="1" step="0.05"><span class="val" id="v_globalScale"></span></div>
+    <div class="row"><label>Rumor noise</label><input id="o_noise" type="range" min="0" max="0.3" step="0.01"><span class="val" id="v_noise"></span></div>
+    <div class="note">x̂=(1−ω)·acquaintances' participation+ω·(compressed global share). The smaller ω, the more people rely on those around them (church circles). More accurate information does not necessarily raise participation — it depends on which way it was biased before (Property 5).</div>
+  </div></details>
+
+  <details><summary>🧠 Memory &amp; mood <span class="tag">structure</span></summary><div class="body">
+    <div class="row"><label>Decay rate ρ</label><input id="o_memDecay" type="range" min="0" max="1" step="0.05"><span class="val" id="v_memDecay"></span></div>
+    <div class="row"><label>Conversion strength γ</label><input id="o_gamma" type="range" min="0" max="6" step="0.1"><span class="val" id="v_gamma"></span></div>
+    <div class="row"><label>Event visibility w</label><input id="o_vis" type="range" min="0" max="1" step="0.05"><span class="val" id="v_vis"></span></div>
+    <div class="row"><label>Memory kernel</label><select id="o_kernel">
+      <option value="exp">Exponential decay (default)</option><option value="memorial">Memorial peak (40th day)</option></select></div>
+    <div class="row"><label>Memorial peak delay</label><input id="o_memPeak" type="range" min="2" max="30" step="1"><span class="val" id="v_memPeak"></span></div>
+    <div class="row"><label>Memorial peak strength</label><input id="o_memPeakAmp" type="range" min="0" max="4" step="0.1"><span class="val" id="v_memPeakAmp"></span></div>
+    <div class="note">b←(1−ρ)b+γw(P−P̄)₊ζ. The same public record can hide very different amounts of accumulated memory — <b>repression debt</b> (Property 2).</div>
+  </div></details>
+
+  <details><summary>🕸 Social structure <span class="tag">applies after rebuild</span></summary><div class="body">
+    <div class="row"><label>Population N</label><input id="o_N" type="range" min="200" max="8000" step="100"><span class="val" id="v_N"></span></div>
+    <div class="row"><label>Tolerance distribution</label><select id="o_tolType">
+      <option value="uniform">Uniform [0,1]</option><option value="bell">Bell (peaked middle)</option>
+      <option value="bimodal">Bimodal (moderate/radical)</option><option value="ladder">Granovetter ladder</option>
+      <option value="low">Repressed society (all lowered)</option></select></div>
+    <div class="row"><label>Network</label><select id="o_netType">
+      <option value="full">Fully mixed (all see all)</option><option value="random">Random network</option>
+      <option value="clusters">Tight cliques (church circles)</option><option value="grid">Spatial square grid</option></select></div>
+    <div class="row"><label>Mean degree</label><input id="o_netDeg" type="range" min="2" max="30" step="1"><span class="val" id="v_netDeg"></span></div>
+    <div class="row"><label>Groups</label><input id="o_netGroups" type="range" min="4" max="100" step="1"><span class="val" id="v_netGroups"></span></div>
+    <div class="row"><label>Hard core x₀</label><input id="o_hardCore" type="range" min="0" max="0.05" step="0.001"><span class="val" id="v_hardCore"></span></div>
+    <div class="row"><label>Random seed</label><input id="o_seed" type="range" min="1" max="999" step="1"><span class="val" id="v_seed"></span></div>
+    <div class="note">Under uniform random targeting, punishment falls on individuals; changing the network or distribution requires <b>Rebuild world</b>. Hard core = people willing to bear the full penalty without waiting for anyone else (Property 6).</div>
+  </div></details>
+
+  <details open><summary>📣 Tactics (movement)<span class="tag">buttons</span></summary><div class="body">
+    <div class="row"><label>Action size (people)</label><input id="seedCount" type="range" min="1" max="200" step="1" value="30"><span class="val" id="v_seedCount">30</span></div>
+    <div class="row"><label>Placement</label><select id="seedMode"><option value="random">Random</option><option value="near">Near threshold (one step away)</option></select></div>
+    <div class="btnrow">
+      <button id="btnSeed" class="act">Launch action (next round)</button>
+      <button id="btnRecur" title="Automatically add a small action every round">Routine actions: off</button>
+    </div>
+    <div class="btnrow">
+      <button id="btnTV" title="For one round, visibility and global information are restored (like the Leipzig footage aired in West Germany)">Footage leak📼</button>
+      <button id="btnLink" title="Add random ties (networking)">Weave network🕸</button>
+    </div>
+    <div class="btnrow">
+      <button id="btnAmnesty" class="warn">Amnesty (free all)</button>
+      <button id="btnSpike" class="warn" title="One round of highly visible bloodshed">Bloodshed🩸</button>
+      <button id="btnCrack" class="warn" title="Three rounds of added pressure: P×1.3">Crackdown order📢</button>
+    </div>
+    <div class="note">The critical seed x₋ is “the last obstacle” (Property 8). Repeated failure of small actions does not prove a large one will fail — look at x₋ and the number of people near threshold first (distribution chart, bottom right).</div>
+  </div></details>
+
+  <details><summary>🧪 Model self-check</summary><div class="body">
+    <div class="btnrow"><button id="btnTest">Run the paper's numeric checks</button></div>
+    <div id="tests">Not run yet.</div>
+    <div class="note">Full suite of 37 checks (node): <span class="kbd">node tests.js</span></div>
+  </div></details>
+</aside>
+
+<section>
+  <div id="statusbar">
+    <span class="item">Round <b id="s_t">0</b></span>
+    <span class="item">Participation x <b id="s_x">0</b></span>
+    <span class="item">Refusal d <b id="s_d">0</b></span>
+    <span class="item">Enforcement capacity k <b id="s_k">0</b></span>
+    <span class="item">Arrested this round p <b id="s_p">0</b></span>
+    <span class="item">Total arrested R <b id="s_R">0</b></span>
+    <span class="item">Mean memory b̄ <b id="s_b">0</b></span>
+    <span class="item" id="s_mu_item">Backlash coeff. μ <b id="s_mu">0</b></span>
+    <span class="item">Critical seed x₋ <b id="s_xc">—</b></span>
+    <span class="item alert">Low-state recovery <b id="s_rec">1 round</b></span>
+  </div>
+
+  <div class="charttitle"><b>Time series</b> · participation xₜ (blue), refusal dₜ (orange), arrests pₜ (red), mean memory b̄ (green)</div>
+  <canvas id="chTime" class="chart" height="240"></canvas>
+
+  <div class="grid2">
+    <div>
+      <div class="charttitle"><b>Response function F(x)</b> · crossings with the diagonal are fixed points; ● stable, ○ unstable (= critical seed); shading = pulled-back zone</div>
+      <canvas id="chReact" class="chart" height="300"></canvas>
+    </div>
+    <div>
+      <div class="charttitle"><b>Bifurcation diagram</b> · P fixed, sweeping enforcement capacity k: steady-state participation vs. k (saddle-node bifurcation)</div>
+      <canvas id="chBif" class="chart" height="300"></canvas>
+    </div>
+  </div>
+
+  <div class="charttitle"><b>Effective tolerance distribution</b> τ+b (free population) · vertical line = current cost; shaded band = people near threshold (sets μ; Properties 3/10)</div>
+  <canvas id="chDist" class="chart" height="190"></canvas>
+
+  <div class="note" style="margin-top:14px">
+    Equations implemented (paper, p1–p8): c(x)=P·min(1,k/x); participation if τ+b≥c(x̂); refusal if αx+βd+δ(P−P̄)₊≥ψ;
+    memory b←(1−ρ)b+γw(P−P̄)₊ζ; update order: read state → arrest at current capacity → update who can act and memory → both layers re-decide.
+    Extensions: release / amnesty / the delayed memorial kernel are the supplementary transition rules the paper points to; the tie-cutting effect of targeted enforcement corresponds to the discussion of martial law in Poland.
+  </div>
+</section>
+</main>
+
+<script>window.SILENCE_LANG = 'en';</script>
+<script>
+/* ---- model.js ---- */
+/* ============================================================
+ * 道路以目 —— 沉默相变模型 · 模拟核心
+ * 严格按原文方程实现:
+ *   基础模型 (p1-2):  c(x) = P·min(1, k/x);  参与条件 τ_i ≥ c(x);
+ *                    F(x) = 1 − G(c(x));     x_{t+1} = F(x_t)
+ *   信息网络 (p3):    x̂_{i,t} = (1−ω)Σ_j A_ij a_{j,t} + ω·x_t
+ *   执行者   (p3):    z_{j,t+1} = 1{ αx_t + βΣB_jℓ z_ℓ + δ(P−P̄)_+ ≥ ψ_j }
+ *   记忆     (p4):    b_{i,t+1} = (1−ρ)b_i + γw_t(P−P̄)_+ ζ_{i,t}
+ *                    ζ_{i,t} = (1−ω)Σ_j A_ij e_{j,t} + ωp_t
+ *   更新顺序 (p4):    读状态 → 按当前能力拘押 → 更新可行动与记忆
+ *                    → 民众据本轮观察定 a_{t+1}, 执行者定 z_{t+1}
+ *   感知代价 (p4):    ĉ = 0 (k=0); P (k>0, x̂=0); P·min(1, k/x̂)
+ *   参与更新 (p4):    a_{i,t+1} = (1−r_{i,t+1})·max{u_{i,t+1}, 1{τ_i+b_{i,t+1} ≥ ĉ_{i,t}}}
+ * 扩展(原文指明需另写转移规则): 释放 releaseProb、大赦、 Memorial 延迟核 (p8)
+ * 游戏层扩展(不改变上述方程, 默认关闭或为零):
+ *   潜藏记忆 latent: 可见度 w<1 时"没被看见"的那部分 γ(1−w)(P−P̄)₊ζ 暂存, 外泄/曝光时 reveal() 兑现
+ *   addGrievance(): 外生事件(侮辱性定性、火灾、同情)直接改变 b, 与所选记忆核一致
+ *   预防性拘捕名单阈值 listThreshold: 只拘押 τ+b 不低于阈值的人(默认 0 = 原版行为)
+ *   不动点分析可选 useMem(用 τ+b 而非 τ)与 kScale(信息压缩造成的有效执行能力放大)
+ * ============================================================ */
+(function (global) {
+  'use strict';
+
+  /* ---------- 随机数 ---------- */
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /* ---------- 承受上限分布 G ---------- */
+  function sampleTolerances(N, type, rng) {
+    const arr = new Float64Array(N);
+    if (type === 'uniform') {
+      for (let i = 0; i < N; i++) arr[i] = rng();
+    } else if (type === 'bell') {           // 钟形: 中心 0.5, 三角分布近似
+      for (let i = 0; i < N; i++) arr[i] = (rng() + rng() + rng()) / 3;
+    } else if (type === 'bimodal') {        // 双峰: 温和派/激进派
+      for (let i = 0; i < N; i++) {
+        const c = rng() < 0.75 ? 0.28 : 0.78;
+        arr[i] = Math.min(1, Math.max(0, c + (rng() + rng() - 1) * 0.14));
+      }
+    } else if (type === 'ladder') {         // 格兰诺维特阶梯: 门槛 0..1 均匀排开
+      for (let i = 0; i < N; i++) arr[i] = (i + 0.5) / N;
+    } else if (type === 'low') {            // 高压社会: 承受上限整体压低
+      for (let i = 0; i < N; i++) arr[i] = 0.45 * rng();
+    }
+    return arr;
+  }
+
+  /* ---------- 信息网络 A (邻接表, 等权) ---------- */
+  function buildNetwork(N, type, rng, deg, groups) {
+    if (type === 'full') return null;
+    const adj = new Array(N);
+    for (let i = 0; i < N; i++) adj[i] = [];
+    const addEdge = (a, b) => { if (a !== b) { adj[a].push(b); adj[b].push(a); } };
+    if (type === 'random') {                       // Erdős–Rényi, 平均度数 deg
+      const m = Math.round(N * deg / 2);
+      const seen = new Set();
+      let guard = 0;
+      while (seen.size < m && guard++ < m * 30) {
+        const a = (rng() * N) | 0, b = (rng() * N) | 0;
+        if (a === b) continue;
+        const key = a < b ? a * N + b : b * N + a;
+        if (seen.has(key)) continue;
+        seen.add(key); addEdge(a, b);
+      }
+    } else if (type === 'clusters') {              // 教会圈: 紧密小团体 + 少量远程弱联系
+      const gs = Math.max(6, Math.round(N / groups));
+      const perm = Array.from({ length: N }, (_, i) => i);
+      for (let i = N - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; const t = perm[i]; perm[i] = perm[j]; perm[j] = t; }
+      for (let g = 0; g * gs < N; g++) {
+        const mem = perm.slice(g * gs, Math.min(N, (g + 1) * gs));
+        const L = mem.length, ring = Math.min(3, (L - 1) >> 1);
+        for (let a = 0; a < L; a++)
+          for (let d = 1; d <= ring; d++) addEdge(mem[a], mem[(a + d) % L]);
+      }
+      const longTies = Math.round(N * 0.6);
+      for (let t = 0; t < longTies; t++) addEdge((rng() * N) | 0, (rng() * N) | 0);
+    } else if (type === 'grid') {                  // 空间广场: ⌈√N⌉² 网格, 8 邻域
+      const W = Math.ceil(Math.sqrt(N));
+      for (let i = 0; i < N; i++) {
+        const x = i % W, y = (i / W) | 0;
+        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+          if (!dx && !dy) continue;
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= W || ny >= W) continue;
+          const j = ny * W + nx;
+          if (j < N) adj[i].push(j);
+        }
+      }
+    }
+    return adj;
+  }
+
+  const DEFAULTS = {
+    N: 1000, M: 60, seed: 7,
+    P: 1.0,        // 处罚强度(完整处罚损失, τ 的单位)
+    Pbar: 0.5,     // 合法性阈值 P̄
+    K0: 20,        // 全部执行时一轮最多拘押人数
+    tolType: 'uniform',
+    netType: 'full', netDeg: 8, netGroups: 25,
+    omega: 1.0,    // ω 全局信息权重
+    globalScale: 1.0,  // 信息政策: 报道出来的总体参与比例 = x·globalScale
+    noise: 0.0,        // 谣言/误报: 加到 x̂ 上的均匀噪声幅度
+    alpha: 0.3, beta: 0.6, delta: 0.2,  // 执行者规则权重
+    psiScale: 1.0,  // 执行者门槛 ψ ~ U(0, psiScale)
+    d0: 0.0,        // 初始拒绝执行比例
+    memDecay: 0.2,  // ρ 记忆消退率
+    gamma: 2.0,     // γ 经历→参与意愿强度
+    vis: 1.0,       // w 事件可见度
+    kernel: 'exp',  // 'exp' | 'memorial'
+    memPeak: 10,    // 纪念峰时距(轮)
+    memPeakAmp: 1.5,// 纪念峰相对强度
+    releaseProb: 0.0,   // 每轮释放概率(原文封闭模型为 0)
+    targetMode: 'uniform', // 'uniform' | 'organizer' | 'zealot'
+    netDamage: 0.5,     // 针对组织者拘押时, 其联络被切断的比例
+    hardCore: 0.0,      // 永久参与者比例 x0 (愿承担完整处罚)
+    continuousK: false, // K_t 取整(有限人口) 或连续近似
+    latentDecay: 0.02,  // 潜藏记忆每轮消退率(游戏扩展)
+    listThreshold: 0,   // 预防性拘捕名单阈值(游戏扩展, 0=原版)
+    listMode: 'all',    // 'all' = 原版(全体自由人口排名); 'flag' = 只抓"在案"的人(曾经参与或被登记)
+    tolMul: 1, tolAdd: 0, // 承受上限整体缩放/平移(游戏扩展)
+    noRemoval: false,   // 冻结切面(p2): 不实际移除被拘押者, x_{t+1}=F(x_t)
+  };
+
+  class Sim {
+    constructor(opts) {
+      this.o = Object.assign({}, DEFAULTS, opts || {});
+      const o = this.o, N = o.N, rng = this.rng = mulberry32(o.seed);
+      this.tau = sampleTolerances(N, o.tolType, rng);
+      if (o.tolMul !== 1 || o.tolAdd !== 0) for (let i = 0; i < N; i++) this.tau[i] = this.tau[i] * o.tolMul + o.tolAdd;
+      this.net = buildNetwork(N, o.netType, rng, o.netDeg, o.netGroups);
+      // 永久参与者 = 承受上限最高的一批 (性质六)
+      this.hard = new Uint8Array(N);
+      const hc = Math.round(o.hardCore * N);
+      if (hc > 0) {
+        const idx = Array.from({ length: N }, (_, i) => i).sort((a, b) => this.tau[b] - this.tau[a]);
+        for (let i = 0; i < hc; i++) this.hard[idx[i]] = 1;
+      }
+      // 执行者
+      this.psi = new Float64Array(o.M);
+      for (let j = 0; j < o.M; j++) this.psi[j] = rng() * o.psiScale;
+      this.z = new Uint8Array(o.M);
+      const z0 = Math.round(o.d0 * o.M);
+      for (let j = 0; j < z0; j++) this.z[j] = 1;
+      this.refreshTau();
+      // 民众状态
+      this.a = new Uint8Array(N);
+      this.r = new Uint8Array(N);
+      this.b = new Float64Array(N);
+      this.latent = new Float64Array(N); // 被封锁压住、尚未公开的记忆(游戏扩展)
+      this.flagged = new Uint8Array(N);  // 在案名单: 曾公开参与或被登记的人(游戏扩展)
+      this.Ehist = [];                 // memorial 核的事件历史
+      this.events = [];                // 一次性政策事件
+      this.t = 0;
+      this.R = 0;                      // 累计拘押比例
+      this.hist = { t: [], x: [], d: [], p: [], k: [], b: [], R: [] };
+    }
+
+    /* 有效参数(考虑一次性事件覆盖) */
+    eff() {
+      const o = this.o, e = { P: o.P, vis: o.vis, globalScale: o.globalScale, omega: o.omega };
+      for (const ev of this.events) {
+        if (ev.P !== undefined) e.P = ev.P;
+        if (ev.vis !== undefined) e.vis = ev.vis;
+        if (ev.globalScale !== undefined) e.globalScale = ev.globalScale;
+        if (ev.omega !== undefined) e.omega = ev.omega;
+      }
+      return e;
+    }
+
+    pushEvent(ev) { this.events.push(Object.assign({ rounds: 1 }, ev)); }
+
+    /* 当前执行能力: K_t = K0(1−d_t) (原文 p3, 有限人口取整) */
+    capacity(d) {
+      const K = this.o.continuousK ? this.o.K0 * (1 - d) : Math.floor(this.o.K0 * (1 - d));
+      return { K, k: K / this.o.N };
+    }
+
+    meanU8(arr) { let s = 0; for (let i = 0; i < arr.length; i++) s += arr[i]; return s / arr.length; }
+
+    /* 邻域加权观察 (1−ω)ΣA_ij s_j + ω s_global。
+       censor=true 时全局信号经宣传压缩(globalScale)与噪声; 拘押可见度 ζ 不经压缩, 由 w 单独控制 */
+    observe(localSum, deg, sGlobal, eff, censor) {
+      let g = censor ? sGlobal * eff.globalScale + (this.rng() * 2 - 1) * this.o.noise : sGlobal;
+      g = g < 0 ? 0 : g > 1 ? 1 : g;
+      let local = deg > 0 ? localSum / deg : g;   // 无熟人者用全局信息
+      return (1 - eff.omega) * local + eff.omega * g;
+    }
+
+    /* 感知代价 ĉ (原文 p4 分段) */
+    cost(k, xHat, P) {
+      if (k <= 0) return 0;
+      if (xHat <= 0) return P;
+      return P * Math.min(1, k / xHat);
+    }
+
+    /**
+     * 推进一步。
+     * @param seedCount 外生种子人数 u_{i,t+1}; @param seedMode 'random'|'near'
+     */
+    step(seedCount, seedMode) {
+      const o = this.o, N = o.N, eff = this.eff();
+      this.tauDirty = true;   // 拘押/释放可能改变自由人口构成
+      /* -- 0. 事件结算: 大赦 & 常规释放 -- */
+      for (const ev of this.events) if (ev.amnesty) { this.r.fill(0); ev.amnesty = false; }
+      if (o.releaseProb > 0) {
+        for (let i = 0; i < N; i++) if (this.r[i] && this.rng() < o.releaseProb) this.r[i] = 0;
+      }
+      /* -- 1. 读取当前状态 -- */
+      const x = this.meanU8(this.a), d = this.meanU8(this.z);
+      const { K, k } = this.capacity(d);
+      /* -- 2. 以当前能力拘押 |C| (均匀/针对性/预防性) -- */
+      const part = [];
+      for (let i = 0; i < N; i++) if (this.a[i] && !this.r[i]) part.push(i);
+      let nDet = 0;
+      if (!o.noRemoval) {
+        if (o.targetMode === 'preventive') {
+          let freeN = 0; for (let i = 0; i < N; i++) if (!this.r[i] && (o.listMode !== 'flag' || this.flagged[i])) freeN++;
+          nDet = Math.min(freeN, Math.round(K));
+        } else {
+          nDet = Math.min(part.length, Math.round(K));
+        }
+      }
+      const e = new Uint8Array(N);
+      if (nDet > 0) {
+        let victims;
+        if (o.targetMode === 'preventive') {
+          // 预防性拘捕(扩展): 从全体自由人口按 τ+b 排名, 不待参与即抓
+          const poolAll = [];
+          const th = o.listThreshold || 0;
+          const byFlag = o.listMode === 'flag';
+          for (let i = 0; i < N; i++) if (!this.r[i] && (!byFlag || this.flagged[i]) && (th <= 0 || this.tau[i] + this.b[i] >= th)) poolAll.push(i);
+          const keyP = (i) => this.tau[i] + this.b[i];
+          poolAll.sort((a, b2) => keyP(b2) - keyP(a));
+          victims = new Set(poolAll.slice(0, Math.min(nDet, poolAll.length)));
+          if (o.netDamage > 0 && this.net) {
+            for (const v of victims) {                      // 关键联系被切断 (波兰戒严)
+              for (const nb of this.net[v]) {
+                if (this.rng() < o.netDamage) {
+                  const L = this.net[nb];
+                  const idx = L.indexOf(v);
+                  if (idx >= 0) { L[idx] = L[L.length - 1]; L.pop(); }
+                }
+              }
+              this.net[v].length = 0;
+            }
+          }
+        } else if (o.targetMode === 'uniform' || !this.net) {
+          victims = new Set();
+          // 部分 Fisher–Yates 抽样
+          const pool = part.slice();
+          for (let s = 0; s < nDet && pool.length; s++) {
+            const j = (this.rng() * pool.length) | 0;
+            victims.add(pool[j]); pool[j] = pool[pool.length - 1]; pool.pop();
+          }
+        } else {
+          const key = o.targetMode === 'organizer'
+            ? (i) => this.net[i].length                    // 组织者 = 高度数
+            : (i) => this.tau[i] + this.b[i];               // 坚定者 = 有效承受上限最高
+          part.sort((a, b2) => key(b2) - key(a));
+          victims = new Set(part.slice(0, nDet));
+          if (o.targetMode === 'organizer' && o.netDamage > 0) {
+            for (const v of victims) {                      // 关键联系被切断 (波兰戒严)
+              for (const nb of this.net[v]) {
+                if (this.rng() < o.netDamage) {
+                  const L = this.net[nb];
+                  const idx = L.indexOf(v);
+                  if (idx >= 0) { L[idx] = L[L.length - 1]; L.pop(); }
+                }
+              }
+              this.net[v].length = 0;
+            }
+          }
+        }
+        for (const v of victims) { this.r[v] = 1; e[v] = 1; }
+        nDet = victims.size;   // 名单阈值可能使实际拘押少于能力上限
+      }
+      const p = nDet / N;
+      this.R += p;
+      /* -- 3. 记忆: ζ 与 b 更新 (p4; memorial 核见 p8) -- */
+      const over = Math.max(0, eff.P - o.Pbar);          // (P_t − P̄)_+
+      const eta = o.gamma * eff.vis * over;              // η_t = γw(P−P̄)_+
+      const etaLatent = o.gamma * Math.max(0, 1 - eff.vis) * over;  // 没被看见的部分(游戏扩展)
+      const E = new Float64Array(N);
+      for (let i = 0; i < N; i++) {
+        let zeta;
+        if (this.net) {
+          let s = 0; const nb = this.net[i];
+          for (let q = 0; q < nb.length; q++) s += e[nb[q]];
+          zeta = this.observe(s, nb.length, p, eff, false);
+        } else zeta = p;
+        E[i] = eta * zeta;
+        this.latent[i] = this.latent[i] * (1 - o.latentDecay) + etaLatent * zeta;
+      }
+      if (o.kernel === 'memorial') {
+        this.Ehist.unshift(E);
+        const cap = Math.max(80, o.memPeak * 2 + 20);
+        if (this.Ehist.length > cap) this.Ehist.pop();
+        const wts = this.kernelWeights(this.Ehist.length);
+        this.b.fill(0);
+        for (let h = 0; h < this.Ehist.length; h++) {
+          const Eh = this.Ehist[h], w = wts[h];
+          if (w === 0) continue;
+          for (let i = 0; i < N; i++) this.b[i] += w * Eh[i];
+        }
+      } else {
+        const keep = 1 - o.memDecay;
+        for (let i = 0; i < N; i++) this.b[i] = keep * this.b[i] + E[i];
+      }
+      /* -- 4. 民众据本轮观察决定 a_{t+1} (p4 方框) -- */
+      const xObsBase = x;                                 // 全局信号 = 本轮真实参与
+      const newA = new Uint8Array(N);
+      const costBound = this.cost(k, xObsBase, eff.P);    // 全局口径的代价(供"near"种子与 μ)
+      for (let i = 0; i < N; i++) {
+        if (this.r[i]) { newA[i] = 0; continue; }         // (1−r) 因子
+        let xHat;
+        if (this.net) {
+          let s = 0; const nb = this.net[i];
+          for (let q = 0; q < nb.length; q++) s += this.a[nb[q]];
+          xHat = this.observe(s, nb.length, xObsBase, eff, true);
+        } else xHat = xObsBase * eff.globalScale + (this.rng() * 2 - 1) * this.o.noise;
+        xHat = xHat < 0 ? 0 : xHat > 1 ? 1 : xHat;
+        const c = this.cost(k, xHat, eff.P);
+        newA[i] = (this.tau[i] + this.b[i] >= c) || this.hard[i] ? 1 : 0;
+      }
+      /* 外生种子 u_{i,t+1}: 仍是自由行动者 */
+      if (seedCount > 0) {
+        const free = [];
+        for (let i = 0; i < N; i++) if (!this.r[i]) free.push(i);
+        const n = Math.min(seedCount, free.length);
+        if (seedMode === 'near' && costBound > 0) {
+          free.sort((a, b2) => Math.abs((this.tau[a] + this.b[a]) - costBound) - Math.abs((this.tau[b2] + this.b[b2]) - costBound));
+          for (let s = 0; s < n; s++) newA[free[s]] = 1;
+        } else {
+          for (let s = 0; s < n; s++) {
+            const j = (this.rng() * free.length) | 0;
+            newA[free[j]] = 1; free[j] = free[free.length - 1]; free.pop();
+          }
+        }
+      }
+      this.a = newA;
+      for (let i = 0; i < N; i++) if (newA[i]) this.flagged[i] = 1;   // 公开露面就会被记下
+      /* -- 5. 执行者据本轮观察决定 z_{t+1} (p3) -- */
+      const press = o.alpha * x + o.beta * d + o.delta * over;
+      for (let j = 0; j < o.M; j++) this.z[j] = press >= this.psi[j] ? 1 : 0;
+      /* -- 6. 事件寿命结算 -- */
+      for (let i = this.events.length - 1; i >= 0; i--) {
+        if (--this.events[i].rounds <= 0) this.events.splice(i, 1);
+      }
+      /* -- 记录 -- */
+      this.t++;
+      const h = this.hist;
+      h.t.push(this.t); h.x.push(x); h.d.push(d); h.p.push(p);
+      h.k.push(k); h.b.push(this.b.reduce((s, v) => s + v, 0) / N); h.R.push(this.R);
+      return this.snapshot();
+    }
+
+    kernelWeights(L) {
+      const o = this.o, w = new Float64Array(L);
+      for (let l = 1; l <= L; l++) {
+        let base;
+        if (o.memDecay >= 1) base = l === 1 ? 1 : 0;
+        else base = Math.pow(1 - o.memDecay, l - 1);
+        const bump = o.memPeakAmp * Math.exp(-((l - o.memPeak) ** 2) / 8);
+        w[l - 1] = o.gamma * (base + bump);
+      }
+      return w;
+    }
+
+    run(rounds, seedFn) {
+      for (let s = 0; s < rounds; s++) {
+        const sc = seedFn ? seedFn(this.t) : 0;
+        this.step(sc.count || 0, sc.mode || 'random');
+      }
+      return this.snapshot();
+    }
+
+    /* ---------- 冻结单变量切面的分析工具 (原文 p2, p12, p15, p20) ---------- */
+
+    /** 连续经验分布(分段线性 CDF, 对应原文连续人口近似 p5)。
+     *  默认用自由(未被拘押)人口的分布, 构成变化(谁被抓走)会移动反应函数(p5 末段)。
+     *  外部改动 tau 后须调用 refreshTau() */
+    refreshTau() { this.sortedTau = Float64Array.from(this.tau).sort(); this.tauDirty = false; this._tauKey = 't'; }
+    _freeTau(useMem) {
+      const key = useMem ? 'm' : 't';
+      if (this.tauDirty || this._tauKey !== key) {
+        const arr = [];
+        for (let i = 0; i < this.o.N; i++) if (!this.r[i]) arr.push(useMem ? this.tau[i] + this.b[i] : this.tau[i]);
+        this.sortedTau = Float64Array.from(arr).sort();
+        this.tauDirty = false;
+        this._tauKey = key;
+      }
+      return this.sortedTau;
+    }
+
+    /** 经验反应函数 F(x) = 1 − G(c(x)),G 为(自由人口)分段线性经验分布 */
+    frozenF(x, P, k, useMem, shift) {
+      const c = this.cost(k, x, P) - (shift || 0);   // shift: 所有人的承受上限同时上移(游戏层: 假想"再多一点怨气")
+      const t = this._freeTau(useMem), N = t.length;
+      if (N === 0) return 0;
+      if (c <= t[0]) return 1;
+      if (c >= t[N - 1]) return 0;
+      let lo = 0, hi = N - 1;                       // 二分: t[lo-1] < c <= t[hi]... 维持 t[lo] < c <= t[hi]
+      while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (t[mid] < c) lo = mid; else hi = mid; }
+      const frac = (c - t[lo]) / (t[hi] - t[lo]);
+      return 1 - (lo + 1 + frac) / N;
+    }
+
+    /** 不动点扫描: F(x)=x 的解及其稳定性 (F'<1 稳定)
+     *  阶梯型经验 F 会使 g 恰好落在 0 上, 故用带死区的符号变化检测 */
+    fixedPoints(P, k, useMem, shift) {
+      const pts = [];
+      const M = 4000, EPS = 1e-9;
+      const g = (x) => this.frozenF(x, P, k, useMem, shift) - x;
+      const S = (v) => (v > EPS ? 1 : v < -EPS ? -1 : 0);
+      const record = (xr) => {
+        const eps = 1e-4;
+        const slope = (this.frozenF(Math.min(1, xr + eps), P, k, useMem, shift) - this.frozenF(Math.max(0, xr - eps), P, k, useMem, shift)) / (2 * eps);
+        if (!pts.some(q => Math.abs(q.x - xr) < 1e-4)) pts.push({ x: xr, stable: slope < 1, slope });
+      };
+      let xPrev = 0, sPrev = S(g(0));
+      if (sPrev === 0) pts.push({ x: 0, stable: true, boundary: true });
+      for (let i = 1; i <= M; i++) {
+        const x = i / M, s = S(g(x));
+        if (s === 0) {
+          if (sPrev !== 0) { record(x); sPrev = 0; }   // 触及零点即记根, 并暂停检测防止重复
+        } else if (sPrev !== 0 && s !== sPrev) {
+          let lo = xPrev, hi = x;                      // S(g(lo)) = sPrev, S(g(hi)) = −sPrev
+          for (let it = 0; it < 60; it++) {
+            const mid = (lo + hi) / 2;
+            if (S(g(mid)) === sPrev) lo = mid; else hi = mid;
+          }
+          record((lo + hi) / 2);
+          xPrev = x; sPrev = s;
+        } else {
+          xPrev = x; sPrev = s;
+        }
+      }
+      pts.sort((q1, q2) => q1.x - q2.x);
+      return pts;
+    }
+
+    /** 临界种子 = 最小的不稳定不动点 (分界, 原文 p6/p13) */
+    criticalSeed(P, k) {
+      const pts = this.fixedPoints(P, k).filter(q => !q.boundary && !q.stable);
+      return pts.length ? pts[0].x : null;
+    }
+
+    /** 局部反作用系数 μ = η·m(q) (原文 p8, 性质三) */
+    backfireMu() {
+      const eff = this.eff(), o = this.o;
+      const d = this.meanU8(this.z), { k } = this.capacity(d);
+      const x = this.meanU8(this.a);
+      const c = this.cost(k, x, eff.P);
+      const eta = o.gamma * eff.vis * Math.max(0, eff.P - o.Pbar);
+      if (eta <= 0 || c <= 0) return { mu: 0, eta, c };
+      const band = 0.01;
+      let cnt = 0, free = 0;
+      for (let i = 0; i < o.N; i++) {
+        if (this.r[i]) continue;
+        free++;
+        const q = this.tau[i] + this.b[i];
+        if (Math.abs(q - c) <= band) cnt++;
+      }
+      const density = free ? cnt / free / (2 * band) : 0;
+      return { mu: eta * density, eta, c, density };
+    }
+
+    /** 轻量快照(每步调用): 状态量 + μ; 不动点等重分析见 analysis() */
+    snapshot() {
+      const d = this.meanU8(this.z), { k, K } = this.capacity(d);
+      const h = this.hist;
+      return {
+        t: this.t, x: this.meanU8(this.a), d, k, K, R: this.R,
+        bAvg: h.b.length ? h.b[h.b.length - 1] : 0,
+        p: h.p.length ? h.p[h.p.length - 1] : 0,
+        mu: this.backfireMu(),
+      };
+    }
+
+    /** 重量分析(按需调用): 不动点与临界种子
+     *  opts.useMem: 用有效承受上限 τ+b(含记忆债务); opts.kScale: 有效执行能力放大(宣传压缩使人低估人数)
+     *  opts.P / opts.shift: 假想的处罚强度 / 承受上限整体上移(游戏层做敏感性分析用) */
+    analysis(opts) {
+      opts = opts || {};
+      const eff = this.eff(), d = this.meanU8(this.z), { k } = this.capacity(d);
+      const kk = k * (opts.kScale || 1);
+      const roots = this.fixedPoints(opts.P != null ? opts.P : eff.P, kk, !!opts.useMem, opts.shift || 0);
+      const xc = roots.filter(q => !q.boundary && !q.stable);
+      return { roots, xCrit: xc.length ? xc[0].x : null, k: kk };
+    }
+
+    /* ---------- 游戏层扩展: 外生改变记忆 ---------- */
+    /** 给第 i 人的记忆加 amt(与当前记忆核一致: 指数核直接加; 纪念核记入本轮事件, 之后按核演化) */
+    addGrievance(i, amt) {
+      if (!(amt > 0)) return;
+      this.b[i] += amt;
+      this.tauDirty = true;
+      if (this.o.kernel === 'memorial') {
+        if (!this.Ehist.length) this.Ehist.unshift(new Float64Array(this.o.N));
+        const w0 = this.kernelWeights(1)[0];
+        if (w0 > 0) this.Ehist[0][i] += amt / w0;
+      }
+    }
+    /** 曝光: 被封锁压住的潜藏记忆按比例 frac 兑现为公开记忆, 返回平均兑现量 */
+    reveal(frac) {
+      let s = 0;
+      for (let i = 0; i < this.o.N; i++) {
+        const v = this.latent[i] * frac;
+        if (v > 0 && !this.r[i]) { this.latent[i] -= v; this.addGrievance(i, v); s += v; }
+      }
+      return s / this.o.N;
+    }
+  }
+
+  /* ---------- 理论对照公式 (均匀分布闭式解, 供自检) ---------- */
+  const theory = {
+    cost: (x, P, k) => (k <= 0 ? 0 : x <= 0 ? P : P * Math.min(1, k / x)),
+    reactionUniform: (x, P, k) => {           // τ~U[0,1], P=1 时 F(x)=[1−P·min(1,k/x)]_0^1
+      const u = 1 - P * (k <= 0 ? 0 : Math.min(1, k / Math.max(x, 1e-12)));
+      return Math.min(1, Math.max(0, u));
+    },
+    xMinus: (P, k) => (1 - Math.sqrt(Math.max(0, 1 - 4 * P * k))) / 2,  // 临界种子(较小根)
+    xPlus: (P, k) => (1 + Math.sqrt(Math.max(0, 1 - 4 * P * k))) / 2,   // 高参与稳态
+    Pdown: (k) => 1 - k,                       // 低态消失阈值 P_↓
+    Pup: (k) => 1 / (4 * k),                   // 高态消失阈值 P_↑
+    /** 冻结映射迭代至收敛 (单变量切面) */
+    iterateUniform(x0, P, k, rounds) {
+      let x = x0;
+      for (let t = 0; t < rounds; t++) {
+        const nx = Math.min(1, Math.max(0, 1 - P * Math.min(1, k / Math.max(x, 1e-12))));
+        if (Math.abs(nx - x) < 1e-12) { x = nx; break; }
+        x = nx;
+        if (x === 0 && k > 0) break;
+      }
+      return x;
+    },
+  };
+
+  const api = { Sim, theory, mulberry32, sampleTolerances, buildNetwork, DEFAULTS };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  global.SilenceSim = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ---- lab.js ---- */
+/* 道路以目 · 模型实验室 —— 沙盒场景与全部参数(原"沉默相变模拟器"界面)
+ * 依赖 model.js (window.SilenceSim)
+ */
+'use strict';
+const { Sim, theory } = window.SilenceSim;
+const $ = (id) => document.getElementById(id);
+
+/* ================= 场景预设 ================= */
+const SCENARIOS = {
+  playground: {
+    name: "① Playground: twenty vs. twenty-one",
+    desc: "Worked example from the paper (pp. 15–16): 1,000 people, uniform tolerance limits, P=1, k=0.02. Critical seed x₋≈20.4 people. <b>Seed 20 → it dies out; seed 21 → it surges to 980 within three rounds.</b> This is “the same silence, a different divide”.",
+    opts: { N: 1000, tolType: 'uniform', netType: 'full', P: 1, Pbar: 0.5, K0: 20, M: 60, alpha: 0, beta: 0, delta: 0, gamma: 0, memDecay: 0.2, vis: 1, omega: 1, globalScale: 1, noise: 0, hardCore: 0, targetMode: 'uniform', releaseProb: 0, seed: 7, d0: 0, psiScale: 1, noRemoval: true },
+  },
+  liwang: {
+    name: "② King Li stops the talk: repression and silence debt",
+    desc: "Harsh punishment (P=1.15), tolerance limits pushed down across the board (τ≤0.45), targeting organizers, compressed propaganda. The routine 10-person actions each round are all flattened — but memory b <b>builds up out of sight</b> (Property 2: repression debt; watch the whole band in the bottom-right distribution chart drift right). Once the debt is deep enough, seed 80 people: the cost line has been pushed into the distribution band, and it ignites.",
+    opts: { N: 2000, tolType: 'low', netType: 'random', netDeg: 8, P: 1.15, Pbar: 0.6, K0: 40, M: 80, alpha: 0.2, beta: 0.4, delta: 0.3, gamma: 12, memDecay: 0.04, vis: 0.7, omega: 1, globalScale: 0.5, noise: 0, hardCore: 0.002, targetMode: 'organizer', netDamage: 0.6, releaseProb: 0.05, seed: 21, d0: 0, psiScale: 1 },
+  },
+  nowarn: {
+    name: "③ Glances on the Road: silence gives no warning",
+    desc: "Property 1 of the paper (p. 6): the enforcers slowly erode on their own (α=0, β=0.9, δ(P−P̄)₊=0.1), and k_t=k₀·0.9ᵗ shrinks geometrically. Public participation <b>stays at 0 throughout</b>, and small disturbances still recover within a round — but the orange dashed line (the critical seed) keeps sliding down. Once it is small enough, a very small action can ignite it all.",
+    opts: { N: 1000, tolType: 'uniform', netType: 'full', P: 1, Pbar: 0.5, K0: 20, M: 2000, alpha: 0, beta: 0.9, delta: 0.2, gamma: 0, memDecay: 0.2, vis: 1, omega: 1, globalScale: 1, noise: 0, hardCore: 0, targetMode: 'uniform', releaseProb: 0, seed: 11, d0: 0, psiScale: 1, continuousK: true },
+  },
+  leipzig: {
+    name: "④ Leipzig Monday demonstrations, 1989",
+    desc: "Fully mixed, one round per week, with a routine 15-person rally each round; critical seed x₋≈23 people — small actions are pulled back for 8 weeks in a row (Property 6). In week 9, <b>“Footage leak”</b>: shared evidence escapes the circle of acquaintances, and the images bring a surge of turnout the following week (an exogenous input; the model does not generate the first event itself) — crossing x₋ ignites it. You can also skip the footage and manually seed 40+ people in week 9.",
+    opts: { N: 2000, tolType: 'uniform', netType: 'full', P: 1, Pbar: 0.55, K0: 24, M: 120, alpha: 0.12, beta: 0.55, delta: 0.12, gamma: 1.6, memDecay: 0.25, vis: 1, omega: 1, globalScale: 0.4, noise: 0, hardCore: 0.003, targetMode: 'uniform', releaseProb: 0.1, seed: 1989, d0: 0.02, psiScale: 1.2 },
+    recur: { count: 15, every: 6 },
+    plan: [{ at: 48, event: 'tvseed', count: 45 }],
+  },
+  petrograd: {
+    name: "⑤ Petrograd 1917: two-layer feedback instability",
+    desc: "Property 4 of the paper (pp. 9–10): two layers, crowd and enforcers. Large α (crowd size shakes the troops), large β (peer cascades). Seed a 40-person action and watch x and d chase and amplify each other — each layer looks stable on its own, but coupled, the whole system destabilizes. What a mutiny changes is not the news but the k faced in every round after.",
+    opts: { N: 1500, tolType: 'bell', netType: 'full', P: 1, Pbar: 0.5, K0: 25, M: 150, alpha: 0.35, beta: 0.5, delta: 0.2, gamma: 1.5, memDecay: 0.3, vis: 1, omega: 1, globalScale: 1, noise: 0, hardCore: 0.002, targetMode: 'uniform', releaseProb: 0.15, seed: 1917, d0: 0.05, psiScale: 1.3 },
+  },
+  bloody: {
+    name: "⑥ Bloody Sunday 1905: the double role of events",
+    desc: "High-pressure calm (P=1.1, bimodal society: radicals 0.78 / moderates 0.28). First switch on “Routine actions” and run a dozen or so rounds — all die out. Then press <b>“Bloodshed”</b>: the killings go over the line and memory jumps. The outcome depends on μ=γw(P−P̄)₊·m(q) (Property 3): once the debt pushes the radicals over their threshold, the cascade begins; lower γ and reset, and the same bloodshed only settles, with no echo — “some people were enraged” does not prove that participation must rise.",
+    opts: { N: 2000, tolType: 'bimodal', netType: 'full', P: 1.1, Pbar: 0.5, K0: 22, M: 100, alpha: 0.25, beta: 0.45, delta: 0.2, gamma: 6, memDecay: 0.2, vis: 0.5, omega: 1, globalScale: 0.6, noise: 0, hardCore: 0.001, targetMode: 'uniform', releaseProb: 0.1, seed: 1905, d0: 0, psiScale: 1 },
+  },
+  martial: {
+    name: "⑦ Polish martial law 1981: decapitation and severed ties",
+    desc: "K₀=45, enforcers frozen (k constant). Enforcement mode = preventive detention: people are ranked by τ+b and arrested without waiting for them to take part, 45 per round — it removes <b>the top of the distribution</b> (p. 5: you must know where in the distribution those removed sit). After 30 rounds, check the critical seed x₋ in the status bar: it has risen from about 46 people to 90. Now seed 55 people — it dies outright; switch enforcement mode to uniform sampling, rebuild the world, and the same 55 ignite. Police size k is the first-order lever; whom you arrest is a second-order composition effect.",
+    opts: { N: 2000, tolType: 'uniform', netType: 'random', netDeg: 8, P: 1, Pbar: 0.5, K0: 45, M: 150, alpha: 0, beta: 0, delta: 0, gamma: 1.8, memDecay: 0.2, vis: 0.7, omega: 1, globalScale: 1, noise: 0, hardCore: 0.002, targetMode: 'preventive', netDamage: 0.3, releaseProb: 0.03, seed: 1981, d0: 0, psiScale: 1.1 },
+  },
+  granovetter: {
+    name: "⑧ Granovetter’s ladder: one person short, one chain broken",
+    desc: "Thresholds from 0 to 1 laid out as a ladder, with just 1 permanent participant (K₀=5). First seed 4 people: fewer than k=5, all are arrested, silence. Reset and seed 8: x passes k, the cost drops to 0.625, people with higher thresholds join, and the chain climbs rung by rung until x₊≈0.995 (Property 8: what blocks diffusion is often a gap in the middle that no one can bridge). Broken-chain variant: set police K₀ to 12, then seed 8.",
+    opts: { N: 1000, tolType: 'ladder', netType: 'full', P: 1, Pbar: 2, K0: 5, M: 60, alpha: 0, beta: 0, delta: 0, gamma: 0, memDecay: 0.2, vis: 1, omega: 1, globalScale: 1, noise: 0, hardCore: 0.001, targetMode: 'uniform', releaseProb: 0, seed: 1978, d0: 0, psiScale: 1 },
+  },
+  chehlom: {
+    name: "⑨ Fortieth-day memorials: a delayed kernel",
+    desc: "Paper p. 8, Iran 1978: exponential decay cannot explain “gathering again exactly forty days later”. Bimodal society, P̄=P (everyday punishment fully legitimate → zero everyday memory), ρ=0.5 (fast forgetting). At t=3, a massacre (a bloodshed event lasting 2 rounds — note: seeds appear only in the decision phase and punishment comes before the decision, so the event must span two rounds to leave any memory). Then everything falls silent, <b>until about round 13</b>: the memorial peak pushes the whole upper tail over its threshold at once, and it ignites with no one organizing. Rebuild with the exponential kernel: silent forever. This is the purest demonstration of “the structure of the memory kernel itself producing timed recurrence”.",
+    opts: { N: 1500, tolType: 'bimodal', netType: 'random', netDeg: 8, P: 0.9, Pbar: 0.9, K0: 30, M: 80, alpha: 0.1, beta: 0.4, delta: 0.15, gamma: 1.2, memDecay: 0.5, vis: 1, omega: 1, globalScale: 1, noise: 0, hardCore: 0.002, targetMode: 'uniform', releaseProb: 0.15, seed: 1978, d0: 0, psiScale: 1, kernel: 'memorial', memPeak: 10, memPeakAmp: 3.5 },
+    plan: [{ at: 3, event: 'spikese', count: 40 }],
+  },
+  hysteresis: {
+    name: "⑩ Bistability and hysteresis: k=0.2",
+    desc: "Property 14 of the paper (pp. 19–20): at k=0.2, lowering pressure jumps up only once the low state vanishes at P_↓=0.8; raising pressure drops back only once the high state vanishes at P_↑=1.25. Lower the P slider on the left slowly (−0.02 at a time, running 25 rounds in between), then raise it slowly — at the same P=0.9, the system can sit at x=0.1 or x≈0.765. <b>History itself becomes information you need to explain the present.</b>",
+    opts: { N: 1000, tolType: 'uniform', netType: 'full', P: 1.4, Pbar: 0.5, K0: 200, M: 60, alpha: 0, beta: 0, delta: 0, gamma: 0, memDecay: 0.2, vis: 1, omega: 1, globalScale: 1, noise: 0, hardCore: 0, targetMode: 'uniform', releaseProb: 0, seed: 89, d0: 0, psiScale: 1, noRemoval: true },
+    hint: "Frozen slice (detainees are not actually removed): move the P slider in steps of 0.02, running 25+ rounds at each step.",
+  },
+};
+
+/* ================= 全局状态 ================= */
+let sim = null, curKey = 'playground';
+let seedPlan = [];           // [{at,count,mode,event}]
+let recur = null;            // {count, every}
+let running = false;
+let pendingSeeds = [];       // 用户手动投入
+let simClock = 0;
+
+function applyScenario(key) {
+  curKey = key;
+  const sc = SCENARIOS[key];
+  sim = new Sim(sc.opts);
+  seedPlan = (sc.plan || []).map(p => Object.assign({}, p));
+  recur = sc.recur ? Object.assign({}, sc.recur) : null;
+  pendingSeeds = [];
+  $('scenDesc').innerHTML = sc.desc + (sc.hint ? `<br><span style="color:var(--org)">How to play: ${sc.hint}</span>` : '');
+  syncControlsFromSim();
+  bifCache.key = null;      // 强制重算分岔图
+  drawAll();
+}
+
+/* ================= 控件绑定 ================= */
+const LIVE_KEYS = ['P', 'Pbar', 'K0', 'M', 'psiScale', 'alpha', 'beta', 'delta', 'd0',
+  'omega', 'globalScale', 'noise', 'memDecay', 'gamma', 'vis', 'kernel', 'memPeak', 'memPeakAmp',
+  'targetMode', 'netDamage', 'releaseProb'];
+const STRUCT_KEYS = ['N', 'tolType', 'netType', 'netDeg', 'netGroups', 'hardCore', 'seed'];
+const RANGES = { P: [0.2, 2, 0.01], K0: [0, 200, 1], Pbar: [0, 1.5, 0.01], M: [10, 2000, 10], psiScale: [0.2, 3, 0.05], alpha: [0, 1.5, 0.05], beta: [0, 1.5, 0.05], delta: [0, 1.5, 0.05], d0: [0, 1, 0.05], omega: [0, 1, 0.05], globalScale: [0, 1, 0.05], noise: [0, 0.3, 0.01], memDecay: [0, 1, 0.05], gamma: [0, 6, 0.1], vis: [0, 1, 0.05], memPeak: [2, 30, 1], memPeakAmp: [0, 4, 0.1], netDamage: [0, 1, 0.05], releaseProb: [0, 1, 0.05], N: [200, 8000, 100], netDeg: [2, 30, 1], netGroups: [4, 100, 1], hardCore: [0, 0.05, 0.001], seed: [1, 999, 1] };
+
+function fmtVal(k, v) {
+  if (k === 'hardCore') return (+v).toFixed(3);
+  if (['P', 'Pbar', 'psiScale', 'alpha', 'beta', 'delta', 'omega', 'globalScale', 'noise', 'memDecay', 'gamma', 'vis', 'netDamage', 'releaseProb', 'memPeakAmp'].includes(k)) return (+v).toFixed(2);
+  return '' + v;
+}
+function syncControlsFromSim() {
+  for (const k of LIVE_KEYS.concat(STRUCT_KEYS)) {
+    const el = $('o_' + k);
+    if (!el) continue;
+    el.value = sim.o[k];
+    const vl = $('v_' + k);
+    if (vl) vl.textContent = fmtVal(k, sim.o[k]);
+  }
+}
+function bindControls() {
+  for (const k of LIVE_KEYS) {
+    const el = $('o_' + k);
+    el.addEventListener('input', () => {
+      const v = el.type === 'range' ? +el.value : el.value;
+      sim.o[k] = (typeof DEFAULTS_T[k] === 'number') ? +v : v;
+      const vl = $('v_' + k);
+      if (vl) vl.textContent = fmtVal(k, v);
+      if (k === 'P' || k === 'gamma' || k === 'Pbar') bifCache.key = null;
+      drawAll();
+    });
+  }
+  for (const k of STRUCT_KEYS) {
+    const el = $('o_' + k);
+    el.addEventListener('change', () => { rebuildWorld(); });
+  }
+}
+const DEFAULTS_T = window.SilenceSim.DEFAULTS;
+
+function collectOptsFromUI() {
+  const o = Object.assign({}, sim.o);
+  for (const k of LIVE_KEYS.concat(STRUCT_KEYS)) {
+    const el = $('o_' + k);
+    if (!el) continue;
+    o[k] = (typeof DEFAULTS_T[k] === 'number') ? +el.value : el.value;
+  }
+  return o;
+}
+function rebuildWorld() {
+  const sc = SCENARIOS[curKey];
+  const o = collectOptsFromUI();
+  // 场景特有字段(不在面板上的)保留
+  for (const k of Object.keys(sc.opts)) if (!(k in o) || o[k] === undefined) o[k] = sc.opts[k];
+  o.continuousK = sc.opts.continuousK || false;
+  sim = new Sim(o);
+  seedPlan = (sc.plan || []).map(p => Object.assign({}, p));
+  recur = sc.recur ? Object.assign({}, sc.recur) : null;
+  pendingSeeds = [];
+  bifCache.key = null;
+  drawAll();
+}
+
+/* ================= 运行循环 ================= */
+function tick() {
+  if (!running) return;
+  const spd = +$('spd').value;
+  for (let s = 0; s < spd; s++) {
+    let seedCount = 0, seedMode = 'random';
+    // 计划事件与种子
+    for (const p of seedPlan) {
+      if (p.at === sim.t) {
+        if (p.event) fireEvent(p.event);
+        if (p.count) { seedCount += p.count; seedMode = p.mode || 'random'; }
+        p.done = true;
+      }
+    }
+    seedPlan = seedPlan.filter(p => !p.done);
+    if (recur && sim.t > 0 && sim.t % recur.every === 0) seedCount += recur.count;
+    if (pendingSeeds.length) { for (const ps of pendingSeeds) { seedCount += ps.count; seedMode = ps.mode; } pendingSeeds = []; }
+    sim.step(seedCount, seedMode);
+  }
+  drawAll();
+  requestAnimationFrame(tick);
+}
+
+function fireEvent(ev) {
+  if (ev === 'tv') sim.pushEvent({ rounds: 1, vis: 1, globalScale: 1, omega: Math.max(sim.o.omega, 0.6) });
+  else if (ev === 'tvseed') sim.pushEvent({ rounds: 1, vis: 1, globalScale: 1, omega: Math.max(sim.o.omega, 0.6) });
+  else if (ev === 'amnesty') sim.pushEvent({ rounds: 1, amnesty: true });
+  else if (ev === 'spike') sim.pushEvent({ rounds: 2, P: sim.o.P * 3, vis: 1 });
+  else if (ev === 'spikese') sim.pushEvent({ rounds: 2, P: sim.o.P * 3, vis: 1 });
+  else if (ev === 'crack') sim.pushEvent({ rounds: 3, P: sim.o.P * 1.3 });
+  else if (ev === 'stopK') sim.o.K0 = Math.min(sim.o.K0, 30);
+  else if (ev === 'stopK20') sim.o.K0 = Math.min(sim.o.K0, 20);
+  else if (ev === 'crackK60') sim.o.K0 = Math.max(sim.o.K0, 60);
+}
+
+/* ================= 状态栏 ================= */
+const anaCache = { time: 0, data: null };
+function getAnalysis(force) {
+  const now = performance.now();
+  if (force || !anaCache.data || now - anaCache.time > 700) {
+    anaCache.data = sim.analysis();
+    anaCache.time = now;
+  }
+  return anaCache.data;
+}
+let frameNo = 0;
+function updateStatus(heavy) {
+  const h = sim.hist, n = h.t.length;
+  if (!n) { $('s_t').textContent = sim.t; return; }
+  const last = (a) => a[a.length - 1];
+  $('s_t').textContent = sim.t;
+  $('s_x').textContent = last(h.x).toFixed(4);
+  $('s_d').textContent = last(h.d).toFixed(3);
+  $('s_k').textContent = last(h.k).toFixed(4);
+  $('s_p').textContent = last(h.p).toFixed(4);
+  $('s_R').textContent = last(h.R).toFixed(3);
+  $('s_b').textContent = last(h.b).toFixed(4);
+  const mu = sim.backfireMu();
+  $('s_mu').textContent = mu.mu.toFixed(2) + (mu.mu > 1 ? " >1 repression backfires" : '');
+  $('s_mu_item').classList.toggle('alert', mu.mu > 1);
+  if (heavy) {
+    const pts = getAnalysis(true).roots;
+    const xc = pts.find(q => !q.boundary && !q.stable);
+    $('s_xc').textContent = xc ? xc.x.toFixed(4) + ` (${Math.round(xc.x * sim.o.N)} people)` : "— (no high state)";
+    // 低位恢复: F'(0+) 的线性化
+    const F0 = sim.frozenF(1e-6, sim.eff().P, last(h.k));
+    $('s_rec').textContent = F0 < 1e-9 ? "1 round (F′=0)" : '~' + Math.max(1, Math.round(1 / (1 - Math.min(0.99, F0)))) + " rounds";
+  }
+}
+
+/* ================= 图表 ================= */
+const COL = { x: '#58a6ff', d: '#d2a032', p: '#ef6a5e', b: '#7ec699', grid: '#222a34', fg: '#8b97a5' };
+
+function setupCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.height;
+  if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return [ctx, w, h];
+}
+function axes(ctx, w, h, pad, xmax, ymax, xlabel) {
+  ctx.strokeStyle = COL.grid; ctx.fillStyle = COL.fg; ctx.lineWidth = 1;
+  ctx.font = '10px sans-serif';
+  ctx.beginPath();
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + (h - pad.t - pad.b) * i / 4;
+    ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y);
+    ctx.fillText((ymax * (1 - i / 4)).toFixed(1), 4, y + 3);
+  }
+  ctx.stroke();
+  ctx.fillText(xlabel, w - pad.r - 30, h - 6);
+}
+
+function drawTime() {
+  const cv = $('chTime'); const [ctx, w, h] = setupCanvas(cv);
+  const pad = { l: 34, r: 12, t: 10, b: 18 };
+  axes(ctx, w, h, pad, 1, 1, "round");
+  const hst = sim.hist, n = hst.t.length;
+  const W = 300, start = Math.max(0, n - W);
+  const X = (i) => pad.l + (w - pad.l - pad.r) * (n - start <= 1 ? 0 : (i - start) / (W - 1));
+  const Y = (v) => pad.t + (h - pad.t - pad.b) * (1 - v);
+  const series = [[hst.x, COL.x, 1.6], [hst.d, COL.d, 1.4], [hst.p, COL.p, 1.2], [hst.b, COL.b, 1.2]];
+  ctx.setLineDash([]);
+  for (const [arr, col, lw] of series) {
+    ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath();
+    for (let i = start; i < n; i++) { const x = X(i), y = Y(arr[i]); i === start ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+    ctx.stroke();
+  }
+  ctx.fillStyle = COL.fg; ctx.font = '10px sans-serif';
+  ctx.fillText(`Rounds ${start}–${Math.max(start, n - 1)}`, pad.l + 4, pad.t + 10);
+  // 临界种子参考线(来自缓存的不动点分析)
+  const xc = getAnalysis().xCrit;
+  if (xc != null) {
+    ctx.strokeStyle = '#c09aff'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.l, Y(xc)); ctx.lineTo(w - pad.r, Y(xc)); ctx.stroke();
+    ctx.setLineDash([]); ctx.fillStyle = '#c09aff';
+    ctx.fillText(`x₋=${xc.toFixed(3)}`, w - pad.r - 76, Y(xc) - 4);
+  }
+}
+
+function drawReact() {
+  const cv = $('chReact'); const [ctx, w, h] = setupCanvas(cv);
+  const pad = { l: 34, r: 12, t: 10, b: 18 };
+  const P = sim.eff().P, k = sim.hist.k.length ? sim.hist.k[sim.hist.k.length - 1] : sim.o.K0 / sim.o.N;
+  axes(ctx, w, h, pad, 1, 1, 'x');
+  const X = (v) => pad.l + (w - pad.l - pad.r) * v;
+  const Y = (v) => pad.t + (h - pad.t - pad.b) * (1 - v);
+  const pts = getAnalysis().roots;
+  const xc = pts.find(q => !q.boundary && !q.stable);
+  if (xc) {                                   // 被吸回区
+    ctx.fillStyle = 'rgba(88,166,255,0.07)';
+    ctx.fillRect(X(0), Y(1), X(xc.x) - X(0), h - pad.t - pad.b);
+  }
+  ctx.strokeStyle = '#3a4450'; ctx.setLineDash([3, 3]);   // 对角线
+  ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(1), Y(1)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = COL.x; ctx.lineWidth = 1.8; ctx.beginPath();   // F(x)
+  const M = 300;
+  for (let i = 0; i <= M; i++) {
+    const x = i / M, y = sim.frozenF(x, P, k);
+    i === 0 ? ctx.moveTo(X(x), Y(y)) : ctx.lineTo(X(x), Y(y));
+  }
+  ctx.stroke();
+  for (const q of pts) {                      // 不动点
+    if (q.boundary) continue;
+    ctx.beginPath(); ctx.arc(X(q.x), Y(q.x), 5, 0, 7);
+    ctx.fillStyle = q.stable ? COL.grn || '#7ec699' : COL.p; ctx.fill();
+    ctx.strokeStyle = '#0f1318'; ctx.stroke();
+  }
+  const xNow = sim.meanU8(sim.a);             // 当前状态
+  ctx.beginPath(); ctx.arc(X(xNow), Y(sim.frozenF(xNow, P, k)), 4.5, 0, 7);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.fillStyle = COL.fg; ctx.font = '10px sans-serif';
+  ctx.fillText(`P=${P.toFixed(2)}  k=${k.toFixed(3)}  fixed points: ${pts.filter(q => !q.boundary).length}`, pad.l + 4, pad.t + 10);
+}
+
+/* ---- 分岔图(带缓存与去抖) ---- */
+const bifCache = { key: null, busy: false, rows: [] };
+function bifKey() { return [sim.o.N, sim.o.tolType, sim.eff().P.toFixed(3), Math.round(sim.R * 50)].join('|'); }
+function computeBif() {
+  const P = sim.eff().P, N = sim.o.N;
+  const rows = [];
+  const kmax = Math.min(0.6, 0.3 / Math.max(P, 0.05));
+  for (let i = 1; i <= 46; i++) {
+    const k = kmax * i / 46;
+    const pts = sim.fixedPoints(P, k).filter(q => !q.boundary);
+    rows.push({ k, pts });
+  }
+  bifCache.rows = rows; bifCache.key = bifKey();
+}
+function drawBif() {
+  const cv = $('chBif'); const [ctx, w, h] = setupCanvas(cv);
+  const pad = { l: 34, r: 12, t: 10, b: 18 };
+  axes(ctx, w, h, pad, 1, 1, 'k');
+  const X = (v) => pad.l + (w - pad.l - pad.r) * v / 0.6;
+  const Y = (v) => pad.t + (h - pad.t - pad.b) * (1 - v);
+  if (bifCache.key !== bifKey() && !bifCache.busy) {
+    bifCache.busy = true;
+    setTimeout(() => { computeBif(); bifCache.busy = false; drawBif(); }, 30);
+  }
+  for (const { k, pts } of bifCache.rows) {
+    for (const q of pts) {
+      ctx.fillStyle = q.stable ? COL.x : COL.d;
+      ctx.fillRect(X(k) - 1.2, Y(q.x) - 1.2, 2.4, 2.4);
+    }
+  }
+  const kNow = Math.min(0.6, sim.hist.k.length ? sim.hist.k[sim.hist.k.length - 1] : 0);
+  const xNow = sim.meanU8(sim.a);
+  ctx.beginPath(); ctx.arc(X(kNow), Y(xNow), 5, 0, 7);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.strokeStyle = '#0f1318'; ctx.stroke();
+  ctx.fillStyle = COL.fg; ctx.font = '10px sans-serif';
+  ctx.fillText("blue = stable  orange = unstable (critical seed)  white dot = now", pad.l + 4, pad.t + 10);
+}
+
+function drawDist() {
+  const cv = $('chDist'); const [ctx, w, h] = setupCanvas(cv);
+  const pad = { l: 34, r: 12, t: 10, b: 18 };
+  const P = sim.eff().P, k = sim.hist.k.length ? sim.hist.k[sim.hist.k.length - 1] : 0;
+  const xNow = sim.meanU8(sim.a);
+  const c = sim.cost(k, xNow, P);
+  axes(ctx, w, h, pad, 1, 1, 'τ+b');
+  const X = (v) => pad.l + (w - pad.l - pad.r) * v;
+  const Y = (v) => pad.t + (h - pad.t - pad.b) * (1 - v);
+  const B = 64, bins = new Array(B).fill(0), maxv = 2.2;
+  let free = 0;
+  for (let i = 0; i < sim.o.N; i++) {
+    if (sim.r[i]) continue;
+    free++;
+    const q = sim.tau[i] + sim.b[i];
+    const bi = Math.min(B - 1, Math.max(0, Math.floor(q / maxv * B)));
+    bins[bi]++;
+  }
+  const mx = Math.max(1, ...bins);
+  ctx.fillStyle = 'rgba(88,166,255,0.65)';
+  for (let i = 0; i < B; i++) {
+    const bw = (w - pad.l - pad.r) / B;
+    ctx.fillRect(X(i / B * maxv), Y(bins[i] / mx), bw, Y(0) - Y(bins[i] / mx));
+  }
+  if (c > 0 && c <= maxv) {                   // 当前代价线 + 门槛带
+    ctx.fillStyle = 'rgba(210,160,50,0.18)';
+    ctx.fillRect(X(Math.max(0, c - 0.01)), Y(1), X(Math.min(maxv, c + 0.01)) - X(Math.max(0, c - 0.01)), h - pad.t - pad.b);
+    ctx.strokeStyle = COL.d; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(X(c), Y(1)); ctx.lineTo(X(c), Y(0)); ctx.stroke();
+    ctx.fillStyle = COL.d; ctx.font = '10px sans-serif';
+    const mu = sim.backfireMu();
+    ctx.fillText(`cost c=${c.toFixed(3)}   μ=${mu.mu.toFixed(2)}${mu.mu > 1 ? ' → events will add participants on net' : ''}`, pad.l + 4, pad.t + 10);
+  }
+}
+
+function drawAll() {
+  frameNo++;
+  updateStatus(frameNo % 20 === 0);
+  drawTime(); drawReact(); drawBif(); drawDist();
+}
+
+/* ================= 页内自检 ================= */
+function runInPageTests() {
+  const out = [];
+  let pass = 0, fail = 0;
+  const check = (name, cond, detail) => {
+    if (cond) { pass++; out.push(`  ✓ ${name}`); }
+    else { fail++; out.push(`  ✗ ${name} ${detail || ''}`); }
+  };
+  const near = (a, b, t) => Math.abs(a - b) <= t;
+  const F = (x) => theory.reactionUniform(x, 1, 0.02);
+  let x = 0.021; const seq = [x];
+  for (let i = 0; i < 40; i++) { const nx = F(x); seq.push(nx); if (Math.abs(nx - x) < 1e-12) break; x = nx; }
+  check("p16 example: 21 people take off 48→580→966→980", near(seq[1] * 1000, 48, 2) && near(seq[2] * 1000, 580, 3) && near(seq[seq.length - 1], 0.97958, 0.001));
+  check("p16 example: 20 people die out", theory.iterateUniform(0.02, 1, 0.02, 50) === 0);
+  check("Fixed points, analytic x₋/x₊", near(theory.xMinus(1, 0.02), 0.02041685, 1e-6) && near(theory.xPlus(1, 0.02), 0.97958315, 1e-6));
+  const eq = (xx, P, k) => theory.iterateUniform(xx, P, k, 400);
+  let xx = 0.05, jd = null;
+  for (let P = 1.6; P >= 0.6; P -= 0.01) { xx = eq(xx, P, 0.2); if (xx > 0.5 && !jd) jd = P; }
+  check("Hysteresis: lowering pressure jumps up at P_↓≈0.8", jd && near(jd, 0.8, 0.03), `jd=${jd && jd.toFixed(2)}`);
+  let u = eq(0.9, 0.6, 0.2), ju = null;
+  for (let P = 0.6; P <= 1.35; P += 0.005) { u = eq(u, P, 0.2); if (u < 0.1 && !ju) ju = P; }
+  check("Hysteresis: raising pressure drops back at P_↑≈1.25", ju && near(ju, 1.25, 0.02), `ju=${ju && ju.toFixed(2)}`);
+  check("Catalan series", Math.abs(theory.xMinus(1, 0.001) - (0.001 + 1e-6 + 2e-9 + 5e-12 + 14e-15)) < 1e-15);
+  const s5 = new Sim({ N: 10000, M: 600, K0: 200, tolType: 'uniform', P: 1, Pbar: 0.5, gamma: 2, memDecay: 0, alpha: 1, beta: 1, delta: 0, d0: 0.5, seed: 9 });
+  const idx = Array.from({ length: 10000 }, (_, i) => i).sort((a, b) => s5.tau[b] - s5.tau[a]);
+  for (let i = 0; i < 1000; i++) s5.a[idx[i]] = 1;
+  const s5r = s5.step(0);
+  check("p5 single-round example: x′≈0.90, d′≈0.6, b̄≈0.01", near(s5r.x, 0.9, 0.005) && near(s5r.d, 0.6, 0.03) && near(s5r.bAvg, 0.01, 0.001));
+  const se = new Sim({ N: 1000, K0: 20, M: 2000, tolType: 'uniform', P: 1, Pbar: 0.5, alpha: 0, beta: 0.9, delta: 0.2, d0: 0, continuousK: true, seed: 11 });
+  let ok = true;
+  for (let t = 1; t <= 10; t++) { const s = se.step(0); if (!near(s.k, 0.02 * Math.pow(0.9, t), 1e-3)) ok = false; }
+  check("Property 1: k_t decays geometrically while the public stays silent", ok && se.meanU8(se.a) === 0);
+  out.unshift(`Results: ${pass} passed, ${fail} failed`);
+  $('tests').textContent = out.join('\n');
+}
+
+/* ================= CSV ================= */
+function exportCsv() {
+  const h = sim.hist;
+  let csv = 't,x,d,k,p,b,R\n';
+  for (let i = 0; i < h.t.length; i++) csv += `${h.t[i]},${h.x[i]},${h.d[i]},${h.k[i]},${h.p[i]},${h.b[i]},${h.R[i]}\n`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `silence_sim_${curKey}_${sim.t}rounds.csv`;
+  a.click();
+}
+
+/* ================= 装配 ================= */
+window.addEventListener('DOMContentLoaded', () => {
+  const sel = $('scenario');
+  for (const [k, sc] of Object.entries(SCENARIOS)) {
+    const op = document.createElement('option');
+    op.value = k; op.textContent = sc.name;
+    sel.appendChild(op);
+  }
+  sel.addEventListener('change', () => applyScenario(sel.value));
+  bindControls();
+
+  $('btnStep').onclick = () => { sim.step(0); drawAll(); };
+  $('btnRun').onclick = () => {
+    running = !running;
+    $('btnRun').textContent = running ? "⏸ Pause" : "▶ Run";
+    if (running) requestAnimationFrame(tick);
+  };
+  $('btnReset').onclick = () => applyScenario(curKey);
+  $('btnRebuild').onclick = () => rebuildWorld();
+  $('spd').oninput = () => $('spdVal').textContent = $('spd').value;
+  $('btnCsv').onclick = exportCsv;
+
+  $('seedCount').oninput = () => $('v_seedCount').textContent = $('seedCount').value;
+  $('btnSeed').onclick = () => {
+    pendingSeeds.push({ count: +$('seedCount').value, mode: $('seedMode').value });
+    if (!running) { sim.step(pendingSeeds[0].count, pendingSeeds[0].mode); pendingSeeds = []; drawAll(); }
+  };
+  let recurOn = false;
+  $('btnRecur').onclick = () => {
+    recurOn = !recurOn;
+    recur = recurOn ? { count: Math.max(2, Math.round(+ $('seedCount').value / 3)), every: 1 } : null;
+    $('btnRecur').textContent = "Routine actions: " + (recurOn ? `On (${recur.count} people/round)` : "Off");
+  };
+  $('btnTV').onclick = () => { fireEvent('tv'); };
+  $('btnAmnesty').onclick = () => { fireEvent('amnesty'); };
+  $('btnSpike').onclick = () => { fireEvent('spike'); };
+  $('btnCrack').onclick = () => { fireEvent('crack'); };
+  $('btnLink').onclick = () => {
+    if (!sim.net) { $('scenDesc').insertAdjacentHTML('beforeend', "<br><span style=\"color:var(--red)\">A fully mixed network has no ties to weave (switch the network type and rebuild first).</span>"); return; }
+    const N = sim.o.N, n = Math.round(N * 0.4);
+    for (let t = 0; t < n; t++) {
+      const a = (sim.rng() * N) | 0, b = (sim.rng() * N) | 0;
+      if (a !== b) { sim.net[a].push(b); sim.net[b].push(a); }
+    }
+  };
+  $('btnTest').onclick = runInPageTests;
+
+
+  window.addEventListener('resize', drawAll);
+  applyScenario('playground');
+});
+
+</script>
+
+</body>
+</html>

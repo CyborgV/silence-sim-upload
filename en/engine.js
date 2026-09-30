@@ -29,7 +29,7 @@
       return String(Math.round(n / p) * p);
     }
     const w = n / 1e4;
-    return (w < 10 ? w.toFixed(1).replace(/\.0$/, '') : String(Math.round(w))) + '万';
+    return (w < 10 ? w.toFixed(1).replace(/\.0$/, '') : String(Math.round(w))) + "×10⁴";
   }
   const band = (v, cuts, words) => { let i = 0; while (i < cuts.length && v >= cuts[i]) i++; return { level: i, words: words[i] }; };
 
@@ -38,50 +38,50 @@
    * ============================================================ */
   const POLICIES = {
     enforce: {
-      name: '执法力度', icon: '⚖️',
-      desc: '抓到之后怎么处置。越重,上街越可怕;可一旦超出民众认可的界线,每一次处罚都会被人记在心里,也会让执行者不安。',
+      name: "Enforcement", icon: '⚖️',
+      desc: "What happens to those you catch. The harsher it is, the more frightening the streets become; but once it goes beyond the line people accept, every punishment is remembered, and the enforcers grow uneasy.",
       options: [
-        { id: 'lenient', name: '宽松', short: '训诫为主', P: 0.7, upkeep: 0 },
-        { id: 'normal', name: '常规', short: '依法拘留', P: 1.0, upkeep: 0 },
-        { id: 'harsh', name: '严厉', short: '重判示众', P: 1.3, upkeep: 0.1, cost: 1 },
-        { id: 'terror', name: '铁腕', short: '株连处决', P: 1.7, upkeep: 0.2, cost: 1 },
+        { id: 'lenient', name: "Lenient", short: "Mostly warnings", P: 0.7, upkeep: 0 },
+        { id: 'normal', name: "Routine", short: "Detention by law", P: 1.0, upkeep: 0 },
+        { id: 'harsh', name: "Harsh", short: "Heavy sentences, made public", P: 1.3, upkeep: 0.1, cost: 1 },
+        { id: 'terror', name: "Draconian", short: "Executions, families punished", P: 1.7, upkeep: 0.2, cost: 1 },
       ],
     },
     police: {
-      name: '警力部署', icon: '🚓',
-      desc: '每一轮能抓多少人。人手越多,零星的抗议者越跑不掉;人手有限时,人一多,每个人被抓的机会就被摊薄了。',
+      name: "Police", icon: '🚓',
+      desc: "How many people you can arrest each round. With more manpower, scattered protesters can't get away; with limited manpower, the bigger the crowd, the thinner each person's chance of arrest.",
       options: [
-        { id: 'lean', name: '精简', short: '省下开支', K: 0.6, upkeep: -0.15 },
-        { id: 'normal', name: '常规', short: '日常警力', K: 1.0, upkeep: 0 },
-        { id: 'surge', name: '增派', short: '调集外地警力', K: 1.7, upkeep: 0.3, cost: 1 },
-        { id: 'martial', name: '戒严', short: '军队进城', K: 3.0, upkeep: 0.6, cost: 2 },
+        { id: 'lean', name: "Lean", short: "Saves money", K: 0.6, upkeep: -0.15 },
+        { id: 'normal', name: "Routine", short: "Everyday policing", K: 1.0, upkeep: 0 },
+        { id: 'surge', name: "Reinforce", short: "Police from other regions", K: 1.7, upkeep: 0.3, cost: 1 },
+        { id: 'martial', name: "Martial law", short: "Troops enter the city", K: 3.0, upkeep: 0.6, cost: 2 },
       ],
     },
     target: {
-      name: '抓捕对象', icon: '🎯',
-      desc: '抓谁。专抓串联者会切断联系;按名单预防性拘押不等人上街就先抓走最可能站出来的人——但名单越长,开销越大。',
+      name: "Arrest targets", icon: '🎯',
+      desc: "Whom to arrest. Targeting organizers cuts the links between people; preventive detention by list takes those most likely to step forward before they ever reach the streets — but the longer the list, the higher the cost.",
       options: [
-        { id: 'uniform', name: '见一个抓一个', short: '街上抓到谁算谁', mode: 'uniform', upkeep: 0 },
-        { id: 'organizer', name: '专抓串联者', short: '切断联系', mode: 'organizer', upkeep: 0.1, needNet: true },
-        { id: 'preventive', name: '预防性拘押', short: '按名单先抓', mode: 'preventive', upkeep: 0.3, cost: 1 },
+        { id: 'uniform', name: "Arrest anyone", short: "Whoever gets caught on the street", mode: 'uniform', upkeep: 0 },
+        { id: 'organizer', name: "Target organizers", short: "Cut the links", mode: 'organizer', upkeep: 0.1, needNet: true },
+        { id: 'preventive', name: "Preventive detention", short: "Arrest from a list, in advance", mode: 'preventive', upkeep: 0.3, cost: 1 },
       ],
     },
     info: {
-      name: '舆论管控', icon: '📺',
-      desc: '人们能看到多少。封锁让人低估别人的参与、也看不见镇压——但被压住的记忆并没有消失,一旦曝光会加倍兑现。封锁也会蒙住你自己的眼睛。',
+      name: "Media", icon: '📺',
+      desc: "How much people can see. A blackout makes people underestimate how many others are taking part, and hides the repression — but suppressed memory doesn't vanish; once exposed, it comes due twice over. A blackout also blinds you.",
       options: [
-        { id: 'open', name: '如实报道', short: '人人看得见', gs: 1.0, vis: 1.0, upkeep: 0 },
-        { id: 'spin', name: '淡化处理', short: '大事化小', gs: 0.72, vis: 0.65, upkeep: 0.05 },
-        { id: 'blackout', name: '全面封锁', short: '断网禁言', gs: 0.42, vis: 0.35, upkeep: 0.25, cost: 1 },
+        { id: 'open', name: "Honest reporting", short: "Everyone can see", gs: 1.0, vis: 1.0, upkeep: 0 },
+        { id: 'spin', name: "Downplay", short: "Make it look small", gs: 0.72, vis: 0.65, upkeep: 0.05 },
+        { id: 'blackout', name: "Total blackout", short: "Internet cut, speech banned", gs: 0.42, vis: 0.35, upkeep: 0.25, cost: 1 },
       ],
     },
     release: {
-      name: '关押政策', icon: '🔓',
-      desc: '抓进去的人关多久。放人会让他们回到街头(带着记忆),关着则要花钱,也让家属与邻居记恨。',
+      name: "Detention", icon: '🔓',
+      desc: "How long the arrested are held. Releasing them sends them back to the streets (with their memories); holding them costs money and makes families and neighbors bitter.",
       options: [
-        { id: 'long', name: '从严关押', short: '长期羁押', rel: 0.02, upkeep: 0.1 },
-        { id: 'normal', name: '依法释放', short: '关满就放', rel: 0.08, upkeep: 0 },
-        { id: 'lenient', name: '宽大处理', short: '教育释放', rel: 0.25, upkeep: -0.05 },
+        { id: 'long', name: "Hold them long", short: "Long-term custody", rel: 0.02, upkeep: 0.1 },
+        { id: 'normal', name: "Release by law", short: "Out when time is served", rel: 0.08, upkeep: 0 },
+        { id: 'lenient', name: "Leniency", short: "Lecture and release", rel: 0.25, upkeep: -0.05 },
       ],
     },
   };
@@ -124,83 +124,83 @@
   const CARDS = {
     /* ---------------- 行动方 ---------------- */
     rally: {
-      side: 'movement', name: '小型集会', icon: '✊', cost: 1, cd: 2,
-      text: '召集一小群人公开表态。人少的时候,他们多半会被抓走——但也可能是火种。',
-      tags: ['上街 +少量'], run(g) { g.addSeeds(0.015); },
+      side: 'movement', name: "Small rally", icon: '✊', cost: 1, cd: 2,
+      text: "Gather a small group to take a public stand. With so few of them, most will likely be arrested — but they may also be the spark.",
+      tags: ["Turnout +small"], run(g) { g.addSeeds(0.015); },
     },
     march: {
-      side: 'movement', name: '大游行', icon: '🚩', cost: 2, cd: 4,
-      text: '提前约好时间地点,一起走上街。人越多,每个人被抓的机会越小。',
-      tags: ['上街 +较多'], run(g) { g.addSeeds(0.04); },
+      side: 'movement', name: "Mass march", icon: '🚩', cost: 2, cd: 4,
+      text: "Agree on a time and place in advance, and take to the streets together. The more people, the smaller each one's chance of arrest.",
+      tags: ["Turnout +medium"], run(g) { g.addSeeds(0.04); },
     },
     mobilize: {
-      side: 'movement', name: '串联动员', icon: '📞', cost: 2, cd: 5,
-      text: '一个一个去找那些"只差一步"的人。犹豫的人最容易被身边的人带动。',
-      tags: ['上街 +精准', '找到犹豫的人'], run(g) { g.addSeeds(0.03, 'near'); g.revealFor(2); },
+      side: 'movement', name: "Mobilize", icon: '📞', cost: 2, cd: 5,
+      text: "Seek out, one by one, the people who are “just one step away.” The hesitant are the easiest to move by those around them.",
+      tags: ["Turnout +targeted", "Finds the wavering"], run(g) { g.addSeeds(0.03, 'near'); g.revealFor(2); },
     },
     strike: {
-      side: 'movement', name: '总罢工', icon: '🏭', cost: 3, cd: 10,
-      text: '工厂停工、商店关门、学校罢课。人多,而且让对方的钱袋子吃紧。',
-      tags: ['上街 +大量', '对方资源 −'], run(g) { g.addSeeds(0.08); g.hurtOpponent(4); },
+      side: 'movement', name: "General strike", icon: '🏭', cost: 3, cd: 10,
+      text: "Factories stop, shops close, schools walk out. Lots of people — and it squeezes the other side's purse.",
+      tags: ["Turnout +large", "Their resources −"], run(g) { g.addSeeds(0.08); g.hurtOpponent(4); },
     },
     samizdat: {
-      side: 'movement', name: '地下刊物', icon: '📰', cost: 1, cd: 4,
-      text: '手抄本、传单、境外广播。让人知道:不止你一个人这么想。',
-      tags: ['打破封锁', '官方说法失信'],
+      side: 'movement', name: "Underground press", icon: '📰', cost: 1, cd: 4,
+      text: "Hand-copied texts, leaflets, foreign broadcasts. Let people know: you are not the only one who thinks this way.",
+      tags: ["Breaks the blackout", "Official line discredited"],
       run(g) {
         const fw = g._actor === 'opp' && g.flags.firewall ? 0.5 : 1;
-        g.addEffect({ id: 'samizdat', name: '地下刊物流传', icon: '📰', side: 'movement', rounds: 4, mod(m) { m.gs = Math.min(1, m.gs + 0.25 * fw); m.noise *= 0.5; } });
+        g.addEffect({ id: 'samizdat', name: "Underground press circulating", icon: '📰', side: 'movement', rounds: 4, mod(m) { m.gs = Math.min(1, m.gs + 0.25 * fw); m.noise *= 0.5; } });
         g.base.Pbar = Math.max(0.2, g.base.Pbar - 0.02);
       },
     },
     leak: {
-      side: 'movement', name: '曝光真相', icon: '📼', cost: 2, cd: 8,
-      text: '把被压下去的画面送出去。封锁压住的不是记忆,只是记忆的公开。',
-      tags: ['被压住的愤怒 → 公开', '人人看见'],
+      side: 'movement', name: "Expose the truth", icon: '📼', cost: 2, cd: 8,
+      text: "Get the suppressed images out. What a blackout holds down is not memory, only memory made public.",
+      tags: ["Suppressed anger → public", "Everyone sees"],
       run(g) {
-        g.addEffect({ id: 'leak', name: '真相曝光', icon: '📼', side: 'movement', rounds: 2, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = 1; m.omega = Math.max(m.omega, 0.7); } });
+        g.addEffect({ id: 'leak', name: "Truth exposed", icon: '📼', side: 'movement', rounds: 2, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = 1; m.omega = Math.max(m.omega, 0.7); } });
         const v = g.sim.reveal(g._actor === 'opp' && g.flags.firewall ? 0.35 : 0.7);
         g.fx.push({ type: 'reveal', amt: v });
       },
     },
     memorial: {
-      side: 'movement', name: '悼念活动', icon: '🕯️', cost: 1, cd: 6,
-      text: '为被抓、被害的人点一支蜡烛。悼念让"发生过什么"留在人们心里。',
-      tags: ['记忆 ↑', '此后的处罚更刺痛'],
+      side: 'movement', name: "Memorial", icon: '🕯️', cost: 1, cd: 6,
+      text: "Light a candle for the arrested and the dead. Mourning keeps “what happened” alive in people's hearts.",
+      tags: ["Memory ↑", "Later punishments sting more"],
       run(g) {
-        g.addEffect({ id: 'memorial', name: '悼念', icon: '🕯️', side: 'movement', rounds: 5, mod(m) { m.vis = Math.min(1.6, m.vis * 1.6 + 0.1); } });
+        g.addEffect({ id: 'memorial', name: "Mourning", icon: '🕯️', side: 'movement', rounds: 5, mod(m) { m.vis = Math.min(1.6, m.vis * 1.6 + 0.1); } });
         griefAll(g, Math.min(0.06, 0.3 * g.sim.R + 0.006));
       },
     },
     fraternize: {
-      side: 'movement', name: '劝说士兵', icon: '🌷', cost: 2, cd: 6,
-      text: '给士兵送水、送花,和他们说话:"你们也是人民的子弟。"',
-      tags: ['军心 ↓'],
+      side: 'movement', name: "Win over troops", icon: '🌷', cost: 2, cd: 6,
+      text: "Bring the soldiers water and flowers, and talk to them: “You are the people's sons too.”",
+      tags: ["Troop morale ↓"],
       run(g) {
         scalePsi(g, 0.3, 0.7);
-        g.addEffect({ id: 'fraternize', name: '军民对话', icon: '🌷', side: 'movement', rounds: 6, mod(m) { m.alpha += 0.12; } });
+        g.addEffect({ id: 'fraternize', name: "Soldiers and people talk", icon: '🌷', side: 'movement', rounds: 6, mod(m) { m.alpha += 0.12; } });
       },
     },
     network: {
-      side: 'movement', name: '串联织网', icon: '🕸️', cost: 1, cd: 5, needNet: true,
-      text: '在学校、工厂、教会之间建立可信的联系。熟人之间,一个人站出来就能带动另一个。',
-      tags: ['更容易互相带动'], run(g) { addEdges(g, Math.round(g.N * 0.35)); },
+      side: 'movement', name: "Build networks", icon: '🕸️', cost: 1, cd: 5, needNet: true,
+      text: "Build trusted links between schools, factories and churches. Among people who know each other, one who steps forward can bring along another.",
+      tags: ["Stronger peer influence"], run(g) { addEdges(g, Math.round(g.N * 0.35)); },
     },
     legal: {
-      side: 'movement', name: '营救被捕者', icon: '📜', cost: 1, cd: 6,
-      text: '律师、家属、联名信。把人要回来——他们回来时带着记忆。',
-      tags: ['被捕者获释', '人手回流'],
+      side: 'movement', name: "Free the detained", icon: '📜', cost: 1, cd: 6,
+      text: "Lawyers, families, petitions. Get people back — and they come back with their memories.",
+      tags: ["Detainees freed", "Manpower returns"],
       run(g) {
         const s = g.sim;
         for (let i = 0; i < s.o.N; i++) if (s.r[i] && s.rng() < 0.15) s.r[i] = 0;
         s.tauDirty = true;
-        g.addEffect({ id: 'legal', name: '营救行动', icon: '📜', side: 'movement', rounds: 6, mod(m) { m.rel += 0.12; } });
+        g.addEffect({ id: 'legal', name: "Rescue campaign", icon: '📜', side: 'movement', rounds: 6, mod(m) { m.rel += 0.12; } });
       },
     },
     hunger: {
-      side: 'movement', name: '绝食请愿', icon: '🥣', cost: 2, cd: 14,
-      text: '不吃饭,不离开。最弱者的姿态,最难被忽视。',
-      tags: ['同情 ↑↑', '少量坚守者'],
+      side: 'movement', name: "Hunger strike", icon: '🥣', cost: 2, cd: 14,
+      text: "No eating, no leaving. The posture of the weakest, and the hardest to ignore.",
+      tags: ["Sympathy ↑↑", "A few holdouts"],
       run(g) {
         g.addSeeds(0.006);
         const vis = g.sim.o.vis;
@@ -208,70 +208,70 @@
       },
     },
     lowkey: {
-      side: 'movement', name: '化整为零', icon: '🌫️', cost: 1, cd: 6,
-      text: '分散、换地点、不留名。对方更难找到你,但别人也更难看见你。',
-      tags: ['被抓风险 ↓', '可见度 ↓'],
-      run(g) { g.addEffect({ id: 'lowkey', name: '化整为零', icon: '🌫️', side: 'movement', rounds: 3, mod(m) { m.K0 *= 0.78; m.gs *= 0.85; } }); },
+      side: 'movement', name: "Disperse", icon: '🌫️', cost: 1, cd: 6,
+      text: "Scatter, change places, leave no names. Harder for them to find you — but harder for others to see you, too.",
+      tags: ["Arrest risk ↓", "Visibility ↓"],
+      run(g) { g.addEffect({ id: 'lowkey', name: "Disperse", icon: '🌫️', side: 'movement', rounds: 3, mod(m) { m.K0 *= 0.78; m.gs *= 0.85; } }); },
     },
 
     /* ---- 关卡专属(行动方) ---- */
     blockade: {
-      side: 'movement', name: '拦阻军车', icon: '🚚', cost: 1, cd: 3, special: true,
-      text: '市民、老人、学生涌上路口,围住军车,给士兵送饭、讲道理。',
-      tags: ['戒严部队受阻', '军心 ↓'],
-      when: (g) => g.pol.police === 'martial' || !!g.flags.martialLaw, whenText: '仅在戒严时可用',
+      side: 'movement', name: "Stop the convoys", icon: '🚚', cost: 1, cd: 3, special: true,
+      text: "Residents, old people and students pour into the intersections, surround the army trucks, bring the soldiers food and reason with them.",
+      tags: ["Martial-law troops stalled", "Troop morale ↓"],
+      when: (g) => g.pol.police === 'martial' || !!g.flags.martialLaw, whenText: "Only under martial law",
       run(g) {
-        g.addEffect({ id: 'blockade', name: '军车受阻', icon: '🚚', side: 'movement', rounds: 2, mod(m) { m.K0 *= 0.55; m.alpha += 0.1; } });
+        g.addEffect({ id: 'blockade', name: "Convoys blocked", icon: '🚚', side: 'movement', rounds: 2, mod(m) { m.K0 *= 0.55; m.alpha += 0.1; } });
         scalePsi(g, 0.2, 0.75);
       },
     },
     goddess: {
-      side: 'movement', name: '民主女神像', icon: '🗽', cost: 2, cd: 99, once: true, special: true,
-      text: '美院学生连夜赶制的泡沫雕像,立在广场上,面对城楼。',
-      tags: ['士气 ↑', '全世界在看'],
+      side: 'movement', name: "Goddess of Democracy", icon: '🗽', cost: 2, cd: 99, once: true, special: true,
+      text: "A foam statue the art-academy students built overnight, set up in the square, facing the gate tower.",
+      tags: ["Morale ↑", "The world is watching"],
       run(g) {
         g.addSeeds(0.03);
-        g.addEffect({ id: 'goddess', name: '女神像', icon: '🗽', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = Math.max(m.gs, 0.8); } });
+        g.addEffect({ id: 'goddess', name: "The Goddess", icon: '🗽', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = Math.max(m.gs, 0.8); } });
         griefAll(g, 0.015);
       },
     },
     prayer: {
-      side: 'movement', name: '和平祈祷', icon: '⛪', cost: 1, cd: 2, special: true,
-      text: '尼古拉教堂每周一的和平祈祷。教堂的门开着,出来的人会走到街上。周一免费。',
-      tags: ['上街 +精准', '周一免费'],
+      side: 'movement', name: "Peace prayers", icon: '⛪', cost: 1, cd: 2, special: true,
+      text: "The Monday peace prayers at St. Nicholas Church. The church doors stand open, and those who come out walk into the streets. Free on Mondays.",
+      tags: ["Turnout +targeted", "Free on Mondays"],
       costFn: (g) => (g.isMonday() ? 0 : 1),
       run(g) { g.addSeeds(g.isMonday() ? 0.022 : 0.01, 'near'); },
     },
     cassette: {
-      side: 'movement', name: '录音带布道', icon: '📼', cost: 1, cd: 4, special: true,
-      text: '流亡者的讲道录在卡带上,在清真寺和集市之间一盘盘翻录。',
-      tags: ['更容易互相带动', '王权失信'],
+      side: 'movement', name: "Cassette sermons", icon: '📼', cost: 1, cd: 4, special: true,
+      text: "The exile's sermons, recorded on cassettes and copied tape by tape between mosques and bazaars.",
+      tags: ["Stronger peer influence", "Monarchy discredited"],
       run(g) { addEdges(g, Math.round(g.N * 0.2)); g.base.Pbar = Math.max(0.25, g.base.Pbar - 0.03); },
     },
     banner: {
-      side: 'movement', name: '桥上的横幅', icon: '🪧', cost: 1, cd: 99, once: true, special: true,
-      text: '一个人,一座桥,两条横幅,一团浓烟。他会被带走——但照片会留下来。',
-      tags: ['一个人', '全网都看见了'],
+      side: 'movement', name: "Bridge banner", icon: '🪧', cost: 1, cd: 99, once: true, special: true,
+      text: "One man, one bridge, two banners, a plume of smoke. He will be taken away — but the photos will remain.",
+      tags: ["One man", "The whole internet saw"],
       run(g) {
         g.addSeeds(1 / g.N);
         griefAll(g, 0.025);
-        g.addEffect({ id: 'banner', name: '横幅照片流传', icon: '🪧', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = Math.min(1, m.gs + 0.2); } });
+        g.addEffect({ id: 'banner', name: "Banner photos spread", icon: '🪧', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = Math.min(1, m.gs + 0.2); } });
       },
     },
     sanctuary: {
-      side: 'movement', name: '明洞圣堂静坐', icon: '⛪', cost: 2, cd: 99, once: true, special: true,
-      text: '示威者退进明洞天主教堂。神父们站在门口:要抓他们,先从我们身上踩过去。',
-      tags: ['上街 +少量', '一个抓不走的据点', '持续六轮'],
+      side: 'movement', name: "Myeongdong sit-in", icon: '⛪', cost: 2, cd: 99, once: true, special: true,
+      text: "The demonstrators retreat into Myeongdong Cathedral. The priests stand at the door: to take them, you will have to walk over us first.",
+      tags: ["Turnout +small", "A stronghold they can't take", "Lasts 6 rounds"],
       run(g) {
         g.addSeeds(0.015);
-        g.addEffect({ id: 'sanctuary', name: '明洞静坐', icon: '⛪', side: 'movement', rounds: 6, mod(m) { m.K0 *= 0.75; m.vis = Math.max(m.vis, 0.9); } });
+        g.addEffect({ id: 'sanctuary', name: "Myeongdong sit-in", icon: '⛪', side: 'movement', rounds: 6, mod(m) { m.K0 *= 0.75; m.vis = Math.max(m.vis, 0.9); } });
       },
     },
     necktie: {
-      side: 'movement', name: '领带部队', icon: '👔', cost: 2, cd: 5, special: true,
-      text: '午休时间,打着领带的上班族走出写字楼,在人行道上鼓掌、从窗口扔下卫生纸卷,然后加入了队伍。',
-      tags: ['上街 +较多', '中产加入', '执法更容易被看作越界'],
-      when: (g) => !!g.flags.necktie, whenText: '要等到六月,街上已经有人的时候',
+      side: 'movement', name: "Necktie brigade", icon: '👔', cost: 2, cd: 5, special: true,
+      text: "At lunch hour, office workers in neckties walk out of their buildings, applaud from the sidewalks, throw rolls of toilet paper from the windows — and then join the march.",
+      tags: ["Turnout +medium", "Middle class joins", "Enforcement more easily seen as over the line"],
+      when: (g) => !!g.flags.necktie, whenText: "Not until June, when people are already on the streets",
       run(g) {
         g.addSeeds(0.03);
         g.base.Pbar = Math.max(0.3, g.base.Pbar - 0.03);
@@ -282,18 +282,18 @@
       },
     },
     blankpaper: {
-      side: 'movement', name: '举起白纸', icon: '📄', cost: 2, cd: 4, special: true,
-      text: '白纸上什么也没写——所有人都知道上面写着什么。罪名很难定。',
-      tags: ['上街 +较多', '被抓后果 ↓'],
+      side: 'movement', name: "Blank sheets", icon: '📄', cost: 2, cd: 4, special: true,
+      text: "Nothing is written on the blank sheet — and everyone knows what it says. Hard to find a charge.",
+      tags: ["Turnout +medium", "Arrest penalty ↓"],
       run(g) {
         g.addSeeds(0.035);
-        g.addEffect({ id: 'blankpaper', name: '白纸', icon: '📄', side: 'movement', rounds: 2, mod(m) { m.P *= 0.65; } });
+        g.addEffect({ id: 'blankpaper', name: "White paper", icon: '📄', side: 'movement', rounds: 2, mod(m) { m.P *= 0.65; } });
       },
     },
     usb: {
-      side: 'movement', name: 'U盘里的韩剧', icon: '💾', cost: 1, cd: 2, special: true,
-      text: '从边境带进来的 U 盘和 SD 卡。人们看到另一种日常——也渐渐知道,邻居也在偷偷看。',
-      tags: ['官方说法失信', '知道别人也在看', '暴露风险 ↑'],
+      side: 'movement', name: "K-dramas on USB", icon: '💾', cost: 1, cd: 2, special: true,
+      text: "USB sticks and SD cards smuggled across the border. People glimpse another kind of everyday life — and slowly learn that the neighbors are secretly watching too.",
+      tags: ["Official line discredited", "Others are watching too", "Exposure risk ↑"],
       run(g) {
         g.base.Pbar = Math.max(0.35, g.base.Pbar - 0.07);
         g.base.globalScale = Math.min(0.9, g.base.globalScale + 0.02);
@@ -302,85 +302,85 @@
       },
     },
     bribe: {
-      side: 'movement', name: '打点关系', icon: '💵', cost: 1, cd: 3, special: true,
-      text: '一条烟、一袋米、几张人民币。执法的人也要养家,市场让忠诚有了价格。',
-      tags: ['执行者松动', '暴露风险 ↑'],
+      side: 'movement', name: "Grease palms", icon: '💵', cost: 1, cd: 3, special: true,
+      text: "A carton of cigarettes, a bag of rice, a few Chinese yuan. Enforcers have families to feed too; the market has put a price on loyalty.",
+      tags: ["Enforcers soften", "Exposure risk ↑"],
       run(g) { for (let j = 0; j < g.sim.psi.length; j++) g.sim.psi[j] *= 0.94; g.exposure += 5 * g.exposureMul; },
     },
     market: {
-      side: 'movement', name: '市场网络', icon: '🧺', cost: 2, cd: 6, special: true,
-      text: '长马当(集市)里的熟人网络。配给制度塌了以后,人们靠它活下来,也靠它传话。',
-      tags: ['更容易互相带动', '组织力 +', '暴露风险 ↑'],
+      side: 'movement', name: "Market network", icon: '🧺', cost: 2, cd: 6, special: true,
+      text: "Networks of acquaintances in the jangmadang (markets). When the rationing system collapsed, people survived through them — and passed word through them.",
+      tags: ["Stronger peer influence", "Organizing power +", "Exposure risk ↑"],
       run(g) { addEdges(g, Math.round(g.N * 0.25)); g.bonusIncome += 0.12; g.exposure += 7 * g.exposureMul; },
     },
     hide: {
-      side: 'movement', name: '销毁痕迹', icon: '🔥', cost: 1, cd: 3, special: true,
-      text: '烧掉名单,换掉联络人,把 U 盘藏进墙缝。',
-      tags: ['暴露风险 ↓↓'], run(g) { g.exposure = Math.max(0, g.exposure - 28); },
+      side: 'movement', name: "Cover tracks", icon: '🔥', cost: 1, cd: 3, special: true,
+      text: "Burn the lists, change the contacts, hide the USB sticks in cracks in the wall.",
+      tags: ["Exposure risk ↓↓"], run(g) { g.exposure = Math.max(0, g.exposure - 28); },
     },
 
     /* ---- 教程 ---- */
     t_small: {
-      side: 'movement', name: '几个人先站出来', icon: '🙋', cost: 1, cd: 0, special: true,
-      text: '你和同班九个最要好的同学,十个人一起走出队列,站到主席台前。',
-      tags: ['上街 +10 人'], run(g) { g.addSeeds(10 / g.N); },
+      side: 'movement', name: "Ten step out", icon: '🙋', cost: 1, cd: 0, special: true,
+      text: "You and your nine closest classmates — ten of you — step out of line together and stand before the rostrum.",
+      tags: ["Turnout +10"], run(g) { g.addSeeds(10 / g.N); },
     },
     t_big: {
-      side: 'movement', name: '全年级串联', icon: '📣', cost: 3, cd: 0, special: true,
-      text: '前一天晚上,你们挨个宿舍敲门,约好一听到"补课"就一起走出队列。二十五个人答应了。',
-      tags: ['上街 +25 人'], run(g) { g.addSeeds(25 / g.N); },
+      side: 'movement', name: "Rally the grade", icon: '📣', cost: 3, cd: 0, special: true,
+      text: "The night before, you knocked on every dorm door and agreed: the moment you hear “weekend classes,” you all step out of line together. Twenty-five said yes.",
+      tags: ["Turnout +25"], run(g) { g.addSeeds(25 / g.N); },
     },
 
     /* ---------------- 朝廷 ---------------- */
     informants: {
-      side: 'regime', name: '线人网络', icon: '👂', cost: 1, cd: 6,
-      text: '派人混进人群,听他们私下说什么。这几天你会听到真话——最敢说话的人也会先被抓。',
-      tags: ['情报准确', '看见民间怨气', '先抓最坚定的人'],
+      side: 'regime', name: "Informant ring", icon: '👂', cost: 1, cd: 6,
+      text: "Plant people in the crowd to hear what they say in private. For a few days you'll hear the truth — and the boldest talkers get arrested first.",
+      tags: ["Accurate intelligence", "See public grievance", "Arrest the most committed first"],
       run(g) {
-        g.addEffect({ id: 'informants', name: '线人在听', icon: '👂', side: 'regime', rounds: 5, intel: true, mod(m) { if (m.targetMode === 'uniform') m.targetMode = 'zealot'; } });
+        g.addEffect({ id: 'informants', name: "Informants listening", icon: '👂', side: 'regime', rounds: 5, intel: true, mod(m) { if (m.targetMode === 'uniform') m.targetMode = 'zealot'; } });
         g.revealFor(5);
       },
     },
     editorial: {
-      side: 'regime', name: '社论定性', icon: '🗞️', cost: 1, cd: 8,
-      text: '在头版把这件事定性。怕的人会退缩——被冤枉的人会记住。',
-      tags: ['上街风险 ↑', '一部分人被激怒'],
+      side: 'regime', name: "Editorial verdict", icon: '🗞️', cost: 1, cd: 8,
+      text: "Pass verdict on it on the front page. The fearful will back off — the wrongly accused will remember.",
+      tags: ["Protest risk ↑", "Some are enraged"],
       run(g) {
-        g.addEffect({ id: 'editorial', name: '定性社论', icon: '🗞️', side: 'regime', rounds: 6, mod(m) { m.P *= 1.2; } });
+        g.addEffect({ id: 'editorial', name: "Editorial verdict", icon: '🗞️', side: 'regime', rounds: 6, mod(m) { m.P *= 1.2; } });
         griefAll(g, 0.045, 0.25);
       },
     },
     crackdown: {
-      side: 'regime', name: '开枪清场', icon: '💥', cost: 3, cd: 12,
-      text: '动用武力,不惜代价清空街道。街道会空——枪声也会被所有人听见。',
-      tags: ['街头迅速清空', '积怨 ↑↑↑', '军心 ↓'],
+      side: 'regime', name: "Open fire", icon: '💥', cost: 3, cd: 12,
+      text: "Use force; clear the streets at any cost. The streets will empty — and everyone will hear the shots.",
+      tags: ["Streets cleared fast", "Grievance ↑↑↑", "Troop morale ↓"],
       run(g) {
-        g.addEffect({ id: 'crackdown', name: '清场', icon: '💥', side: 'regime', rounds: 2, mod(m) { m.P *= 2.2; m.K0 *= 2; m.vis = Math.max(m.vis, 0.85); } });
+        g.addEffect({ id: 'crackdown', name: "Clearance", icon: '💥', side: 'regime', rounds: 2, mod(m) { m.P *= 2.2; m.K0 *= 2; m.vis = Math.max(m.vis, 0.85); } });
         g.flags.lastCrackdown = g.round;
         g.fx.push({ type: 'crackdown' });
       },
     },
     amnesty: {
-      side: 'regime', name: '大赦', icon: '🕊️', cost: 2, cd: 12,
-      text: '释放所有被关押的人。一些怨气会消散,但他们会回到街头。',
-      tags: ['全部释放', '积怨 ↓'],
+      side: 'regime', name: "Amnesty", icon: '🕊️', cost: 2, cd: 12,
+      text: "Release everyone in custody. Some resentment will fade, but they will return to the streets.",
+      tags: ["All released", "Grievance ↓"],
       run(g) { g.sim.r.fill(0); g.sim.tauDirty = true; griefScale(g, 0.88); },
     },
     dialogue: {
-      side: 'regime', name: '对话让步', icon: '🤝', cost: 2, cd: 10,
-      text: '"为民者宣之使言。"坐下来谈,认下一部分诉求。怨气会消,对手也会觉得你软。',
-      tags: ['积怨 ↓↓', '民众认可的界线 ↑', '对方士气 ↑'],
+      side: 'regime', name: "Dialogue", icon: '🤝', cost: 2, cd: 10,
+      text: "“Those who govern the people let them speak.” Sit down and talk; grant some of the demands. Resentment will ease — and your opponents will think you soft.",
+      tags: ["Grievance ↓↓", "The line people accept ↑", "Their morale ↑"],
       run(g) { g.base.Pbar += 0.08; griefScale(g, 0.72); g.hurtOpponent(-2); },
     },
     subsidy: {
-      side: 'regime', name: '发放补贴', icon: '🍚', cost: 2, cd: 8,
-      text: '降价、发粮、涨工资。买来的平静是真的——只是买不了多久。',
-      tags: ['积怨 ↓'], run(g) { griefScale(g, 0.85); },
+      side: 'regime', name: "Subsidies", icon: '🍚', cost: 2, cd: 8,
+      text: "Cut prices, hand out grain, raise wages. The calm you buy is real — it just doesn't last long.",
+      tags: ["Grievance ↓"], run(g) { griefScale(g, 0.85); },
     },
     bonus: {
-      side: 'regime', name: '加薪稳军心', icon: '💰', cost: 2, cd: 8,
-      text: '给军警发奖金、升职、许诺。让他们觉得站在你这边值得。',
-      tags: ['军心 ↑'],
+      side: 'regime', name: "Pay the troops", icon: '💰', cost: 2, cd: 8,
+      text: "Bonuses, promotions and promises for the security forces. Make them feel it pays to stand with you.",
+      tags: ["Troop morale ↑"],
       run(g) {
         const s = g.sim;
         for (let j = 0; j < s.psi.length; j++) s.psi[j] *= 1.25;
@@ -388,31 +388,31 @@
       },
     },
     rotate: {
-      side: 'regime', name: '调外地部队', icon: '🪖', cost: 3, cd: 15,
-      text: '换上与本地人无亲无故、只听命令的部队。他们不会和人群说话。',
-      tags: ['军心重置', '人群影响 ↓'],
+      side: 'regime', name: "Outside troops", icon: '🪖', cost: 3, cd: 15,
+      text: "Swap in troops with no ties to the locals, who answer only to orders. They won't talk to the crowd.",
+      tags: ["Troop morale reset", "Crowd influence ↓"],
       run(g) {
         const s = g.sim, sc = (g.base.psiScale || 1) * 1.3;
         for (let j = 0; j < s.psi.length; j++) s.psi[j] = s.rng() * sc;
         s.z.fill(0);
-        g.addEffect({ id: 'rotate', name: '外地部队', icon: '🪖', side: 'regime', rounds: 8, mod(m) { m.alpha *= 0.4; } });
+        g.addEffect({ id: 'rotate', name: "Outside troops", icon: '🪖', side: 'regime', rounds: 8, mod(m) { m.alpha *= 0.4; } });
       },
     },
     cutnet: {
-      side: 'regime', name: '切断通讯', icon: '📵', cost: 2, cd: 10,
-      text: '掐断电话、网络、广播。人们只能听到你想让他们听到的。',
-      tags: ['互相看不见', '被压住的记忆 ↑'],
+      side: 'regime', name: "Cut comms", icon: '📵', cost: 2, cd: 10,
+      text: "Cut the phones, the internet, the broadcasts. People hear only what you want them to hear.",
+      tags: ["Can't see each other", "Suppressed memory ↑"],
       run(g) {
-        g.addEffect({ id: 'cutnet', name: '通讯中断', icon: '📵', side: 'regime', rounds: 4, mod(m) { m.omega = 1; m.gs *= 0.6; m.vis *= 0.6; } });
+        g.addEffect({ id: 'cutnet', name: "Comms down", icon: '📵', side: 'regime', rounds: 4, mod(m) { m.omega = 1; m.gs *= 0.6; m.vis *= 0.6; } });
         cutEdges(g, g.flags.cutResist ? 0.1 : 0.25);
       },
     },
   };
 
   const DIFFS = {
-    easy: { name: '简单', income: 1.25, aggr: 0.75 },
-    normal: { name: '标准', income: 1.0, aggr: 1.0 },
-    hard: { name: '困难', income: 0.85, aggr: 1.2 },
+    easy: { name: "Easy", income: 1.25, aggr: 0.75 },
+    normal: { name: "Normal", income: 1.0, aggr: 1.0 },
+    hard: { name: "Hard", income: 0.85, aggr: 1.2 },
   };
 
   /* ---------- 经济: [费用(点), 当局警觉+, 反对派组织度±] ---------- */
@@ -431,13 +431,13 @@
 
   /* ---------- 气泡: 局势变化时冒出来, 点击收集 ---------- */
   const BUBBLES = {
-    anger: { icon: '💢', name: '愤怒', tip: '越界的处罚被人看见了' },
-    morale: { icon: '✊', name: '士气', tip: '街上的人多了' },
-    sympathy: { icon: '🌷', name: '同情', tip: '有执行者动摇了' },
-    word: { icon: '📡', name: '消息', tip: '消息在网络里传开' },
-    order: { icon: '🏛️', name: '安定', tip: '又一个平静的日子' },
-    intel: { icon: '👂', name: '情报', tip: '审讯带来了情报' },
-    loyalty: { icon: '🎖️', name: '忠诚', tip: '军心稳住了' },
+    anger: { icon: '💢', name: "Anger", tip: "Punishment over the line was seen" },
+    morale: { icon: '✊', name: "Morale", tip: "More people on the streets" },
+    sympathy: { icon: '🌷', name: "Sympathy", tip: "An enforcer has wavered" },
+    word: { icon: '📡', name: "Word", tip: "Word spreads through the network" },
+    order: { icon: '🏛️', name: "Stability", tip: "Another quiet day" },
+    intel: { icon: '👂', name: "Intelligence", tip: "Interrogations yield intelligence" },
+    loyalty: { icon: '🎖️', name: "Loyalty", tip: "Troop morale holds" },
   };
 
   /* ============================================================
@@ -446,57 +446,57 @@
   const shiftTau = (g, d) => { const s = g.sim; for (let i = 0; i < s.tau.length; i++) s.tau[i] += d; s.tauDirty = true; };
   const TREES = {
     movement: [
-      { id: 'spread', name: '传播', icon: '📡', desc: '人们能看见彼此多少', nodes: [
-        { id: 'm_word', name: '口耳相传', cost: 4, alert: 1, text: '熟人之间的消息网。一个人站出来,更容易带动身边的人。', tags: ['互相带动 ↑', '偶尔冒出「消息」气泡'], run(g) { addEdges(g, Math.round(g.N * 0.2)); } },
-        { id: 'm_net', name: '联络网', cost: 9, req: ['m_word'], alert: 2, text: '固定的联络人与暗号。约好的行动,来的人更多。', tags: ['每次行动带出的人 +25%'], run(g) { g.seedMul *= 1.25; } },
-        { id: 'm_press', name: '地下刊物', cost: 9, req: ['m_word'], alert: 3, text: '手抄本、油印传单。官方的说法不再是唯一的说法。', tags: ['封锁的效果 −30%', '执法更容易被看作越界'], run(g) { g.infoResist = Math.max(g.infoResist, 0.3); g.base.Pbar -= 0.04; } },
-        { id: 'm_foreign', name: '境外媒体', cost: 14, req: ['m_press'], alert: 4, text: '外国记者、短波电台、翻墙。被压下去的事情,终究会被知道。', tags: ['封锁的效果 −60%', '被压住的愤怒立刻浮出'], run(g) { g.infoResist = Math.max(g.infoResist, 0.6); g.sim.reveal(0.6); } },
-        { id: 'm_crypto', name: '加密通讯', cost: 18, req: ['m_net'], alert: 3, text: '抓走一个人,不再能顺藤摸瓜。', tags: ['每次行动带出的人 +25%', '断联打击减半'], run(g) { g.seedMul *= 1.25; g.sim.o.netDamage = (g.sim.o.netDamage || 0.5) * 0.5; g.flags.cutResist = true; } },
+      { id: 'spread', name: "Spread", icon: '📡', desc: "How much people can see of each other", nodes: [
+        { id: 'm_word', name: "Word of mouth", cost: 4, alert: 1, text: "A grapevine among acquaintances. When one person steps forward, it's easier to bring along those nearby.", tags: ["Peer influence ↑", "Occasional “Word” bubbles"], run(g) { addEdges(g, Math.round(g.N * 0.2)); } },
+        { id: 'm_net', name: "Contact network", cost: 9, req: ['m_word'], alert: 2, text: "Fixed contacts and code words. More people show up to planned actions.", tags: ["Turnout per action +25%"], run(g) { g.seedMul *= 1.25; } },
+        { id: 'm_press', name: "Underground press", cost: 9, req: ['m_word'], alert: 3, text: "Hand-copied texts, mimeographed leaflets. The official version is no longer the only version.", tags: ["Blackout effect −30%", "Enforcement more easily seen as over the line"], run(g) { g.infoResist = Math.max(g.infoResist, 0.3); g.base.Pbar -= 0.04; } },
+        { id: 'm_foreign', name: "Foreign media", cost: 14, req: ['m_press'], alert: 4, text: "Foreign reporters, shortwave radio, VPNs. What has been suppressed will be known in the end.", tags: ["Blackout effect −60%", "Suppressed anger surfaces at once"], run(g) { g.infoResist = Math.max(g.infoResist, 0.6); g.sim.reveal(0.6); } },
+        { id: 'm_crypto', name: "Encrypted comms", cost: 18, req: ['m_net'], alert: 3, text: "Arresting one person no longer leads them to the rest.", tags: ["Turnout per action +25%", "Link-cutting halved"], run(g) { g.seedMul *= 1.25; g.sim.o.netDamage = (g.sim.o.netDamage || 0.5) * 0.5; g.flags.cutResist = true; } },
       ] },
-      { id: 'memory', name: '记忆', icon: '🕯️', desc: '镇压在人们心里留下多少', nodes: [
-        { id: 'm_witness', name: '口述见证', cost: 4, alert: 1, text: '把看到的事情讲给别人听。每一次越界的处罚,都会被更多人记住。', tags: ['处罚留下的记忆 +30%'], run(g) { g.base.gamma *= 1.3; } },
-        { id: 'm_mourn', name: '悼念传统', cost: 8, req: ['m_witness'], alert: 2, text: '为逝者守灵、做七、过四十日。记忆不再很快褪去。', tags: ['遗忘速度 −40%'], run(g) { g.sim.o.memDecay *= 0.6; } },
-        { id: 'm_names', name: '受难者名单', cost: 10, req: ['m_witness'], alert: 3, text: '一个一个地记下名字。处罚不再是数字,而是某个人。', tags: ['处罚被看见的程度 +25%'], run(g) { g.base.vis *= 1.25; } },
-        { id: 'm_anniv', name: '纪念日', cost: 12, req: ['m_mourn'], alert: 3, text: '每到那一天,人们都会想起。', tags: ['每隔一段时间,积怨自动上升'], run(g) { g.flags.anniv = true; } },
-        { id: 'm_courage', name: '不再沉默', cost: 21, req: ['m_names', 'm_anniv'], reqAny: true, alert: 6, text: '人们开始相信:沉默保护不了任何人。', tags: ['所有人都更敢站出来'], run(g) { shiftTau(g, g.L.courage != null ? g.L.courage : 0.035); } },
+      { id: 'memory', name: "Memory", icon: '🕯️', desc: "How much repression stays in people's hearts", nodes: [
+        { id: 'm_witness', name: "Oral testimony", cost: 4, alert: 1, text: "Tell others what you saw. Every punishment over the line will be remembered by more people.", tags: ["Memory of punishment +30%"], run(g) { g.base.gamma *= 1.3; } },
+        { id: 'm_mourn', name: "Mourning rites", cost: 8, req: ['m_witness'], alert: 2, text: "Wakes for the dead, the seventh-day rites, the fortieth day. Memory no longer fades quickly.", tags: ["Forgetting −40%"], run(g) { g.sim.o.memDecay *= 0.6; } },
+        { id: 'm_names', name: "Victims' names", cost: 10, req: ['m_witness'], alert: 3, text: "Write down the names, one by one. A punishment is no longer a number, but someone.", tags: ["Punishment visibility +25%"], run(g) { g.base.vis *= 1.25; } },
+        { id: 'm_anniv', name: "Anniversary", cost: 12, req: ['m_mourn'], alert: 3, text: "Every year on that day, people remember.", tags: ["Grievance rises periodically on its own"], run(g) { g.flags.anniv = true; } },
+        { id: 'm_courage', name: "No more silence", cost: 21, req: ['m_names', 'm_anniv'], reqAny: true, alert: 6, text: "People begin to believe: silence protects no one.", tags: ["Everyone more willing to step forward"], run(g) { shiftTau(g, g.L.courage != null ? g.L.courage : 0.035); } },
       ] },
-      { id: 'resist', name: '韧性', icon: '🛡️', desc: '扛住镇压,赢得执行者', nodes: [
-        { id: 'm_legal', name: '法律援助', cost: 4, alert: 1, text: '律师、家属、联名信。被抓的人能更快回来。', tags: ['被捕者获释 ↑'], run(g) { g.relBonus += 0.07; } },
-        { id: 'm_family', name: '家属互助', cost: 9, req: ['m_legal'], alert: 1, text: '有人被抓,他的家人有人照顾。站出来不再意味着全家遭殃。', tags: ['被抓的代价 −12%'], run(g) { g.penaltyMul *= 0.88; } },
-        { id: 'm_talk', name: '与士兵交谈', cost: 8, alert: 2, text: '士兵也是某人的儿子。和他们说话,给他们送水。', tags: ['人群对执行者的影响 ↑'], run(g) { g.base.alpha += 0.08; } },
-        { id: 'm_sympath', name: '军中同情者', cost: 14, req: ['m_talk'], alert: 3, text: '有些军官私下表示同情。', tags: ['执行者更容易动摇'], run(g) { scalePsi(g, 1, 0.85); } },
-        { id: 'm_barracks', name: '兵营串联', cost: 20, req: ['m_sympath'], alert: 4, text: '一个团倒戈,消息会传到下一个团。', tags: ['倒戈会连锁'], run(g) { g.sim.o.beta += 0.15; } },
+      { id: 'resist', name: "Resilience", icon: '🛡️', desc: "Withstand repression, win over the enforcers", nodes: [
+        { id: 'm_legal', name: "Legal aid", cost: 4, alert: 1, text: "Lawyers, families, petitions. Those arrested come back sooner.", tags: ["Releases ↑"], run(g) { g.relBonus += 0.07; } },
+        { id: 'm_family', name: "Family support", cost: 9, req: ['m_legal'], alert: 1, text: "When someone is arrested, their family is looked after. Stepping forward no longer means ruin for the whole family.", tags: ["Cost of arrest −12%"], run(g) { g.penaltyMul *= 0.88; } },
+        { id: 'm_talk', name: "Talk to soldiers", cost: 8, alert: 2, text: "A soldier is someone's son too. Talk to them; bring them water.", tags: ["Crowd influence on enforcers ↑"], run(g) { g.base.alpha += 0.08; } },
+        { id: 'm_sympath', name: "Sympathizers in the ranks", cost: 14, req: ['m_talk'], alert: 3, text: "Some officers express sympathy in private.", tags: ["Enforcers waver more easily"], run(g) { scalePsi(g, 1, 0.85); } },
+        { id: 'm_barracks', name: "Barracks network", cost: 20, req: ['m_sympath'], alert: 4, text: "When one regiment defects, word reaches the next.", tags: ["Defections cascade"], run(g) { g.sim.o.beta += 0.15; } },
       ] },
     ],
     regime: [
-      { id: 'fist', name: '铁拳', icon: '🪖', desc: '能抓多少人,执行者是否可靠', nodes: [
-        { id: 'r_police', name: '扩编警力', cost: 6, text: '更多的警察、更多的车。', tags: ['每轮能抓的人 +20%'], run(g) { g.base.K0 *= 1.2; } },
-        { id: 'r_riot', name: '防暴部队', cost: 10, req: ['r_police'], text: '专门训练过的防暴队伍。', tags: ['每轮能抓的人 +15%'], run(g) { g.base.K0 *= 1.15; } },
-        { id: 'r_pay', name: '军饷优先', cost: 9, req: ['r_police'], text: '先保证拿枪的人吃饱。', tags: ['执行者更可靠'], run(g) { scalePsi(g, 1, 1.2); } },
-        { id: 'r_outside', name: '外地驻军', cost: 14, req: ['r_riot'], text: '换防成与本地无亲无故的部队。', tags: ['人群对执行者的影响 −30%'], run(g) { g.base.alpha *= 0.7; } },
-        { id: 'r_loyal', name: '政治委员', cost: 18, req: ['r_outside', 'r_pay'], reqAny: true, text: '每个连队都有人盯着。', tags: ['执行者之间不再互相带动'], run(g) { g.sim.o.beta *= 0.5; } },
+      { id: 'fist', name: "Iron fist", icon: '🪖', desc: "How many you can arrest, and whether the enforcers are reliable", nodes: [
+        { id: 'r_police', name: "Expand police", cost: 6, text: "More police, more vehicles.", tags: ["Arrests per round +20%"], run(g) { g.base.K0 *= 1.2; } },
+        { id: 'r_riot', name: "Riot police", cost: 10, req: ['r_police'], text: "Specially trained riot units.", tags: ["Arrests per round +15%"], run(g) { g.base.K0 *= 1.15; } },
+        { id: 'r_pay', name: "Pay troops first", cost: 9, req: ['r_police'], text: "Make sure the men with guns eat first.", tags: ["More reliable enforcers"], run(g) { scalePsi(g, 1, 1.2); } },
+        { id: 'r_outside', name: "Outside garrison", cost: 14, req: ['r_riot'], text: "Rotate in units with no ties to the locals.", tags: ["Crowd influence on enforcers −30%"], run(g) { g.base.alpha *= 0.7; } },
+        { id: 'r_loyal', name: "Political commissars", cost: 18, req: ['r_outside', 'r_pay'], reqAny: true, text: "Someone watches every company.", tags: ["Enforcers no longer sway each other"], run(g) { g.sim.o.beta *= 0.5; } },
       ] },
-      { id: 'eye', name: '天网', icon: '👁️', desc: '你能知道多少,他们能看见多少', nodes: [
-        { id: 'r_inform', name: '线人', cost: 6, text: '在每个单位、每条街安插耳目。', tags: ['情报更准', '「情报」气泡更多'], run(g) { g.intelBonus += 0.2; } },
-        { id: 'r_grid', name: '网格化管理', cost: 10, req: ['r_inform'], text: '每户都有人负责盯着。', tags: ['在案名单扩大', '反对派组织更慢'], run(g) { g.flagTop(0.04); g.orgMul *= 0.8; } },
-        { id: 'r_censor', name: '新闻审查', cost: 9, req: ['r_inform'], text: '删帖、封号、约谈编辑。', tags: ['人们更低估彼此'], run(g) { g.base.globalScale *= 0.85; } },
-        { id: 'r_propaganda', name: '舆论引导', cost: 12, req: ['r_censor'], text: '让大家相信:别人都很满意。', tags: ['人们更低估彼此', '执法更少被看作越界'], run(g) { g.base.globalScale *= 0.85; g.base.Pbar += 0.05; } },
-        { id: 'r_firewall', name: '防火墙', cost: 16, req: ['r_propaganda'], text: '外面的消息进不来。', tags: ['对方的「曝光」「刊物」效果减半'], run(g) { g.flags.firewall = true; } },
+      { id: 'eye', name: "Dragnet", icon: '👁️', desc: "How much you can know, and how much they can see", nodes: [
+        { id: 'r_inform', name: "Informants", cost: 6, text: "Plant eyes and ears in every work unit and on every street.", tags: ["Better intelligence", "More “Intelligence” bubbles"], run(g) { g.intelBonus += 0.2; } },
+        { id: 'r_grid', name: "Grid management", cost: 10, req: ['r_inform'], text: "Every household has someone assigned to watch it.", tags: ["Watchlist grows", "Opposition organizes more slowly"], run(g) { g.flagTop(0.04); g.orgMul *= 0.8; } },
+        { id: 'r_censor', name: "Censorship", cost: 9, req: ['r_inform'], text: "Delete posts, ban accounts, call editors in for a talk.", tags: ["People underestimate each other more"], run(g) { g.base.globalScale *= 0.85; } },
+        { id: 'r_propaganda', name: "Propaganda", cost: 12, req: ['r_censor'], text: "Make everyone believe: everyone else is content.", tags: ["People underestimate each other more", "Enforcement less often seen as over the line"], run(g) { g.base.globalScale *= 0.85; g.base.Pbar += 0.05; } },
+        { id: 'r_firewall', name: "Firewall", cost: 16, req: ['r_propaganda'], text: "News from outside can't get in.", tags: ["Halves their “Expose the truth” and “Underground press”"], run(g) { g.flags.firewall = true; } },
       ] },
-      { id: 'heart', name: '民心', icon: '⚖️', desc: '人们是否还认为你的统治正当', nodes: [
-        { id: 'r_relief', name: '惠民补贴', cost: 6, text: '降价、发粮。', tags: ['积怨 −15%', '以后每轮收入略减'], run(g) { griefScale(g, 0.85); g.bonusIncome -= 0.15; } },
-        { id: 'r_petition', name: '信访渠道', cost: 9, req: ['r_relief'], text: '让人有地方说话。', tags: ['人们认可的界线 ↑', '反对派组织更慢'], run(g) { g.base.Pbar += 0.1; g.orgMul *= 0.85; } },
-        { id: 'r_law', name: '依法治理', cost: 12, req: ['r_petition'], text: '按程序抓人,按程序审判。', tags: ['人们认可的界线 ↑', '执行者更安心'], run(g) { g.base.Pbar += 0.1; g.sim.o.delta *= 0.6; } },
-        { id: 'r_share', name: '让利于民', cost: 14, req: ['r_relief'], text: '日子过得去的人,有更多可以失去。', tags: ['所有人都更不愿冒险'], run(g) { shiftTau(g, -(g.L.courage != null ? g.L.courage : 0.035)); } },
-        { id: 'r_reform', name: '政治改革', cost: 22, req: ['r_law', 'r_share'], reqAny: true, text: '让一部分诉求成为制度。', tags: ['积怨 −40%', '界线大幅上移'], run(g) { g.base.Pbar += 0.25; griefScale(g, 0.6); g.org = Math.max(0, g.org - 30); } },
+      { id: 'heart', name: "Hearts and minds", icon: '⚖️', desc: "Whether people still see your rule as legitimate", nodes: [
+        { id: 'r_relief', name: "Welfare subsidies", cost: 6, text: "Cut prices, hand out grain.", tags: ["Grievance −15%", "Slightly less income each round"], run(g) { griefScale(g, 0.85); g.bonusIncome -= 0.15; } },
+        { id: 'r_petition', name: "Petition office", cost: 9, req: ['r_relief'], text: "Give people somewhere to speak.", tags: ["The line people accept ↑", "Opposition organizes more slowly"], run(g) { g.base.Pbar += 0.1; g.orgMul *= 0.85; } },
+        { id: 'r_law', name: "Rule by law", cost: 12, req: ['r_petition'], text: "Arrest by procedure, try by procedure.", tags: ["The line people accept ↑", "Enforcers feel safer"], run(g) { g.base.Pbar += 0.1; g.sim.o.delta *= 0.6; } },
+        { id: 'r_share', name: "Share the wealth", cost: 14, req: ['r_relief'], text: "People whose lives are bearable have more to lose.", tags: ["Everyone less willing to take risks"], run(g) { shiftTau(g, -(g.L.courage != null ? g.L.courage : 0.035)); } },
+        { id: 'r_reform', name: "Political reform", cost: 22, req: ['r_law', 'r_share'], reqAny: true, text: "Write some of the demands into the system.", tags: ["Grievance −40%", "The line moves up sharply"], run(g) { g.base.Pbar += 0.25; griefScale(g, 0.6); g.org = Math.max(0, g.org - 30); } },
       ] },
     ],
   };
   const STAGES = [
-    { name: '常态', tip: '日常管控' },
-    { name: '警戒', tip: '增派警力、加重处罚、淡化报道' },
-    { name: '严打', tip: '封锁新闻、专抓串联者、社论定性' },
-    { name: '全面镇压', tip: '铁腕、戒严、可能开枪清场' },
+    { name: "Normal", tip: "Routine control" },
+    { name: "Alert", tip: "More police, harsher punishment, downplayed reporting" },
+    { name: "Crackdown", tip: "News blackout, organizers targeted, editorial verdicts" },
+    { name: "Total repression", tip: "Draconian punishment, martial law, possibly opening fire" },
   ];
 
   /* ============================================================
@@ -505,115 +505,115 @@
    * ============================================================ */
   const RANDOM_EVENTS = {
     movement: [
-      { id: 'death', art: '⚰️', title: '拘留所里的死讯', if: (g) => g.sim.R > 0.01,
-        text: '一名被带走的人死在了拘留所里。官方说是"突发疾病"。他的家人想见遗体。',
+      { id: 'death', art: '⚰️', title: "Death in custody", if: (g) => g.sim.R > 0.01,
+        text: "One of those taken away has died in the detention center. The official cause: “sudden illness.” His family wants to see the body.",
         choices: [
-          { label: '公开遗体照片,组织送葬', hint: '积怨大增 · 当局警觉 +12 · 悼念免费', run: (g) => { griefAll(g, 0.04); g.addAlert(12); g.giveFree('memorial', 3); } },
-          { label: '私下安葬,保护他的家人', hint: '少量积怨 · 当局警觉 −5', run: (g) => { griefAll(g, 0.01); g.addAlert(-5); } },
+          { label: "Publish photos of the body, hold a funeral march", hint: "Grievance surges · Regime alert +12 · Free Memorial", run: (g) => { griefAll(g, 0.04); g.addAlert(12); g.giveFree('memorial', 3); } },
+          { label: "Bury him quietly, protect his family", hint: "Some grievance · Regime alert −5", run: (g) => { griefAll(g, 0.01); g.addAlert(-5); } },
         ] },
-      { id: 'mole', art: '🕵️', title: '内鬼', if: (g) => g.round > 4,
-        text: '最近几次聚会,警察都来得太快了。有人怀疑组织里混进了线人。',
+      { id: 'mole', art: '🕵️', title: "Mole", if: (g) => g.round > 4,
+        text: "At the last few meetings, the police arrived far too quickly. Some suspect an informer has slipped into the organization.",
         choices: [
-          { label: '彻底清查', hint: '花费 3 点 · 联系网收缩 · 当局警觉 −8', run: (g) => { g.me.ap = Math.max(0, g.me.ap - 3); cutEdges(g, 0.06); g.addAlert(-8); } },
-          { label: '不能自乱阵脚', hint: '接下来 4 轮,对方抓人效率 +40%', run: (g) => g.addEffect({ id: 'mole', name: '内鬼', icon: '🕵️', side: 'regime', rounds: 4, mod(m) { m.K0 *= 1.4; } }) },
+          { label: "Root them out", hint: "Costs 3 points · Network shrinks · Regime alert −8", run: (g) => { g.me.ap = Math.max(0, g.me.ap - 3); cutEdges(g, 0.06); g.addAlert(-8); } },
+          { label: "Don't turn on each other", hint: "For 4 rounds, their arrest rate +40%", run: (g) => g.addEffect({ id: 'mole', name: "Mole", icon: '🕵️', side: 'regime', rounds: 4, mod(m) { m.K0 *= 1.4; } }) },
         ] },
-      { id: 'press', art: '📷', title: '记者来了', modern: true,
-        text: '一队外国记者进了城。他们想知道这里到底发生了什么。',
+      { id: 'press', art: '📷', title: "Reporters arrive", modern: true,
+        text: "A team of foreign reporters has come to the city. They want to know what is really happening here.",
         choices: [
-          { label: '带他们去看', hint: '3 轮内所有人都看得见 · 当局警觉 +6', run: (g) => { g.addEffect({ id: 'press_ev', name: '记者在场', icon: '📷', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = Math.max(m.gs, 0.9); } }); g.addAlert(6); } },
-          { label: '保持低调', hint: '什么也不发生' },
+          { label: "Show them", hint: "Everyone sees for 3 rounds · Regime alert +6", run: (g) => { g.addEffect({ id: 'press_ev', name: "Press present", icon: '📷', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = Math.max(m.gs, 0.9); } }); g.addAlert(6); } },
+          { label: "Keep a low profile", hint: "Nothing happens" },
         ] },
-      { id: 'prices', art: '🍞', title: '物价飞涨',
-        text: '面粉的价格一夜之间翻了一倍。排队的人在骂,但没人敢大声。',
+      { id: 'prices', art: '🍞', title: "Prices soar",
+        text: "The price of flour doubled overnight. People in line are cursing, but no one dares say it loud.",
         choices: [
-          { label: '组织抗议', hint: '立刻带出一批人 · 当局警觉 +5', run: (g) => { g.addSeeds(0.02); g.addAlert(5); } },
-          { label: '组织互助', hint: '+3 点 · 积怨上升', run: (g) => { g.me.ap += 3; griefAll(g, 0.015); } },
+          { label: "Organize a protest", hint: "Brings people out now · Regime alert +5", run: (g) => { g.addSeeds(0.02); g.addAlert(5); } },
+          { label: "Organize mutual aid", hint: "+3 points · Grievance rises", run: (g) => { g.me.ap += 3; griefAll(g, 0.015); } },
         ] },
-      { id: 'talks', art: '🤝', title: '当局提出谈判', if: (g) => g.x > 0.015 || g.alert > 45,
-        text: '一位官员托人带话:可以谈,但你们先解散。',
+      { id: 'talks', art: '🤝', title: "The regime offers talks", if: (g) => g.x > 0.015 || g.alert > 45,
+        text: "An official sends word through a go-between: we can talk, but you disperse first.",
         choices: [
-          { label: '同意谈判,先解散', hint: '街上的人回家 · 当局警觉 −25 · +4 点', run: (g) => { g.sim.a.fill(0); g.addAlert(-25); g.me.ap += 4; } },
-          { label: '拒绝:先放人,再谈', hint: '当局警觉 +8 · 士气上升', run: (g) => { g.addAlert(8); griefAll(g, 0.012); } },
+          { label: "Agree: disperse, then talk", hint: "Crowds go home · Regime alert −25 · +4 points", run: (g) => { g.sim.a.fill(0); g.addAlert(-25); g.me.ap += 4; } },
+          { label: "Refuse: free them first, then talk", hint: "Regime alert +8 · Morale rises", run: (g) => { g.addAlert(8); griefAll(g, 0.012); } },
         ] },
-      { id: 'split', art: '⚡', title: '内部分歧', if: (g) => g.x > 0.005 || g.round > 10,
-        text: '激进派要冲击政府大楼;温和派坚持:我们不能给他们开枪的理由。',
+      { id: 'split', art: '⚡', title: "Internal split", if: (g) => g.x > 0.005 || g.round > 10,
+        text: "The radicals want to storm the government building; the moderates insist: we must not give them a reason to shoot.",
         choices: [
-          { label: '冲!', hint: '立刻带出很多人 · 但 3 轮内对方处罚加重 · 当局警觉 +15', run: (g) => { g.addSeeds(0.04); g.addAlert(15); g.addEffect({ id: 'pretext', name: '镇压的借口', icon: '🔥', side: 'regime', rounds: 3, mod(m) { m.P *= 1.35; } }); } },
-          { label: '坚持非暴力', hint: '执行者更同情你们(永久)', run: (g) => { scalePsi(g, 0.4, 0.85); g.base.alpha += 0.04; } },
+          { label: "Charge!", hint: "Brings many out now · but harsher punishment for 3 rounds · Regime alert +15", run: (g) => { g.addSeeds(0.04); g.addAlert(15); g.addEffect({ id: 'pretext', name: "Pretext for repression", icon: '🔥', side: 'regime', rounds: 3, mod(m) { m.P *= 1.35; } }); } },
+          { label: "Stay nonviolent", hint: "Enforcers more sympathetic (permanent)", run: (g) => { scalePsi(g, 0.4, 0.85); g.base.alpha += 0.04; } },
         ] },
-      { id: 'writer', art: '✍️', title: '一位名人声援', modern: true,
-        text: '一位很有名的作家在公开信上签了名。他的读者很多——他也可能因此被抓。',
+      { id: 'writer', art: '✍️', title: "A celebrity speaks up", modern: true,
+        text: "A very famous writer has signed an open letter. He has many readers — and he may be arrested for it.",
         choices: [
-          { label: '大力宣传', hint: '执法更容易被看作越界 · 3 轮内更多人看见 · 当局警觉 +4', run: (g) => { g.base.Pbar -= 0.05; g.addEffect({ id: 'writer', name: '名人声援', icon: '✍️', side: 'movement', rounds: 3, mod(m) { m.gs = Math.min(1, m.gs + 0.15); } }); g.addAlert(4); } },
-          { label: '请他暂时沉默,保护自己', hint: '+2 点', run: (g) => { g.me.ap += 2; } },
+          { label: "Publicize it widely", hint: "Enforcement more easily seen as over the line · More people see for 3 rounds · Regime alert +4", run: (g) => { g.base.Pbar -= 0.05; g.addEffect({ id: 'writer', name: "Celebrity support", icon: '✍️', side: 'movement', rounds: 3, mod(m) { m.gs = Math.min(1, m.gs + 0.15); } }); g.addAlert(4); } },
+          { label: "Ask him to stay quiet for now, for his own safety", hint: "+2 points", run: (g) => { g.me.ap += 2; } },
         ] },
-      { id: 'festival', art: '🏮', title: '节日',
-        text: '节日到了。人们本来就会聚在一起。',
+      { id: 'festival', art: '🏮', title: "Festival",
+        text: "A festival has come. People would be gathering anyway.",
         choices: [
-          { label: '借节日集会', hint: '带出一批人,这一轮被抓的后果很轻', run: (g) => { g.addSeeds(0.025); g.addEffect({ id: 'festival', name: '节日', icon: '🏮', side: 'movement', rounds: 1, mod(m) { m.P *= 0.6; } }); } },
-          { label: '休养生息', hint: '+3 点 · 当局警觉 −6', run: (g) => { g.me.ap += 3; g.addAlert(-6); } },
+          { label: "Gather under cover of the festival", hint: "Brings people out; arrests carry light penalties this round", run: (g) => { g.addSeeds(0.025); g.addEffect({ id: 'festival', name: "Festival", icon: '🏮', side: 'movement', rounds: 1, mod(m) { m.P *= 0.6; } }); } },
+          { label: "Rest and recover", hint: "+3 points · Regime alert −6", run: (g) => { g.me.ap += 3; g.addAlert(-6); } },
         ] },
-      { id: 'letter', art: '✉️', title: '士兵的信', if: (g) => g.d > 0.02 || g.round > 8,
-        text: '一个年轻士兵偷偷递来一封信:"我们不想开枪。"',
+      { id: 'letter', art: '✉️', title: "A soldier's letter", if: (g) => g.d > 0.02 || g.round > 8,
+        text: "A young soldier secretly passes you a letter: “We don't want to shoot.”",
         choices: [
-          { label: '公开这封信', hint: '一部分执行者动摇 · 当局警觉 +6', run: (g) => { scalePsi(g, 0.25, 0.65); g.addAlert(6); } },
-          { label: '保密,继续联络', hint: '少数执行者动摇', run: (g) => { scalePsi(g, 0.12, 0.75); } },
+          { label: "Publish the letter", hint: "Some enforcers waver · Regime alert +6", run: (g) => { scalePsi(g, 0.25, 0.65); g.addAlert(6); } },
+          { label: "Keep it secret, stay in touch", hint: "A few enforcers waver", run: (g) => { scalePsi(g, 0.12, 0.75); } },
         ] },
-      { id: 'release', art: '🚪', title: '一批人被放了回来', if: (g) => g.sim.R > 0.02,
-        text: '一批被关押的人获释回家。他们瘦了很多,也不再害怕。',
+      { id: 'release', art: '🚪', title: "Detainees come home", if: (g) => g.sim.R > 0.02,
+        text: "A group of detainees has been released and sent home. They are much thinner — and no longer afraid.",
         choices: [
-          { label: '办一场欢迎会', hint: '积怨上升 · 当局警觉 +4', run: (g) => { const s = g.sim; for (let i = 0; i < s.o.N; i++) if (s.r[i] && s.rng() < 0.2) s.r[i] = 0; griefAll(g, 0.02); g.addAlert(4); } },
-          { label: '让他们好好休养', hint: '+2 点', run: (g) => { g.me.ap += 2; } },
+          { label: "Hold a welcome gathering", hint: "Grievance rises · Regime alert +4", run: (g) => { const s = g.sim; for (let i = 0; i < s.o.N; i++) if (s.r[i] && s.rng() < 0.2) s.r[i] = 0; griefAll(g, 0.02); g.addAlert(4); } },
+          { label: "Let them rest", hint: "+2 points", run: (g) => { g.me.ap += 2; } },
         ] },
     ],
     regime: [
-      { id: 'r_ringleaders', art: '📋', title: '下面来请示',
-        text: '地方官报上来一份名单:"这几个带头的,抓不抓?"',
+      { id: 'r_ringleaders', art: '📋', title: "A request from below",
+        text: "A local official sends up a list: “These ringleaders — do we arrest them or not?”",
         choices: [
-          { label: '抓', hint: '反对派组织度 −18 · 但越界的抓捕会留下积怨', run: (g) => { g.org = Math.max(0, g.org - 18); const s = g.sim; let n = 0; for (let i = 0; i < s.o.N && n < g.N * 0.006; i++) if (s.flagged[i] && !s.r[i]) { s.r[i] = 1; n++; } s.R += n / g.N; s.tauDirty = true; if (s.o.P > s.o.Pbar) griefAll(g, 0.012); } },
-          { label: '先盯着', hint: '5 轮内情报准确', run: (g) => g.addEffect({ id: 'watch', name: '盯梢', icon: '👂', side: 'regime', rounds: 5, intel: true }) },
+          { label: "Arrest", hint: "Opposition organization −18 · but arrests over the line leave grievance", run: (g) => { g.org = Math.max(0, g.org - 18); const s = g.sim; let n = 0; for (let i = 0; i < s.o.N && n < g.N * 0.006; i++) if (s.flagged[i] && !s.r[i]) { s.r[i] = 1; n++; } s.R += n / g.N; s.tauDirty = true; if (s.o.P > s.o.Pbar) griefAll(g, 0.012); } },
+          { label: "Watch them for now", hint: "Accurate intelligence for 5 rounds", run: (g) => g.addEffect({ id: 'watch', name: "Surveillance", icon: '👂', side: 'regime', rounds: 5, intel: true }) },
         ] },
-      { id: 'r_pay', art: '💸', title: '军饷',
-        text: '国库吃紧。军饷可能要拖欠了。',
+      { id: 'r_pay', art: '💸', title: "Army pay",
+        text: "The treasury is strained. The soldiers' pay may fall into arrears.",
         choices: [
-          { label: '先保军饷', hint: '花费 4 点', run: (g) => { g.me.ap = Math.max(0, g.me.ap - 4); } },
-          { label: '拖一拖', hint: '执行者的忠诚下降', run: (g) => scalePsi(g, 1, 0.85) },
+          { label: "Pay the army first", hint: "Costs 4 points", run: (g) => { g.me.ap = Math.max(0, g.me.ap - 4); } },
+          { label: "Delay it", hint: "Enforcer loyalty falls", run: (g) => scalePsi(g, 1, 0.85) },
         ] },
-      { id: 'r_rumor', art: '🗯️', title: '谣言',
-        text: '街头流传一个关于你的谣言。越传越离谱。',
+      { id: 'r_rumor', art: '🗯️', title: "Rumor",
+        text: "A rumor about you is going around the streets. It grows wilder with every telling.",
         choices: [
-          { label: '辟谣', hint: '花费 2 点 · 积怨略降', run: (g) => { g.me.ap = Math.max(0, g.me.ap - 2); griefScale(g, 0.93); } },
-          { label: '抓造谣的人', hint: '反对派组织度 −6 · 积怨上升', run: (g) => { g.org = Math.max(0, g.org - 6); griefAll(g, 0.015); } },
+          { label: "Refute it", hint: "Costs 2 points · Grievance eases slightly", run: (g) => { g.me.ap = Math.max(0, g.me.ap - 2); griefScale(g, 0.93); } },
+          { label: "Arrest the rumormongers", hint: "Opposition organization −6 · Grievance rises", run: (g) => { g.org = Math.max(0, g.org - 6); griefAll(g, 0.015); } },
         ] },
-      { id: 'r_disaster', art: '🌊', title: '天灾',
-        text: '大水冲毁了城外的村子,灾民涌进城里。',
+      { id: 'r_disaster', art: '🌊', title: "Natural disaster",
+        text: "Floods have wiped out the villages outside the city; refugees are pouring in.",
         choices: [
-          { label: '全力救灾', hint: '花费 6 点 · 积怨 −20% · 人们认可的界线 ↑', run: (g) => { g.me.ap = Math.max(0, g.me.ap - 6); griefScale(g, 0.8); g.base.Pbar += 0.05; } },
-          { label: '封锁消息', hint: '反对派组织度 +12 · 积怨上升', run: (g) => { g.org += 12; griefAll(g, 0.02); } },
+          { label: "All-out relief", hint: "Costs 6 points · Grievance −20% · The line people accept ↑", run: (g) => { g.me.ap = Math.max(0, g.me.ap - 6); griefScale(g, 0.8); g.base.Pbar += 0.05; } },
+          { label: "Suppress the news", hint: "Opposition organization +12 · Grievance rises", run: (g) => { g.org += 12; griefAll(g, 0.02); } },
         ] },
-      { id: 'r_hawks', art: '🦅', title: '强硬派',
-        text: '身边的强硬派说你太软弱了,要求严打。',
+      { id: 'r_hawks', art: '🦅', title: "Hardliners",
+        text: "The hardliners around you say you are too soft, and demand a crackdown.",
         choices: [
-          { label: '顺从他们', hint: '+4 点 · 执法被锁定为「严厉」4 轮', run: (g) => { g.me.ap += 4; g.forcePolicy('enforce', 'harsh', 4, '强硬派'); } },
-          { label: '顶住压力', hint: '花费 2 点', run: (g) => { g.me.ap = Math.max(0, g.me.ap - 2); } },
+          { label: "Give in to them", hint: "+4 points · Enforcement locked to Harsh for 4 rounds", run: (g) => { g.me.ap += 4; g.forcePolicy('enforce', 'harsh', 4, "Hardliners"); } },
+          { label: "Resist the pressure", hint: "Costs 2 points", run: (g) => { g.me.ap = Math.max(0, g.me.ap - 2); } },
         ] },
-      { id: 'r_advisor', art: '🧓', title: '老臣进谏',
-        text: '一位老臣冒死进谏:百姓的怨气,不是堵得住的。',
+      { id: 'r_advisor', art: '🧓', title: "An old minister's warning",
+        text: "An old minister risks his life to remonstrate: the people's resentment cannot be dammed up.",
         choices: [
-          { label: '采纳', hint: '免费「对话让步」', run: (g) => g.selfCard('dialogue', '你采纳了进谏。') },
-          { label: '贬斥他', hint: '反对派组织度 +8', run: (g) => { g.org += 8; } },
+          { label: "Heed him", hint: "Free “Dialogue”", run: (g) => g.selfCard('dialogue', "You heeded the remonstrance.") },
+          { label: "Demote him", hint: "Opposition organization +8", run: (g) => { g.org += 8; } },
         ] },
-      { id: 'r_corrupt', art: '💰', title: '军官贪腐',
-        text: '有军官倒卖军需被揭发了。',
+      { id: 'r_corrupt', art: '💰', title: "Officer corruption",
+        text: "Officers have been caught selling off army supplies.",
         choices: [
-          { label: '严惩', hint: '花费 2 点 · 执行者更可靠', run: (g) => { g.me.ap = Math.max(0, g.me.ap - 2); scalePsi(g, 1, 1.1); } },
-          { label: '内部处理', hint: '+2 点 · 执行者略有不满', run: (g) => { g.me.ap += 2; scalePsi(g, 1, 0.95); } },
+          { label: "Punish severely", hint: "Costs 2 points · Enforcers more reliable", run: (g) => { g.me.ap = Math.max(0, g.me.ap - 2); scalePsi(g, 1, 1.1); } },
+          { label: "Handle it internally", hint: "+2 points · Enforcers slightly disgruntled", run: (g) => { g.me.ap += 2; scalePsi(g, 1, 0.95); } },
         ] },
-      { id: 'r_press', art: '📷', title: '外国记者', modern: true,
-        text: '几名外国记者申请进城采访。',
+      { id: 'r_press', art: '📷', title: "Foreign reporters", modern: true,
+        text: "Several foreign reporters are asking to enter the city to report.",
         choices: [
-          { label: '驱逐出境', hint: '反对派组织度 −5 · 执法更容易被看作越界', run: (g) => { g.org = Math.max(0, g.org - 5); g.base.Pbar -= 0.03; } },
-          { label: '允许采访', hint: '人们认可的界线 ↑ · 3 轮内一切都被看见', run: (g) => { g.base.Pbar += 0.04; g.addEffect({ id: 'press_r', name: '记者在场', icon: '📷', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); } }); } },
+          { label: "Expel them", hint: "Opposition organization −5 · Enforcement more easily seen as over the line", run: (g) => { g.org = Math.max(0, g.org - 5); g.base.Pbar -= 0.03; } },
+          { label: "Let them report", hint: "The line people accept ↑ · Everything seen for 3 rounds", run: (g) => { g.base.Pbar += 0.04; g.addEffect({ id: 'press_r', name: "Press present", icon: '📷', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); } }); } },
         ] },
     ],
   };
@@ -700,7 +700,7 @@
     get x() { return this.sim.meanU8(this.sim.a); }
     get d() { return this.sim.meanU8(this.sim.z); }
     isMonday() { return this.L.isMonday ? this.L.isMonday(this.round) : false; }
-    dateLabel(r) { return this.L.dateFmt ? this.L.dateFmt(r == null ? this.round : r) : `第 ${(r == null ? this.round : r) + 1} 轮`; }
+    dateLabel(r) { return this.L.dateFmt ? this.L.dateFmt(r == null ? this.round : r) : `Round ${(r == null ? this.round : r) + 1}`; }
     policyOpt(key, id) { const P = POLICIES[key]; return P.options.find(o => o.id === (id || this.pol[key])) || P.options[1]; }
     policyAllowed(key, id) {
       const lim = this.L.policies && this.L.policies.allow && this.L.policies.allow[key];
@@ -786,7 +786,7 @@
       this._actor = 'opp'; c.run(this); this._actor = null;
       this.actions.push({ round: this.round, id, side: this.oppSide });
       this.fx.push({ type: 'card', id, side: this.oppSide });
-      if (say !== false) this.log(say || `当局:「${this.card(id).name}」`, 'opp');
+      if (say !== false) this.log(say || `Regime: “${this.card(id).name}”`, 'opp');
       this.tipCache.t = -1;
       this._applyParams();
     }
@@ -842,7 +842,7 @@
       if (this.side === 'regime' && c.org) this.org = clamp(this.org + c.org, 0, 100);
       this.actions.push({ round: this.round, id, side: this.side });
       this.fx.push({ type: 'card', id, side: this.side });
-      this.log(`你:「${this.card(id).name}」`, 'mine');
+      this.log(`You: “${this.card(id).name}”`, 'mine');
       this._noteAction(this.card(id).name);
       this.sim.tauDirty = true;
       this.tipCache.t = -1;
@@ -862,7 +862,7 @@
       this.actions.push({ round: this.round, id, side: this.oppSide });
       this.fx.push({ type: 'card', id, side: this.oppSide });
       const nm = this.card(id).name;
-      const say = (this.L.oppSay && this.L.oppSay[id]) || (this.oppSide === 'regime' ? `当局:「${nm}」` : `对方:「${nm}」`);
+      const say = (this.L.oppSay && this.L.oppSay[id]) || (this.oppSide === 'regime' ? `Regime: “${nm}”` : `Movement: “${nm}”`);
       this.log(say, 'opp');
       return true;
     }
@@ -886,7 +886,7 @@
       this.pol[key] = id;
       this.polCd[key] = 2;
       this.actions.push({ round: this.round, id: key + ':' + id, side: this.side });
-      this.log(`你把「${POLICIES[key].name}」改为「${ps.opt.name}」`, 'mine');
+      this.log(`You set “${POLICIES[key].name}” to “${ps.opt.name}”`, 'mine');
       this._noteAction(`${POLICIES[key].name}→${ps.opt.name}`);
       this.tipCache.t = -1;
       this._applyParams();
@@ -950,7 +950,7 @@
       this._actor = 'me'; node.run(this); this._actor = null;
       if (this.side === 'movement' && node.alert) this.addAlert(node.alert);
       this.actions.push({ round: this.round, id: 'tree:' + id, side: this.side });
-      this.log(`建设:「${node.name}」`, 'mine');
+      this.log(`Built: “${node.name}”`, 'mine');
       this.fx.push({ type: 'buy', id, name: node.name });
       this.tipCache.t = -1;
       this._applyParams();
@@ -1052,68 +1052,68 @@
       const base = this.tipping(), B = base === Infinity ? CAP : base;
       const ms = this.moodScale || 0.2;
       const f = [
-        { id: 'capacity', name: '当局抓得过来', drop: B - T({ kMul: 0.7 }),
-          advice: '人太少,当局抓得过来。需要一次带出更多人(攒够组织力、同一轮打出几张牌),或者先动摇执行者——同样的警力被更多人摊薄,每个人的风险才会下降。',
+        { id: 'capacity', name: "Police can keep up", drop: B - T({ kMul: 0.7 }),
+          advice: "Too few people: the regime can arrest them all. Bring out more at once (save up organizing power, play several cards in the same round), or shake the enforcers first — only when the same police force is spread over more people does each person's risk go down.",
           cards: ['strike', 'march', 'mobilize', 'fraternize', 'blockade', 'prayer', 'blankpaper'] },
-        { id: 'penalty', name: '被抓的代价太重', drop: B - T({ Pmul: 0.75 }),
-          advice: '被抓的后果太重,很少有人承受得起。营救被捕者、低调的参与方式能降低代价;当局一旦越界,重罚也会变成积怨,反过来压低临界点。',
+        { id: 'penalty', name: "Arrest costs too much", drop: B - T({ Pmul: 0.75 }),
+          advice: "The consequences of arrest are too heavy; few can bear them. Rescuing detainees and low-key ways of taking part lower the cost; and once the regime goes over the line, harsh penalties turn into grievance and push the tipping point back down.",
           cards: ['legal', 'lowkey', 'hide', 'prayer'] },
-        { id: 'anger', name: '怨气还不够', drop: B - T({ shift: 0.25 * ms }),
-          advice: '人们还不够愤怒,或者愤怒被封锁压着没有浮出来。悼念与曝光能让记忆浮出水面;当局每一次越界的处罚,也都会被记住。',
+        { id: 'anger', name: "Not angry enough", drop: B - T({ shift: 0.25 * ms }),
+          advice: "People are not angry enough yet — or their anger is held down by the blackout and has not surfaced. Mourning and exposure bring memory to the surface; and every penalty that goes over the line will be remembered too.",
           cards: ['memorial', 'leak', 'hunger', 'banner', 'cassette'] },
-        { id: 'info', name: '人们看不见彼此', drop: B - T({ gsAdd: 0.25 }),
-          advice: '人们看不见彼此——每个人都以为只有自己这么想。地下刊物、串联织网、传播类的建设能让人知道"别人也在"。',
+        { id: 'info', name: "People can't see each other", drop: B - T({ gsAdd: 0.25 }),
+          advice: "People cannot see each other — each thinks they alone feel this way. Underground press, networking and communication builds let people know “others are out there too.”",
           cards: ['samizdat', 'network', 'usb', 'market', 'cassette'] },
       ];
       const mx = Math.max(...f.map((q) => q.drop));
       for (const q of f) q.v = mx > 1e-4 ? clamp(q.drop / mx, 0, 1) : 0;
       f.sort((a, b) => b.v - a.v);
       let head;
-      if (base === 0) head = { kind: 'go', text: '一点就着:任何一点火星都可能燎原。现在就是出手的时候。' };
-      else if (mx <= 1e-4 && base === Infinity) head = { kind: 'stuck', text: '看不到转机:任何单独一项改变都不够。多管齐下,或者等待时机(一次越界的镇压、一个纪念日……)。' };
+      if (base === 0) head = { kind: 'go', text: "Tinderbox: any spark could set the plain ablaze. Now is the time to act." };
+      else if (mx <= 1e-4 && base === Infinity) head = { kind: 'stuck', text: "No opening in sight: no single change is enough. Push on several fronts at once, or wait for the moment (a crackdown that goes over the line, an anniversary…)." };
       else {
         const r = this.readout(), cap = this.pushCapacity();
         const est = r.tip.kind === 'est' ? r.tip.est : null;
-        if (est != null && this.x + cap >= est) head = { kind: 'go', text: '你手里的组织力,一次能带出的人已经够到估计的临界点了。' };
-        else if (est != null) head = { kind: 'gap', text: `你一次最多能带出约 ${fmtCount(Math.max(1, (this.x + cap) * this.N * this.scale))} 人,估计需要 ${r.tip.range}。` };
+        if (est != null && this.x + cap >= est) head = { kind: 'go', text: "With the organizing power in your hands, you can already bring out enough people at once to reach the estimated tipping point." };
+        else if (est != null) head = { kind: 'gap', text: `At most you can bring out ~${fmtCount(Math.max(1, (this.x + cap) * this.N * this.scale))} people at once; an estimated ${r.tip.range} are needed.` };
       }
-      if (this.vigor < 0.75) head = { kind: 'warn', text: `一次次没能越过临界点的行动,抓走的是你最骨干的人:组织元气只剩 ${Math.round(this.vigor * 100)}%,以后每次出手能带出的人都会变少。停一停、攒一攒——安静的时候元气会慢慢恢复。` };
+      if (this.vigor < 0.75) head = { kind: 'warn', text: `Action after action that failed to cross the tipping point has cost you your core people: organizational strength is down to ${Math.round(this.vigor * 100)}%, and every future push will bring out fewer. Pause and rebuild — strength slowly recovers while things are quiet.` };
       const g = this.L.goal || {};
       if (g.d != null && g.x == null) {
         // 这一关靠执行者倒戈取胜: 先说军心
         const r = this.readout();
-        head = { kind: 'army', text: `这一关要赢,靠的是执行者倒戈。${(this.L.labels && this.L.labels.army) || '军警'}眼下「${r.army.words}」(传闻),目标是「成建制倒戈」。街上的人越多、越和士兵说话,他们越动摇。` };
+        head = { kind: 'army', text: `This level is won when the enforcers defect. ${(this.L.labels && this.L.labels.army) || 'Security forces'} right now: “${r.army.words}” (rumor); the goal is “Defecting en masse”. The more people on the streets, and the more they talk to the soldiers, the more the troops waver.` };
       }
-      return { side: 'movement', title: '眼下的主要阻力', factors: f, head, top: f[0] };
+      return { side: 'movement', title: "The main obstacle now", factors: f, head, top: f[0] };
     }
     _diagRegime() {
       const bias = this.intelBias(), o = this.sim.o;
       const moodSeen = (this.meanGrievance() / this.moodScale) * (1 - bias);
       const raw = this.regimeRawIncome();
       const f = [
-        { id: 'grievance', name: '积怨在侵蚀安全边际', v: clamp(moodSeen / 0.9, 0, 1),
-          advice: '积怨不会表现为上街,却在把临界点往下压。把执法降到人们认可的界线以内;对话、特赦、安抚类的建设能让它慢慢消退。',
+        { id: 'grievance', name: "Grievance eroding the margin", v: clamp(moodSeen / 0.9, 0, 1),
+          advice: "Grievance doesn't show up as people on the streets, but it keeps pushing the tipping point down. Bring enforcement back within the line people accept; dialogue, amnesty and appeasement builds let it slowly fade.",
           cards: ['dialogue', 'amnesty', 'subsidy'] },
-        { id: 'overline', name: '处罚越过了界线', v: clamp((o.P - o.Pbar) / 0.6, 0, 1),
-          advice: '你的处罚已经越过人们认可的界线:每抓一个人,旁观者都记在心里,执行者也会不安。把「执法」降到常规或以下。',
+        { id: 'overline', name: "Penalties over the line", v: clamp((o.P - o.Pbar) / 0.6, 0, 1),
+          advice: "Your penalties are over the line people accept: every arrest is remembered by those watching, and the enforcers grow uneasy. Lower Enforcement to the normal level or below.",
           cards: [] },
-        { id: 'army', name: '执行者在动摇', v: clamp(this.d / 0.35, 0, 1),
-          advice: '执行者在动摇。越界的命令、街上的人数、同僚的态度都会让他们犹豫。发饷、轮换能暂时稳住,但治标不治本。',
+        { id: 'army', name: "Enforcers faltering", v: clamp(this.d / 0.35, 0, 1),
+          advice: "The enforcers are faltering. Orders that go over the line, the numbers on the streets, their comrades' attitudes — all of it makes them hesitate. Bonuses and rotation can steady them for a while, but they treat the symptoms, not the cause.",
           cards: ['bonus', 'rotate'] },
-        { id: 'money', name: '财政入不敷出', v: raw < 0 ? clamp(-raw / (0.6 * this.econ), 0.2, 1) : 0,
-          advice: '强硬政策的开销超过了收入,代价正转嫁给百姓,变成积怨。关掉最贵、却最不必要的那一项。',
+        { id: 'money', name: "Budget in deficit", v: raw < 0 ? clamp(-raw / (0.6 * this.econ), 0.2, 1) : 0,
+          advice: "Hard-line policies cost more than you take in; the bill is being passed on to ordinary people and turning into grievance. Drop the one that costs the most and is needed the least.",
           cards: [] },
-        { id: 'org', name: '反对派在组织', v: clamp(this.orgShown() / 100, 0, 1),
-          advice: '反对派的组织度满了就会发动大规模行动。抓串联者、对话让步都能把它压下去。',
+        { id: 'org', name: "Opposition organizing", v: clamp(this.orgShown() / 100, 0, 1),
+          advice: "When opposition organization is full, they launch a mass action. Arresting organizers or conceding in dialogue can both push it down.",
           cards: ['informants', 'cutnet', 'dialogue'] },
-        { id: 'intel', name: '情报失真', v: clamp(bias / 0.5, 0, 1),
-          advice: '下面的人不敢说真话——你看到的"平静"可能是假的,上面几条也可能被低估了。「线人」这类牌能暂时听到真话。',
+        { id: 'intel', name: "Intelligence distorted", v: clamp(bias / 0.5, 0, 1),
+          advice: "People below dare not tell the truth — the “calm” you see may be false, and the items above may be underestimated too. Informant cards let you hear the truth for a while.",
           cards: ['informants'] },
       ];
       f.sort((a, b) => b.v - a.v);
       const r = this.readout();
-      const head = { kind: bias >= 0.3 ? 'warn' : 'info', text: `下面报上来的局势:「${r.tip.words}」${bias >= 0.15 ? '(可信度' + (bias >= 0.4 ? '低' : '中') + ')' : ''}。` };
-      return { side: 'regime', title: '眼下的隐患', factors: f, head, top: f[0] };
+      const head = { kind: bias >= 0.3 ? 'warn' : 'info', text: `Situation as reported from below: “${r.tip.words}”${bias >= 0.15 ? ' (reliability: ' + (bias >= 0.4 ? 'low' : 'medium') + ')' : ''}.` };
+      return { side: 'regime', title: "The main hidden risk now", factors: f, head, top: f[0] };
     }
 
     /* ---------- 暗流: 城里有多少人"离站出来只差一点" ----------
@@ -1166,40 +1166,40 @@
       const ro = this.readout(), lab = this.L.labels || {};
       const cnt = (v) => fmtCount(Math.max(0, v) * this.N * this.scale);
       for (const p of due) {
-        const what = '「' + p.names.join('」「') + '」';
+        const what = "“" + p.names.join("”, “") + "”";
         const parts = [];
-        const crowdL = lab.crowd || '街上';
-        if (p.peak > p.x0 + 0.002 || this.x > 0.002) parts.push(`${crowdL}最多约 ${cnt(p.peak)} 人,现在约 ${cnt(this.x)} 人`);
-        else parts.push(`${crowdL}依旧空无一人`);
+        const crowdL = lab.crowd || "On the streets";
+        if (p.peak > p.x0 + 0.002 || this.x > 0.002) parts.push(`${crowdL}: peak ~${cnt(p.peak)}, now ~${cnt(this.x)}`);
+        else parts.push(`${crowdL}: still empty`);
         const arrested = (this.sim.R - p.R0) * this.N * this.arrestScale;
-        if (arrested >= 1) parts.push(`这期间被带走约 ${fmtCount(arrested)} 人`);
+        if (arrested >= 1) parts.push(`~${fmtCount(arrested)} taken away meanwhile`);
         let verdict = '';
         if (this.side === 'movement') {
           const t0 = p.tip0, t1 = ro.tip;
           const ignited = t1.kind === 'tinder' || (t1.kind === 'est' && this.x >= t1.est && this.x > 0.02);
-          if (ignited) verdict = '连锁反应已经开始。';
+          if (ignited) verdict = "The chain reaction has begun. ";
           else if (p.peak > p.x0 + 0.004 && t0.kind === 'est') {
             const ratio = p.peak / t0.est;
-            verdict = ratio < 0.5 ? `离估计的临界点(${t0.range})还差得远——人不够多,每个人面对的风险没有被摊薄。` : ratio < 1 ? '只差一点就到临界点了。' : '人数一度越过了估计的临界点,却没能留住——估计本身可能偏低。';
+            verdict = ratio < 0.5 ? `Still far from the estimated tipping point (${t0.range}) — not enough people, so no one's risk was spread thin. ` : ratio < 1 ? "Just short of the tipping point. " : "Numbers briefly passed the estimated tipping point but didn't hold — the estimate itself may be too low. ";
           }
           if (ignited) { /* 已经点着了, 临界点的变化不再重要 */ }
           else if (t0.kind === 'est' && t1.kind === 'est') {
-            if (t1.est < t0.est * 0.88) verdict += `估计的临界点降低了(${cnt(t0.est)} → ${cnt(t1.est)} 人)。`;
-            else if (t1.est > t0.est * 1.12) verdict += `估计的临界点反而升高了(${cnt(t0.est)} → ${cnt(t1.est)} 人)。`;
-          } else if (t0.kind === 'none' && t1.kind === 'est') verdict += '临界点出现了——转机第一次变得可见。';
-          else if (t0.kind === 'est' && t1.kind === 'none') verdict += '临界点消失了——眼下看不到转机。';
+            if (t1.est < t0.est * 0.88) verdict += `The estimated tipping point fell (${cnt(t0.est)} → ${cnt(t1.est)} people). `;
+            else if (t1.est > t0.est * 1.12) verdict += `The estimated tipping point rose instead (${cnt(t0.est)} → ${cnt(t1.est)} people). `;
+          } else if (t0.kind === 'none' && t1.kind === 'est') verdict += "A tipping point has appeared — for the first time, an opening is visible. ";
+          else if (t0.kind === 'est' && t1.kind === 'none') verdict += "The tipping point has vanished — no opening in sight for now. ";
           const uc1 = this.undercurrent().frac;
-          if (uc1 > p.uc0 * 1.15 + 0.005) verdict += '暗流在扩大。';
-          else if (uc1 < p.uc0 * 0.85 - 0.005) verdict += '暗流在收缩。';
-          if (this.vigor < p.vig0 - 0.04) verdict += `组织元气受损(${Math.round(p.vig0 * 100)}% → ${Math.round(this.vigor * 100)}%)。`;
-          if (!verdict) verdict = '暂时看不出变化。';
+          if (uc1 > p.uc0 * 1.15 + 0.005) verdict += "The undercurrent is growing. ";
+          else if (uc1 < p.uc0 * 0.85 - 0.005) verdict += "The undercurrent is shrinking. ";
+          if (this.vigor < p.vig0 - 0.04) verdict += `Organizational strength hurt (${Math.round(p.vig0 * 100)}% → ${Math.round(this.vigor * 100)}%). `;
+          if (!verdict) verdict = "No visible change yet. ";
         } else {
-          if (p.mood0.words !== ro.mood.words) verdict += `据报民间情绪「${p.mood0.words}」→「${ro.mood.words}」${ro.mood.bias >= 0.15 ? '(可能报喜不报忧)' : ''}。`;
-          if (p.army0.words !== ro.army.words) verdict += `${lab.army || '军警'}「${p.army0.words}」→「${ro.army.words}」。`;
-          if (p.tip0.words !== ro.tip.words) verdict += `局势「${p.tip0.words}」→「${ro.tip.words}」。`;
-          if (!verdict) verdict = '据报一切如常。';
+          if (p.mood0.words !== ro.mood.words) verdict += `Reported public mood: “${p.mood0.words}” → “${ro.mood.words}”${ro.mood.bias >= 0.15 ? ' (bad news may be held back)' : ''}. `;
+          if (p.army0.words !== ro.army.words) verdict += `${lab.army || 'Security forces'}: “${p.army0.words}” → “${ro.army.words}”. `;
+          if (p.tip0.words !== ro.tip.words) verdict += `Situation: “${p.tip0.words}” → “${ro.tip.words}”. `;
+          if (!verdict) verdict = "All normal, reportedly. ";
         }
-        const text = `${what}之后:${parts.join(';')}。${verdict}`;
+        const text = `After ${what} — ${parts.join('; ')}. ${verdict}`;
         this.log(text, 'report');
         this.fx.push({ type: 'report', text });
       }
@@ -1232,44 +1232,44 @@
       const pArr = n >= 1 ? Math.min(1, K / n) : (K > 0 ? 1 : 0);
       const crowdN = n * this.scale;
       const crowd = {
-        x, count: crowdN, text: crowdN < 1 ? '空无一人' : `约 ${fmtCount(crowdN)} 人`,
-        ...band(x, [0.002, 0.02, 0.08, 0.25, 0.5], ['空无一人', '零星几人', '一小群人', '人越来越多', '人山人海', '全城沸腾']),
+        x, count: crowdN, text: crowdN < 1 ? "Empty" : `~${fmtCount(crowdN)} people`,
+        ...band(x, [0.002, 0.02, 0.08, 0.25, 0.5], ["Empty", "A handful", "A small crowd", "Growing crowd", "A sea of people", "The whole city astir"]),
       };
-      const risk = band(pArr, [0.05, 0.2, 0.5, 0.9], ['几乎不会被抓', '偶尔有人被抓', '不少人被抓', '多半会被抓', '必被抓']);
+      const risk = band(pArr, [0.05, 0.2, 0.5, 0.9], ["Almost no arrests", "Occasional arrests", "Many arrested", "Arrest likely", "Certain arrest"]);
       risk.p = pArr;
-      const pen = band(o.P, [0.8, 1.05, 1.35, 1.75], ['训诫罚款', '拘留', '判刑', '重判', '株连·处决']);
+      const pen = band(o.P, [0.8, 1.05, 1.35, 1.75], ["Warnings & fines", "Detention", "Prison sentence", "Heavy sentence", "Kin punished · executions"]);
       const over = o.P - o.Pbar;
-      const legit = band(over, [0.001, 0.25, 0.6], ['在人们认可的界线内', '过火', '残暴', '暴虐']);
+      const legit = band(over, [0.001, 0.25, 0.6], ["Within the line people accept", "Excessive", "Brutal", "Tyrannical"]);
       legit.over = over;
       const dNoise = this.side === 'regime' ? 0 : this.intelNoise.army;
       const dShown = clamp(d + dNoise, 0, 1);
-      const army = band(dShown, [0.05, 0.15, 0.35, 0.6], ['令行禁止', '私下抱怨', '人心浮动', '公开抗命', '成建制倒戈']);
+      const army = band(dShown, [0.05, 0.15, 0.35, 0.6], ["Obedient", "Grumbling in private", "Restless", "Openly defiant", "Defecting en masse"]);
       army.shown = dShown;
       army.rumor = this.side !== 'regime';
       const moodTrue = this.meanGrievance() / this.moodScale;
       const bias = this.intelBias();
       const moodShown = this.side === 'regime' ? moodTrue * (1 - bias) : Math.max(0, moodTrue * (1 + this.intelNoise.mood));
-      const mood = band(moodShown, [0.1, 0.3, 0.55, 0.8], ['平静', '隐忍', '积怨', '怨声载道', '一触即发']);
+      const mood = band(moodShown, [0.1, 0.3, 0.55, 0.8], ["Calm", "Holding it in", "Aggrieved", "Seething", "Explosive"]);
       mood.shown = moodShown; mood.bias = bias;
       mood.conf = this.side === 'regime'
-        ? (bias >= 0.4 ? '低:下面的人不敢说真话' : bias >= 0.15 ? '中:报喜多于报忧' : '高')
-        : '传闻';
+        ? (bias >= 0.4 ? "Low: people below dare not tell the truth" : bias >= 0.15 ? "Medium: more good news than bad" : "High")
+        : "rumor";
       const tipTrue = this.L.structuralTip ? this.structuralTipping() : this.tipping();
       let tip;
       if (this.side === 'movement') {
-        if (tipTrue === Infinity) tip = { kind: 'none', text: '看不到转机', sub: '即使全城一起站出来,眼下也会被压下去' };
-        else if (tipTrue === 0) tip = { kind: 'tinder', text: '一点就着', sub: '任何一点火星都可能燎原' };
+        if (tipTrue === Infinity) tip = { kind: 'none', text: "No opening in sight", sub: "Even if the whole city stood up together, it would be crushed for now" };
+        else if (tipTrue === 0) tip = { kind: 'tinder', text: "Tinderbox", sub: "Any spark could set the plain ablaze" };
         else {
           const est = tipTrue * (1 + this.intelNoise.tip);
           const spread = this.L.tipSpread != null ? this.L.tipSpread : 0.3;
           const lo = est * (1 - spread), hi = est * (1 + spread);
           const cnt = (v) => fmtCount(Math.max(1, v * this.N * this.scale));
-          tip = { kind: 'est', text: `约 ${cnt(lo)}～${cnt(hi)} 人`, range: `${cnt(lo)}～${cnt(hi)} 人`, sub: '需要这么多人同时站出来,才会连锁', est };
+          tip = { kind: 'est', text: `~${cnt(lo)}–${cnt(hi)} people`, range: `${cnt(lo)}–${cnt(hi)} people`, sub: "This many must stand up at once to set off a chain reaction", est };
         }
         tip.shownFrac = tipTrue === Infinity ? 1 : tipTrue === 0 ? 0 : tip.est;
       } else {
         const seen = tipTrue === Infinity ? Infinity : tipTrue * (1 + 2.5 * bias) + 0.25 * bias;
-        tip = band(seen === Infinity ? 9 : seen, [0.03, 0.08, 0.18, 0.35], ['岌岌可危', '脆弱', '尚稳', '稳固', '固若金汤']);
+        tip = band(seen === Infinity ? 9 : seen, [0.03, 0.08, 0.18, 0.35], ["Precarious", "Fragile", "Holding", "Secure", "Rock-solid"]);
         tip.shownFrac = seen === Infinity ? 1 : Math.min(1, seen);
       }
       return { crowd, risk, pen, legit, army, mood, tip, R: s.R, detained: s.R * this.N * this.arrestScale };
@@ -1292,7 +1292,7 @@
       const stage = this.stage();
       if (stage !== this.aiStage) {
         const up = stage > this.aiStage; this.aiStage = stage;
-        this.log(up ? `当局升级为「${STAGES[stage].name}」:${STAGES[stage].tip}。` : `当局的戒备降到「${STAGES[stage].name}」。`, 'opp');
+        this.log(up ? `The regime escalates to “${STAGES[stage].name}”: ${STAGES[stage].tip}.` : `The regime stands down to “${STAGES[stage].name}”.`, 'opp');
         this.fx.push({ type: 'stage', stage, up });
       }
       const s0 = A.start || {};
@@ -1313,7 +1313,7 @@
         if (!this.policyAllowed(key, w)) return;
         if (this.pol[key] !== w) {
           this.pol[key] = w;
-          if (!A.quiet) this.log((A.say && A.say[key + ':' + w]) || `当局:「${POLICIES[key].name}」→「${this.policyOpt(key).name}」`, 'opp');
+          if (!A.quiet) this.log((A.say && A.say[key + ':' + w]) || `Regime: “${POLICIES[key].name}” → “${this.policyOpt(key).name}”`, 'opp');
         }
       };
       for (const k of ['enforce', 'police', 'info', 'target']) ladder(k, want[k]);
@@ -1353,7 +1353,7 @@
         this.addSeeds(0.02 + 0.02 * Math.min(1, this.meanGrievance() / this.moodScale));
         this.org = 25;
         this.flags.aiPush = this.round;
-        this.log(A.pushNews || '反对派发动了一次大规模行动!', 'opp');
+        this.log(A.pushNews || "The opposition has launched a mass action!", 'opp');
         this.fx.push({ type: 'push' });
         return;
       }
@@ -1396,7 +1396,7 @@
             ev, title: ev.title, art: ev.art || '📜', date: this.dateLabel(),
             text: typeof ev.text === 'function' ? ev.text(this) : ev.text,
             quote: ev.quote,
-            choices: (ev.choices || [{ label: '继续' }]).map(c => ({ label: c.label, hint: c.hint, wise: !!c.wise })),
+            choices: (ev.choices || [{ label: "Continue" }]).map(c => ({ label: c.label, hint: c.hint, wise: !!c.wise })),
           };
           this.fx.push({ type: 'popup' });
           return true;
@@ -1458,7 +1458,7 @@
       const raw = this.regimeRawIncome();
       if (raw < 0) {
         griefAll(this, Math.min(0.02, -raw * 0.025));
-        if (this.round % 5 === 0) this.log(this.L.deficitNews || '财政吃紧:物价上涨,配给减少,排队的人更多了。', this.side === 'regime' ? 'intel' : 'event');
+        if (this.round % 5 === 0) this.log(this.L.deficitNews || "Budget squeeze: prices rise, rations shrink, the queues grow longer.", this.side === 'regime' ? 'intel' : 'event');
       }
       const incMe = this.income(this.side), incOpp = this.income(this.oppSide);
       this.me.ap = clamp(this.me.ap + incMe, 0, this.apCap);
@@ -1478,17 +1478,17 @@
       if (!this.L.noAI) { if (this.side === 'movement') this._alertTick(); else this._orgTick(arrestedNow); }
       if (this.flags.anniv && this.round % 6 === 0) {
         griefAll(this, Math.min(0.03, 0.25 * s.R + 0.006));
-        this.log('纪念日到了。人们又想起了那些人。', 'event');
+        this.log("The anniversary has come. People remember the ones who were lost.", 'event');
       }
       // 起伏: 连锁反应 / 差一点
       const tipPrev = this.hist.tip.length ? this.hist.tip[this.hist.tip.length - 1] : 1;
       if (this.x >= 0.02 && this.x > this.prevX * 1.6 && this.x > tipPrev && this.round - this.lastIgnite > 6) {
         this.lastIgnite = this.round;
         this.fx.push({ type: 'ignite' });
-        this.log('连锁反应开始了:越来越多的人加入。', 'crowd');
+        this.log("The chain reaction has begun: more and more people are joining.", 'crowd');
       } else if (this.prevX >= 0.015 && this.x < this.prevX * 0.45 && this.prevX > tipPrev * 0.55) {
         this.fx.push({ type: 'nearmiss' });
-        this.log('差一点。人群散去了——再多一些人,也许就不一样了。', 'calm');
+        this.log("So close. The crowd dispersed — a few more people, and it might have been different.", 'calm');
       }
       for (const st of [this.me, this.opp]) for (const k in st.cool) if (st.cool[k] > 0) st.cool[k]--;
       for (const k in this.polCd) if (this.polCd[k] > 0) this.polCd[k]--;
@@ -1545,24 +1545,24 @@
       const L = this.L;
       if (arrested * this.N >= 1) {
         const n = arrested * this.N * this.arrestScale;
-        if (arrested >= 0.002 || this.rng() < 0.4) this.log(`${fmtCount(n)} 人被带走。`, 'arrest');
+        if (arrested >= 0.002 || this.rng() < 0.4) this.log(`${fmtCount(n)} people taken away.`, 'arrest');
       }
-      if (cross(x, px, 0.02)) this.log(L.newsCrowd1 || '有人开始公开站出来了。', 'crowd');
-      if (cross(x, px, 0.1)) this.log(L.newsCrowd2 || '人越聚越多——旁观的人开始犹豫要不要加入。', 'crowd');
-      if (cross(x, px, 0.3)) this.log(L.newsCrowd3 || '街上已经是人的海洋。', 'crowd');
-      if (px >= 0.05 && x < px * 0.4) this.log('街道又空了。', 'calm');
-      if (cross(d, d0, 0.15)) this.log('执行者中有人开始拒绝执行命令。', 'army');
-      if (cross(d, d0, 0.4)) this.log('执行系统出现大面积抗命!', 'army');
+      if (cross(x, px, 0.02)) this.log(L.newsCrowd1 || "Some have begun to stand up in public.", 'crowd');
+      if (cross(x, px, 0.1)) this.log(L.newsCrowd2 || "The crowd keeps growing — onlookers begin to wonder whether to join.", 'crowd');
+      if (cross(x, px, 0.3)) this.log(L.newsCrowd3 || "The streets are a sea of people.", 'crowd');
+      if (px >= 0.05 && x < px * 0.4) this.log("The streets are empty again.", 'calm');
+      if (cross(d, d0, 0.15)) this.log("Some enforcers have begun refusing orders.", 'army');
+      if (cross(d, d0, 0.4)) this.log("Mass refusal of orders across the enforcement apparatus!", 'army');
       if (this.side === 'regime') {
         if (this.round % 4 === 0) {
           const r = this.readout();
-          this.log(`密报:民间${r.mood.words}。(可信度${r.mood.conf.split(':')[0]})`, 'intel');
+          this.log(`Intel: public mood “${r.mood.words}”. (Reliability: ${r.mood.conf.split(':')[0]})`, 'intel');
         }
       } else {
         const mu = this.sim.backfireMu().mu;
-        if (mu > 1 && this.rng() < 0.3) this.log('街谈巷议:抓人反而让更多人坐不住了。', 'intel');
+        if (mu > 1 && this.rng() < 0.3) this.log("Street talk: the arrests are only making more people restless.", 'intel');
       }
-      if (x < 0.003 && this.rng() < 0.06) this.log(L.quiet || '街上很安静。有人满意,有人疲惫,有人害怕,有人在等别人。', 'calm');
+      if (x < 0.003 && this.rng() < 0.06) this.log(L.quiet || "The streets are quiet. Some are content, some are tired, some are afraid, some are waiting for others.", 'calm');
     }
 
     /* ---------- 胜负 ---------- */
@@ -1592,11 +1592,11 @@
       const e = E[r.key] || (r.win ? E.win : E.lose) || {};
       const stars = [];
       if (r.win) {
-        stars.push({ text: this.L.starText ? this.L.starText[0] : '达成目标', ok: true });
+        stars.push({ text: this.L.starText ? this.L.starText[0] : "Goal reached", ok: true });
         for (const s of (this.L.stars || [])) stars.push({ text: s.text, ok: !!s.test(this) });
       }
       this.over = {
-        win: r.win, key: r.key, title: r.title || e.title || (r.win ? '胜利' : '失败'),
+        win: r.win, key: r.key, title: r.title || e.title || (r.win ? "Victory" : "Defeat"),
         text: r.text || (typeof e.text === 'function' ? e.text(this) : e.text) || '',
         stars, starCount: r.win ? stars.filter(s => s.ok).length : 0,
         stats: this.stats(),
@@ -1609,9 +1609,9 @@
       return {
         peakCrowd: fmtCount(peakX * this.N * this.scale),
         detained: fmtCount(this.sim.R * this.N * this.arrestScale),
-        peakArmy: band(peakD, [0.05, 0.15, 0.35, 0.6], ['令行禁止', '私下抱怨', '人心浮动', '公开抗命', '成建制倒戈']).words,
+        peakArmy: band(peakD, [0.05, 0.15, 0.35, 0.6], ["Obedient", "Grumbling in private", "Restless", "Openly defiant", "Defecting en masse"]).words,
         rounds: this.round,
-        moodEnd: band(this.meanGrievance() / this.moodScale, [0.1, 0.3, 0.55, 0.8], ['平静', '隐忍', '积怨', '怨声载道', '一触即发']).words,
+        moodEnd: band(this.meanGrievance() / this.moodScale, [0.1, 0.3, 0.55, 0.8], ["Calm", "Holding it in", "Aggrieved", "Seething", "Explosive"]).words,
       };
     }
   }

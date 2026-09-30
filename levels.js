@@ -17,10 +17,16 @@
   const LUNAR_M = ['正', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
   const DAY = 864e5;
   const ymd = (t) => { const d = new Date(t); return [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), d.getUTCDay()]; };
-  const dayFmt = (y, m, d, withYear) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [Y, M, D] = ymd(t0 + r * DAY); return (withYear === false ? '' : Y + '年') + M + '月' + D + '日'; }; };
-  const weekFmt = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [Y, M, D] = ymd(t0 + r * 7 * DAY); return `${Y}年${M}月${D}日`; }; };
-  const halfDayFmt = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [, M, D] = ymd(t0 + Math.floor(r / 2) * DAY); return M + '月' + D + '日 · ' + (r % 2 ? '夜' : '昼'); }; };
-  const monthFmt = (y, m) => (r) => { const mm = m - 1 + r; return `${y + Math.floor(mm / 12)}年${(mm % 12) + 1}月`; };
+  // 英文版(window.SILENCE_LANG = 'en')的日期格式
+  const EN = (typeof window !== 'undefined' ? window : globalThis).SILENCE_LANG === 'en';
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const HALF = (r) => (EN ? (r % 2 ? 'night' : 'day') : (r % 2 ? '夜' : '昼'));
+  const md = (M, D) => (EN ? `${MON[M - 1]} ${D}` : M + '月' + D + '日');
+  const ymdTxt = (Y, M, D) => (EN ? `${MON[M - 1]} ${D}, ${Y}` : `${Y}年${M}月${D}日`);
+  const dayFmt = (y, m, d, withYear) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [Y, M, D] = ymd(t0 + r * DAY); return withYear === false ? md(M, D) : ymdTxt(Y, M, D); }; };
+  const weekFmt = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [Y, M, D] = ymd(t0 + r * 7 * DAY); return ymdTxt(Y, M, D); }; };
+  const halfDayFmt = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [, M, D] = ymd(t0 + Math.floor(r / 2) * DAY); return md(M, D) + ' · ' + HALF(r); }; };
+  const monthFmt = (y, m) => (r) => { const mm = m - 1 + r, Y = y + Math.floor(mm / 12); return EN ? `${MON[mm % 12]} ${Y}` : `${Y}年${(mm % 12) + 1}月`; };
   const weekday = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => ymd(t0 + r * DAY)[3]; };
 
   const STD_POL = { enforce: 'normal', police: 'normal', target: 'uniform', info: 'open', release: 'normal' };
@@ -51,7 +57,7 @@
     labels: { army: '老师们', crowd: '站出来的学生', plaza: '主席台前', prison: '教导处', barracks: '主席台', avenue: '' },
     cards: ['t_small', 't_big'], startAP: 1, apCap: 3, income: 1,
     goal: { x: 0.5, hold: 2 },
-    dateFmt: (r) => `升旗仪式 · 上午 8:${String(r).padStart(2, '0')}`,
+    dateFmt: (r) => (EN ? `Morning assembly · 8:${String(r).padStart(2, '0')} a.m.` : `升旗仪式 · 上午 8:${String(r).padStart(2, '0')}`),
     events: [
       { at: 0, headline: '升旗仪式。太阳很毒,没有一丝风。' },
       { at: 1, headline: '校领导:"从下周起,取消周末,全部补课。"' },
@@ -112,7 +118,7 @@
       { text: '三年后民间积怨不超过"隐忍"', test: (g) => g.meanGrievance() / g.moodScale < 0.3 },
       { text: '被抓的国人少于一成', test: (g) => g.sim.R < 0.1 },
     ],
-    dateFmt: (r) => `厉王${cnNum(34 + Math.floor(r / 12))}年${LUNAR_M[r % 12]}月`,
+    dateFmt: (r) => (EN ? `King Li, year ${34 + Math.floor(r / 12)}, month ${(r % 12) + 1}` : `厉王${cnNum(34 + Math.floor(r / 12))}年${LUNAR_M[r % 12]}月`),
     events: [
       { at: 0, title: '国人谤王', art: '🗣️', text: '都城里的人都在议论你的"专利"。有人说你与民争利,有人说荣夷公迟早要坏事。<br><br>这是第一个月。你打算怎么办?(左边是你的政策,右边是你能做的事。)', choices: [{ label: '先看看再说' }] },
       { at: 2, title: '召公谏', art: '🧓', quote: '民不堪命矣!', text: '召公来见你,说国人已经受不了了。', choices: [
@@ -173,7 +179,8 @@
       { text: '在2月27日夜之前成功', test: (g) => g.round <= 27 },
       { text: '被捕者少于七千人', test: (g) => g.sim.R < 0.12 },
     ],
-    dateFmt: (r) => `俄历2月${14 + Math.floor(r / 2)}日 · ${r % 2 ? '夜' : '昼'}`.replace('2月29日', '3月1日').replace('2月30日', '3月2日'),
+    // 俄历: 2月14日起每轮半天; 1917年2月只有28天
+    dateFmt: (r) => { const d = 14 + Math.floor(r / 2), M = d > 28 ? 3 : 2, D = d > 28 ? d - 28 : d; return (EN ? `${MON[M - 1]} ${D} (O.S.) · ` : `俄历${M}月${D}日 · `) + HALF(r); },
     events: [
       { at: 0, title: '第三个冬天', art: '❄️', text: '杜马开幕了,议员们在演讲,面包店前的队伍越来越长。城里流传着要实行面包配给的消息。<br><br>你在维堡区的一家工厂里。人们在抱怨,但没有人敢第一个停下机器。', choices: [{ label: '开始' }] },
       { at: 8, title: '普梯洛夫工厂', art: '🏭', text: '全城最大的普梯洛夫工厂,工人们要求加薪。厂方拒绝了。', choices: [
@@ -548,7 +555,7 @@
       { text: '在10月9日之前成功', test: (g) => g.round <= 35 },
       { text: '被斯塔西带走的人少于一千', test: (g) => g.sim.R < 0.1 },
     ],
-    dateFmt: (r) => dayFmt(1989, 9, 4)(r) + (weekday(1989, 9, 4)(r) === 1 ? ' · 周一' : ''),
+    dateFmt: (r) => dayFmt(1989, 9, 4)(r) + (weekday(1989, 9, 4)(r) === 1 ? (EN ? ' · Monday' : ' · 周一') : ''),
     events: [
       { at: 0, title: '9月4日 · 周一', art: '⛪', text: '和平祈祷结束了。几个年轻人在教堂门口展开标语。斯塔西的便衣冲上去抢走了标语——西德的电视台正好拍到了这一幕。', choices: [{ label: '开始' }] },
       { at: 7, news: '匈牙利开放了与奥地利的边境。成千上万东德人从那里出走。', kind: 'event', run: (g) => g.griefAll(0.015) },
@@ -810,7 +817,7 @@
       stars: side === 'movement'
         ? [{ text: '30 轮内成功', test: (g) => g.round <= 30 }, { text: '被捕者少于 5%', test: (g) => g.sim.R < 0.05 }]
         : [{ text: '民间积怨不超过"积怨"', test: (g) => g.meanGrievance() / g.moodScale < 0.55 }, { text: '被捕者少于 10%', test: (g) => g.sim.R < 0.1 }],
-      dateFmt: (r) => `第 ${r + 1} 轮`,
+      dateFmt: (r) => (EN ? `Round ${r + 1}` : `第 ${r + 1} 轮`),
       endings: {},
       history: '',
       lesson: null,

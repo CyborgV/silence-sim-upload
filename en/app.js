@@ -27,7 +27,7 @@
   }
   document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => show(b.dataset.go)));
 
-  const sideLabel = (s) => (s === 'regime' ? '🏛 扮演当局' : '📣 扮演民间');
+  const sideLabel = (s) => (s === 'regime' ? "🏛 Play the regime" : "📣 Play the movement");
   const starsHtml = (n, max) => { let h = ''; for (let i = 0; i < max; i++) h += `<span class="${i < n ? 'on' : ''}">★</span>`; return h; };
 
   /* ================= 标题动画: 沉默的城市, 偶尔有人亮起 ================= */
@@ -82,23 +82,23 @@
   /* ================= 简报 ================= */
   function openBrief(L, skOpts) {
     const diff = SAVE.diff || 'normal';
-    const starItems = [L.starText ? L.starText[0] : '达成目标'].concat((L.stars || []).map((s) => s.text));
+    const starItems = [L.starText ? L.starText[0] : "Goal reached"].concat((L.stars || []).map((s) => s.text));
     $('briefBody').innerHTML = `
       <div class="head"><div class="ico">${L.icon}</div><div>
         <div class="ch">${L.chapter} · ${L.era}</div><h2>${L.title}</h2><div class="era">${L.place}</div></div></div>
-      <div class="role"><span class="side ${L.side}">${sideLabel(L.side)}</span> <span class="era">你是:${L.role}</span></div>
+      <div class="role"><span class="side ${L.side}">${sideLabel(L.side)}</span> <span class="era">You are: ${L.role}</span></div>
       ${(L.intro || []).map((p) => `<p>${p}</p>`).join('')}
       ${L.quote ? `<div class="quote">${L.quote}</div>` : ''}
-      <div class="goalbox"><h4>目标</h4><div class="goal">${L.goalText}</div>
-        ${L.id !== 'tutorial' ? `<h4 style="margin-top:12px">星级</h4><ul>${starItems.map((t) => `<li>★ ${t}</li>`).join('')}</ul>` : ''}</div>
-      ${L.tips && L.tips.length ? `<div class="goalbox"><h4>提示</h4><ul>${L.tips.map((t) => `<li>${t}</li>`).join('')}</ul></div>` : ''}
+      <div class="goalbox"><h4>Goal</h4><div class="goal">${L.goalText}</div>
+        ${L.id !== 'tutorial' ? `<h4 style="margin-top:12px">Stars</h4><ul>${starItems.map((t) => `<li>★ ${t}</li>`).join('')}</ul>` : ''}</div>
+      ${L.tips && L.tips.length ? `<div class="goalbox"><h4>Tips</h4><ul>${L.tips.map((t) => `<li>${t}</li>`).join('')}</ul></div>` : ''}
       <div class="actions">
-        <button class="btn primary" id="brief-start">开始 ▶</button>
-        ${L.id === 'tutorial' ? '<button class="btn" id="brief-guide">💡 带引导开始</button>' : ''}
-        ${L.id !== 'tutorial' ? `<span class="era">难度</span><div class="seg-sm" id="brief-diff">
-          <button data-v="easy" class="${diff === 'easy' ? 'on' : ''}">简单</button>
-          <button data-v="normal" class="${diff === 'normal' ? 'on' : ''}">标准</button>
-          <button data-v="hard" class="${diff === 'hard' ? 'on' : ''}">困难</button></div>` : ''}
+        <button class="btn primary" id="brief-start">Start ▶</button>
+        ${L.id === 'tutorial' ? '<button class="btn" id="brief-guide">💡 Start with guide</button>' : ''}
+        ${L.id !== 'tutorial' ? `<span class="era">Difficulty</span><div class="seg-sm" id="brief-diff">
+          <button data-v="easy" class="${diff === 'easy' ? 'on' : ''}">Easy</button>
+          <button data-v="normal" class="${diff === 'normal' ? 'on' : ''}">Normal</button>
+          <button data-v="hard" class="${diff === 'hard' ? 'on' : ''}">Hard</button></div>` : ''}
       </div>`;
     const seg = $('brief-diff');
     if (seg) seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
@@ -136,7 +136,7 @@
     show('game');
     $('g-chapter').textContent = L.chapter + ' · ';
     $('g-title').textContent = L.title;
-    $('cards-title').innerHTML = G.side === 'regime' ? '行动 <span class="tag">一次性 · 有冷却</span>' : '对策 <span class="tag">一次性 · 有冷却</span>';
+    $('cards-title').innerHTML = G.side === 'regime' ? "Actions <span class=\"tag\">one-off · cooldowns</span>" : "Tactics <span class=\"tag\">one-off · cooldowns</span>";
     $('meters').classList.toggle('solo', !!L.noAI);
     Bub.clear(); $('headline').innerHTML = ''; $('banner').innerHTML = ''; $('ov-tree').classList.remove('show');
     if (!city) city = new window.SilenceCity($('city'));
@@ -157,7 +157,7 @@
   function renderGuideBtn() {
     const b = $('g-guide'); if (!G) return;
     b.classList.toggle('fresh', !SAVE.coach['lv_' + G.L.id]);
-    b.title = G.L.id === 'tutorial' ? '召公一步步带你玩(已经开始的话,会从头重来)' : '新手引导:召公讲解这一关的界面和要点';
+    b.title = G.L.id === 'tutorial' ? "The Duke of Shao walks you through it step by step (if the level is already underway, it restarts)" : "Tutorial guide: the Duke of Shao explains this level’s screen and key points";
   }
   function startGuide() {
     if (!G || G.over) return;
@@ -218,7 +218,7 @@
       const imp = G.news.find((n) => n.round === G.round && ['crowd', 'army', 'opp', 'arrest', 'event'].includes(n.kind));
       if (imp) headline(imp.text, imp.kind, true);
     }
-    if (G.side === 'regime' && G.x - x0 > 0.04) toast('⚠ 街头突然聚集了大量人群!', 'crowd');
+    if (G.side === 'regime' && G.x - x0 > 0.04) toast("⚠ A large crowd has suddenly gathered in the streets!", 'crowd');
     renderAll();
     Coach.notify('round');
     if (G.popup) showEvent();
@@ -231,26 +231,26 @@
     const fx = G.fx.splice(0);
     const slogans = (G.L.slogans || []).filter(Boolean);
     for (const f of fx) {
-      if (f.type === 'crackdown') { city.flash('#ff2a1a', 900); city.shake(); $('stage').classList.remove('shake'); void $('stage').offsetWidth; $('stage').classList.add('shake'); if (G.side === 'movement') toast('💥 当局动手了', 'opp'); }
+      if (f.type === 'crackdown') { city.flash('#ff2a1a', 900); city.shake(); $('stage').classList.remove('shake'); void $('stage').offsetWidth; $('stage').classList.add('shake'); if (G.side === 'movement') toast("💥 The regime strikes", 'opp'); }
       else if (f.type === 'raid') { city.flash('#ff4030', 500); }
       else if (f.type === 'defect') { city.flash('#57c28a', 500); }
       else if (f.type === 'reveal') { city.flash('#b392f0', 600); }
       else if (f.type === 'card' && f.side !== G.side) {
         const nm = G.card(f.id).name;
-        toast(`${G.side === 'movement' ? '当局' : '对方'}:${CARDS[f.id].icon} ${nm}`, 'opp');
+        toast(`${G.side === 'movement' ? 'Regime' : 'Opposition'}: ${CARDS[f.id].icon} ${nm}`, 'opp');
       }
       else if (f.type === 'news' && ['crowd', 'army'].includes(f.kind)) toast(f.text, f.kind === 'army' ? 'good' : 'crowd');
       else if (f.type === 'headline') headline(f.text, f.kind);
       else if (f.type === 'bubble') Bub.add(f.b);
-      else if (f.type === 'seeds') city.say(`+约 ${fmtCount(f.n * G.scale)} 人`, '#9fe0b5');
-      else if (f.type === 'ignite') { banner('连锁反应!', '越来越多的人加入了', 'ignite'); city.flash('#ffb347', 700); }
-      else if (f.type === 'nearmiss') banner('差一点', '人群散去了——再多一些人,也许就不一样了', 'miss');
+      else if (f.type === 'seeds') city.say(`+~${fmtCount(f.n * G.scale)} people`, '#9fe0b5');
+      else if (f.type === 'ignite') { banner("Chain reaction!", "More and more people are joining", 'ignite'); city.flash('#ffb347', 700); }
+      else if (f.type === 'nearmiss') banner("So close", "The crowd melted away — a few more people, and it might have been different", 'miss');
       else if (f.type === 'stage') {
-        if (f.up) { banner(`当局:${STAGES[f.stage].name}`, STAGES[f.stage].tip, 'stage'); city.flash('#ff3b2f', 500); }
-        else toast(`当局的戒备降到「${STAGES[f.stage].name}」`, 'good');
+        if (f.up) { banner(`Regime: ${STAGES[f.stage].name}`, STAGES[f.stage].tip, 'stage'); city.flash('#ff3b2f', 500); }
+        else toast(`The regime stands down to “${STAGES[f.stage].name}”`, 'good');
       }
-      else if (f.type === 'push') { banner('反对派发动了!', '一次大规模行动——压不压得住,取决于你看不见的临界点', 'stage'); }
-      else if (f.type === 'buy') toast(`建成:${f.name}`, 'crowd');
+      else if (f.type === 'push') { banner("The opposition moves!", "A mass action — whether you can hold it down depends on a tipping point you cannot see", 'stage'); }
+      else if (f.type === 'buy') toast(`Built: ${f.name}`, 'crowd');
       else if (f.type === 'report') toast('📋 ' + (f.text.length > 64 ? f.text.slice(0, 62) + '…' : f.text), 'report');
     }
     if (G.x > 0.004 && slogans.length && Math.random() < Math.min(0.9, 0.25 + G.x * 2)) city.say(slogans[(Math.random() * slogans.length) | 0]);
@@ -275,7 +275,7 @@
       el.className = 'bubble ' + b.kind;
       el.style.left = (p.x * 100).toFixed(1) + '%'; el.style.top = (p.y * 100).toFixed(1) + '%';
       el.innerHTML = `${b.icon}<b>+${b.amt}</b>`;
-      el.dataset.tip = `<b>${b.name}</b> · 点击收集 +${b.amt}<div class="tt-tags">${BUBBLES[b.kind].tip}</div>`;
+      el.dataset.tip = `<b>${b.name}</b> · click to collect +${b.amt}<div class="tt-tags">${BUBBLES[b.kind].tip}</div>`;
       el.addEventListener('click', (e) => { e.stopPropagation(); take(b.id, 1); });
       layer.appendChild(el);
       items.push({ id: b.id, el, life: 9000, auto: SAVE.autoCollect ? 1500 : null });
@@ -328,32 +328,32 @@
   const delta = (arr, lag) => { lag = lag || 2; const n = arr.length; return n > lag ? arr[n - 1] - arr[n - 1 - lag] : 0; };
   // words: true = "上升/下降"; 也可以传 [上升时的词, 下降时的词]
   function arrow(dv, eps, goodIfUp, words) {
-    if (Math.abs(dv) < eps) return words ? '<span class="trend flat">→ 平稳</span>' : '';
+    if (Math.abs(dv) < eps) return words ? "<span class=\"trend flat\">→ steady</span>" : '';
     const up = dv > 0, good = goodIfUp == null ? null : up === goodIfUp;
-    const w = !words ? '' : Array.isArray(words) ? ' ' + words[up ? 0 : 1] : (up ? ' 上升' : ' 下降');
+    const w = !words ? '' : Array.isArray(words) ? ' ' + words[up ? 0 : 1] : (up ? " rising" : " falling");
     return `<span class="trend ${good == null ? '' : good ? 'good' : 'bad'}">${up ? '↑' : '↓'}${w}</span>`;
   }
   const MOV = () => G.side === 'movement';
 
   function renderAdvice() {
     const d = G.diagnose();
-    const lv = (v) => (v >= 0.8 ? '很大' : v >= 0.55 ? '较大' : v >= 0.3 ? '一般' : v > 0.05 ? '较小' : '—');
+    const lv = (v) => (v >= 0.8 ? "Huge" : v >= 0.55 ? "High" : v >= 0.3 ? "Mid" : v > 0.05 ? "Low" : '—');
     const hand = G.hand().map((c) => c.id);
     const sugg = (d.top && d.top.v > 0.05 ? d.top.cards : []).filter((id) => hand.includes(id)).map((id) => G.card(id));
     $('advice').innerHTML = `<div class="advice ${d.side}">
-      <div class="ah"><span>🧭 参谋 · ${d.title}</span><button class="lnk" id="adv-more">详细 ›</button></div>
+      <div class="ah"><span>🧭 Advisor · ${d.title}</span><button class="lnk" id="adv-more">Details ›</button></div>
       ${d.head ? `<div class="ahd ${d.head.kind}">${d.head.text}</div>` : ''}
       ${d.factors.slice(0, 3).map((f) => `<div class="af"><span class="an">${f.name}</span><span class="abar"><i style="width:${Math.max(3, f.v * 100).toFixed(0)}%"></i></span><span class="alv">${lv(f.v)}</span></div>`).join('')}
       ${d.top && d.top.v > 0.05 ? `<div class="at">${d.top.advice}</div>` : ''}
-      ${sugg.length ? `<div class="ac"><span>对症的牌:</span>${sugg.map((c) => `<button class="chip" data-play="${c.id}" data-tip="${esc('<b>' + c.icon + ' ' + c.name + '</b><br>' + c.text)}">${c.icon} ${c.name}</button>`).join('')}</div>` : ''}
+      ${sugg.length ? `<div class="ac"><span>Suggested:</span>${sugg.map((c) => `<button class="chip" data-play="${c.id}" data-tip="${esc('<b>' + c.icon + ' ' + c.name + '</b><br>' + c.text)}">${c.icon} ${c.name}</button>`).join('')}</div>` : ''}
     </div>`;
     $('advice').querySelectorAll('[data-play]').forEach((b) => b.addEventListener('click', () => playCard(b.dataset.play)));
     $('adv-more').addEventListener('click', openAnalysis);
   }
 
   /* 走势图: 上半 = 街上的人 vs 估计的临界点(人口比例, 平方根刻度); 下半(大图) = 积怨、军心、警觉、暗流。全部是你的所见所闻。 */
-  const moodW = (v) => (v < 0.1 ? '平静' : v < 0.3 ? '隐忍' : v < 0.55 ? '积怨' : v < 0.8 ? '怨声载道' : '一触即发');
-  const armyW = (v) => (v < 0.05 ? '令行禁止' : v < 0.15 ? '私下抱怨' : v < 0.35 ? '人心浮动' : v < 0.6 ? '公开抗命' : '成建制倒戈');
+  const moodW = (v) => (v < 0.1 ? "Calm" : v < 0.3 ? "Holding it in" : v < 0.55 ? "Aggrieved" : v < 0.8 ? "Seething" : "Explosive");
+  const armyW = (v) => (v < 0.05 ? "Obedient" : v < 0.15 ? "Grumbling in private" : v < 0.35 ? "Restless" : v < 0.6 ? "Openly defiant" : "Defecting en masse");
   function drawTrend(cv, big, hoverI) {
     if (!cv || !G) return;
     const dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, H = cv.clientHeight;
@@ -412,7 +412,7 @@
       const P2 = { y0: H * 0.64, y1: H - 22 };
       const Y2 = (v) => P2.y1 - (P2.y1 - P2.y0) * clamp(v, 0, 1);
       for (const g of [0, 0.5, 1]) { ctx.strokeStyle = '#1d2530'; ctx.beginPath(); ctx.moveTo(pl, Y2(g)); ctx.lineTo(w - pr, Y2(g)); ctx.stroke(); }
-      ctx.fillStyle = '#6d7885'; ctx.fillText('高', 6, Y2(1) + 4); ctx.fillText('低', 6, Y2(0));
+      ctx.fillStyle = '#6d7885'; ctx.fillText("High", 6, Y2(1) + 4); ctx.fillText("Low", 6, Y2(0));
       const line = (arr, col, dash, f) => {
         ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.setLineDash(dash || []); ctx.beginPath();
         for (let i = 0; i < n; i++) { const v = f(arr[i]); i ? ctx.lineTo(X(i), Y2(v)) : ctx.moveTo(X(i), Y2(v)); }
@@ -429,7 +429,7 @@
     }
     if (hoverI != null && hoverI < n) { ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(hoverI), 4); ctx.lineTo(X(hoverI), H - (big ? 20 : 4)); ctx.stroke(); }
     cv._X = X; cv._total = total;
-    if (!big) $('trend-legend').innerHTML = `<span><i style="background:#ffcf70"></i>${(L.labels && L.labels.crowd) || '街上'}</span><span><i style="background:#b392f0"></i>${mov ? '临界点(估计)' : '局势(据报)'}</span><span class="tri a">▲</span>你 <span class="tri o">▼</span>对手`;
+    if (!big) $('trend-legend').innerHTML = `<span><i style="background:#ffcf70"></i>${(L.labels && L.labels.crowd) || 'On the streets'}</span><span><i style="background:#b392f0"></i>${mov ? 'Tipping point (est.)' : 'Situation (reported)'}</span><span class="tri a">▲</span>You <span class="tri o">▼</span>Opponent`;
   }
 
   function openAnalysis() { if (!G) return; $('ov-analysis').classList.add('show'); renderAnalysis(); }
@@ -438,28 +438,28 @@
   $('trendbox').addEventListener('click', openAnalysis);
   function renderAnalysis() {
     const d = G.diagnose(), mov = MOV(), lab = G.L.labels || {};
-    const lv = (v) => (v >= 0.8 ? '很大' : v >= 0.55 ? '较大' : v >= 0.3 ? '一般' : v > 0.05 ? '较小' : '—');
+    const lv = (v) => (v >= 0.8 ? "Huge" : v >= 0.55 ? "High" : v >= 0.3 ? "Mid" : v > 0.05 ? "Low" : '—');
     const reps = G.news.filter((q) => q.kind === 'report').slice(0, 6);
-    $('an-box').innerHTML = `<div class="an-head"><h3>局势分析 <small>${G.dateLabel()}</small></h3><button class="icon-btn" id="an-close" title="关闭 (Esc)">✕</button></div>
+    $('an-box').innerHTML = `<div class="an-head"><h3>Situation analysis <small>${G.dateLabel()}</small></h3><button class="icon-btn" id="an-close" title="Close (Esc)">✕</button></div>
       <div class="an-chart"><canvas id="an-cv"></canvas><div class="an-tip" id="an-tip"></div></div>
       <div class="legend">
-        <span><i style="background:#ffcf70"></i>${lab.crowd || '街上'}的人</span>
-        <span><i style="background:#b392f0"></i>${mov ? '临界点(估计范围)' : '你估计的临界点(据报)'}</span>
-        <span style="color:#f0b44c">▲ 你的出手</span><span style="color:#e5534b">▼ 对手的出手</span>
-        <span style="color:#ef6a5e"><i class="dash"></i>积怨(${mov ? '传闻' : '据报'})</span>
-        <span style="color:#57c28a"><i class="dash"></i>${lab.army || '军警'}动摇(${mov ? '传闻' : '实情'})</span>
-        <span><i style="background:#ff8a65"></i>暗流</span>${mov ? '<span style="color:#f0b44c"><i class="dash"></i>组织元气</span>' : ''}
-        <span><i style="background:#8f99a6"></i>${mov ? '当局警觉' : '反对派组织度(据报)'}</span>
+        <span><i style="background:#ffcf70"></i>${lab.crowd || 'On the streets'}</span>
+        <span><i style="background:#b392f0"></i>${mov ? 'Tipping point (est. range)' : 'Your tipping-point estimate (reported)'}</span>
+        <span style="color:#f0b44c">▲ Your moves</span><span style="color:#e5534b">▼ Opponent moves</span>
+        <span style="color:#ef6a5e"><i class="dash"></i>Grievance (${mov ? 'rumor' : 'reported'})</span>
+        <span style="color:#57c28a"><i class="dash"></i>${lab.army || 'Security forces'} shaken (${mov ? 'rumor' : 'actual'})</span>
+        <span><i style="background:#ff8a65"></i>Undercurrent</span>${mov ? '<span style="color:#f0b44c"><i class="dash"></i>Organizational strength</span>' : ''}
+        <span><i style="background:#8f99a6"></i>${mov ? 'Regime alert' : 'Opposition organization (reported)'}</span>
       </div>
-      <div class="an-note">上半:人口比例(平方根刻度,1% · 10% · 25% · 50%)。下半:高低只看走向。<b>鼠标移到图上</b>,看那一轮发生了什么。</div>
+      <div class="an-note">Top: share of the population (square-root scale: 1% · 10% · 25% · 50%). Bottom: read only the direction, not the height. <b>Hover over the chart</b> to see what happened that round.</div>
       <div class="an-cols">
-        <div class="an-diag"><h4>🧭 参谋 · ${d.title}</h4>
+        <div class="an-diag"><h4>🧭 Advisor · ${d.title}</h4>
           ${d.head ? `<div class="ahd ${d.head.kind}">${d.head.text}</div>` : ''}
           ${d.factors.map((f) => `<div class="af"><span class="an">${f.name}</span><span class="abar"><i style="width:${Math.max(3, f.v * 100).toFixed(0)}%"></i></span><span class="alv">${lv(f.v)}</span></div>`).join('')}
-          ${d.factors.slice(0, 2).filter((f) => f.v > 0.05).map((f) => `<p class="at"><b>${f.name}:</b>${f.advice}</p>`).join('')}
-          <p class="an-fine">${mov ? '参谋的判断来自一个简单的推演:同样"一步"的改变——抓捕能力少三成、处罚轻四分之一、怨气多一档、消息多传开四分之一——哪一个能让临界点降得最多。它只比强弱,不给数字。' : '这些判断和你的情报一样,来自下面的报告:执法越凶,越"报喜不报忧"。'}</p>
+          ${d.factors.slice(0, 2).filter((f) => f.v > 0.05).map((f) => `<p class="at"><b>${f.name}:</b> ${f.advice}</p>`).join('')}
+          <p class="an-fine">${mov ? 'The advisor’s judgments come from a simple thought experiment: of equal “one-step” changes — arrest capacity down 30%, penalties a quarter lighter, grievance one notch higher, news spreading a quarter further — which one lowers the tipping point the most? It only ranks them; it gives no numbers.' : 'Like your intelligence, these judgments rest on reports from below: the harsher the enforcement, the more they report only good news.'}</p>
         </div>
-        <div class="an-reps"><h4>📋 最近的回报</h4>${reps.length ? reps.map((q) => `<div class="rp"><span class="d">${q.date}</span>${q.text}</div>`).join('') : '<div class="rp dim">出牌或调整政策两轮之后,这里会告诉你发生了什么。</div>'}</div>
+        <div class="an-reps"><h4>📋 Recent reports</h4>${reps.length ? reps.map((q) => `<div class="rp"><span class="d">${q.date}</span>${q.text}</div>`).join('') : '<div class="rp dim">Two rounds after you play a card or change a policy, this will tell you what happened.</div>'}</div>
       </div>`;
     $('an-close').addEventListener('click', closeAnalysis);
     const cv = $('an-cv');
@@ -474,8 +474,8 @@
       const acts = G.actions.filter((a) => a.round === i).map((a) => `<span class="${a.side === G.side ? 'me' : 'op'}">${a.id.includes(':') ? polLabel(a.id) : (CARDS[a.id] ? CARDS[a.id].icon + ' ' + G.card(a.id).name : a.id)}</span>`);
       const news = G.news.filter((q) => q.round === i && !['mine', 'report'].includes(q.kind)).slice(0, 3).map((q) => q.text);
       const tip = h.tipSeen[i];
-      $('an-tip').innerHTML = `<b>${G.dateLabel(i)}</b><br>${lab.crowd || '街上'}约 ${cnt(h.x[i])} 人 · ${mov ? (tip >= 1 ? '看不到转机' : `临界点约 ${cnt(tip * (1 - sp))}～${cnt(tip * (1 + sp))} 人`) : ''}
-        <br>积怨(${mov ? '传闻' : '据报'}):${moodW(h.moodSeen[i])} · ${lab.army || '军警'}:${armyW(h.dSeen[i])}
+      $('an-tip').innerHTML = `<b>${G.dateLabel(i)}</b><br>${lab.crowd || 'On the streets'}: ~${cnt(h.x[i])} people · ${mov ? (tip >= 1 ? 'no turning point in sight' : `tipping point ~${cnt(tip * (1 - sp))}–${cnt(tip * (1 + sp))} people`) : ''}
+        <br>Grievance (${mov ? 'rumor' : 'reported'}): ${moodW(h.moodSeen[i])} · ${lab.army || 'Security forces'}: ${armyW(h.dSeen[i])}
         ${acts.length ? `<div class="acts">${acts.join(' ')}</div>` : ''}${news.length ? `<div class="nws">${news.join('<br>')}</div>` : ''}`;
       const tx = clamp(e.clientX - r.left + 14, 0, r.width - 260);
       $('an-tip').style.left = tx + 'px'; $('an-tip').classList.add('show');
@@ -491,7 +491,7 @@
     const on = !!SAVE.layer;
     const dv = delta(G.hist.uc, 2);
     b.classList.toggle('on', on);
-    b.innerHTML = on ? `<b>🌊 暗流</b><span class="lg"><i class="c1"></i>观望 <i class="c2"></i>欲动</span>${arrow(dv, 0.006, MOV(), ['扩大', '收缩'])}` : '<b>🌊 暗流</b> <span class="lg">关</span>';
+    b.innerHTML = on ? `<b>🌊 Undercurrent</b><span class="lg"><i class="c1"></i>wavering <i class="c2"></i>ready</span>${arrow(dv, 0.006, MOV(), ['growing', 'shrinking'])}` : "<b>🌊 Undercurrent</b> <span class=\"lg\">off</span>";
     if (city) city.layerOn = on;
   }
   $('layer-btn').addEventListener('click', () => { SAVE.layer = !SAVE.layer; persist(); renderLayerBtn(); });
@@ -502,21 +502,21 @@
     const left = G.maxRound - G.round;
     if (G.side === 'regime') {
       prog = G.round / G.maxRound;
-      sub = `还要撑 ${left} 轮`;
-      if (G.streak.x > 0 || G.streak.d > 0) sub = `<span style="color:var(--red2)">⚠ 局面正在失控(${Math.max(G.streak.x, G.streak.d)}/${g.hold || 3})</span> · ` + sub;
+      sub = `Rounds to hold out: ${left}`;
+      if (G.streak.x > 0 || G.streak.d > 0) sub = `<span style="color:var(--red2)">⚠ Losing control (${Math.max(G.streak.x, G.streak.d)}/${g.hold || 3})</span> · ` + sub;
     } else if (L.id === 'pyongyang') {
       const r = G.readout();
       prog = r.tip.kind === 'none' ? 0.03 : clamp((1 - r.tip.shownFrac) / (1 - 0.2), 0, 1);
-      sub = `据估计 · 剩余 ${left} 个月`;
-      if (G.streak.tip > 0) sub = `<span style="color:var(--green)">裂缝已经出现(${G.streak.tip}/3)</span> · ` + sub;
+      sub = `Estimated · months left: ${left}`;
+      if (G.streak.tip > 0) sub = `<span style="color:var(--green)">Cracks are showing (${G.streak.tip}/3)</span> · ` + sub;
     } else {
       const px = g.x != null ? G.x / g.x : 0;
       const dShown = G.d + (G.side === 'movement' ? G.intelNoise.army : 0);
       const pd = g.d != null ? clamp(dShown, 0, 1) / g.d : 0;
       prog = clamp(Math.max(px, pd), 0, 1);
-      sub = `剩余 ${left} 轮`;
+      sub = `Rounds left: ${left}`;
       const st = Math.max(G.streak.x, G.streak.d);
-      if (st > 0) sub = `<span style="color:var(--green)">已经坚持 ${st}/${g.hold || 3} 轮!</span> · ` + sub;
+      if (st > 0) sub = `<span style="color:var(--green)">Held ${st}/${g.hold || 3} rounds!</span> · ` + sub;
     }
     $('goal-text').innerHTML = '🎯 ' + L.goalText;
     $('goal-bar').style.width = (prog * 100).toFixed(1) + '%';
@@ -533,58 +533,58 @@
       const x = G.x, cap = Math.max(0, G.pushCapacity() - G.seedNext / G.N) + G.seedNext / G.N;
       const t = r.tip, sp = L.tipSpread != null ? L.tipSpread : 0.3;
       let lo = null, hi = null, tipTxt;
-      if (t.kind === 'none') tipTxt = '看不到转机';
-      else if (t.kind === 'tinder') { lo = hi = 0; tipTxt = '一点就着'; }
-      else { lo = t.est * (1 - sp); hi = t.est * (1 + sp); tipTxt = `约 ${cnt(lo)}～${cnt(hi)} 人`; }
+      if (t.kind === 'none') tipTxt = "No opening in sight";
+      else if (t.kind === 'tinder') { lo = hi = 0; tipTxt = "Tinderbox"; }
+      else { lo = t.est * (1 - sp); hi = t.est * (1 + sp); tipTxt = `~${cnt(lo)}–${cnt(hi)} people`; }
       let max = Math.max(0.04, (hi || 0) * 1.3, (x + cap) * 1.15, x * 1.1);
       if (lo == null) max = Math.max(max, 0.12);
       max = Math.min(1, max);
       const P = (v) => pct(v / max);
       const ready = lo != null && cap > 0 && L.id !== 'pyongyang' && x + cap >= lo;
       const band = lo != null ? `<div class="band" style="left:${P(lo)};width:${pct(Math.max(0.008, (hi - lo) / max))}"></div>` : '<div class="band" style="left:calc(100% - 10px);width:10px"></div>';
-      const crowdTxt = x * G.N * G.scale < 1 ? '无人' : '约 ' + cnt(x) + ' 人';
+      const crowdTxt = x * G.N * G.scale < 1 ? "nobody" : "~" + cnt(x) + " people";
       const armyGoal = L.goal && L.goal.d != null && L.goal.x == null;
       if (armyGoal) {
         const dS = clamp(G.d + G.intelNoise.army, 0, 1), gd = L.goal.d;
-        main = `<div class="mh" data-tip="${esc('这一关要赢,靠的是执行者倒戈。街上的人越多、越和士兵说话,他们越动摇;当局换防会把军心重置。')}"><b>🪖 ${lab.army || '军警'}倒戈</b><span class="mv">${r.army.words}(传闻)· ${lab.crowd || '街上'} ${crowdTxt}</span></div>
+        main = `<div class="mh" data-tip="${esc('To win this level, the enforcers must defect. The more people on the streets, and the more they talk to the soldiers, the more the soldiers waver; when the regime rotates units, their morale resets.')}"><b>🪖 ${lab.army || 'Security forces'} defecting</b><span class="mv">${r.army.words} (rumor) · ${lab.crowd || 'On the streets'}: ${crowdTxt}</span></div>
           <div class="mbar"><div class="fill" style="width:${pct(dS / (gd * 1.25))}"></div><div class="band" style="left:${pct(gd / (gd * 1.25))};width:1%"></div></div>
-          <div class="ms">${G.streak.d > 0 ? `<span class="go">已经坚持 ${G.streak.d}/${L.goal.dHold || L.goal.hold || 2} 轮!</span>` : `紫线是目标:成建制倒戈 · 街上的人越多,士兵越动摇`}</div>`;
+          <div class="ms">${G.streak.d > 0 ? `<span class="go">Held ${G.streak.d}/${L.goal.dHold || L.goal.hold || 2} rounds!</span>` : `Purple line = goal: defection en masse · the bigger the crowd, the more soldiers waver`}</div>`;
       } else if (L.id === 'pyongyang') {
-        main = `<div class="mh" data-tip="${esc('需要多少人同时站出来,局面才会改变。你的目标是让它从「看不到转机」降到约两成人。')}"><b>🔥 让临界点出现</b><span class="mv">需要 ${tipTxt} · 目标:降到约 ${cnt(0.2)} 以下</span></div>
+        main = `<div class="mh" data-tip="${esc('How many people must stand up at once for things to change. Your goal: bring it down from “no turning point in sight” to about one person in five.')}"><b>🔥 Create a tipping point</b><span class="mv">Needed: ${tipTxt} · goal: under ~${cnt(0.2)}</span></div>
           <div class="mbar"><div class="fill" style="width:${lo == null ? '2%' : pct(clamp((1 - t.est) / 0.8, 0, 1))}"></div></div>
-          <div class="ms">${G.streak.tip > 0 ? `<span class="go">裂缝已经出现(${G.streak.tip}/3)</span>` : '别上街:在这里,公开行动只是送死'}</div>`;
+          <div class="ms">${G.streak.tip > 0 ? `<span class="go">Cracks are showing (${G.streak.tip}/3)</span>` : 'Stay off the streets: here, open action is suicide'}</div>`;
       } else {
-        main = `<div class="mh" data-tip="${esc('黄色:此刻站出来的人。斜纹:你手里的组织力一次还能带出的人。紫框:临界点——大约要这么多人同时站出来,风险才被摊薄、连锁才会开始(估计值)。')}"><b>🔥 离临界点</b><span class="mv">${lab.crowd || '街上'} ${crowdTxt} · 需要 ${tipTxt}${t.kind === 'est' ? ' ' + arrow(delta(G.hist.tipSeen), 0.004, false, ['在升高', '在降低']) : ''}</span></div>
+        main = `<div class="mh" data-tip="${esc('Yellow: people standing up right now. Hatched: how many more your organizing power can bring out in one push. Purple box: the tipping point — roughly how many must stand up at once before the risk is spread thin and a cascade can start (an estimate).')}"><b>🔥 Tipping point</b><span class="mv">${lab.crowd || 'On the streets'}: ${crowdTxt} · needed: ${tipTxt}${t.kind === 'est' ? ' ' + arrow(delta(G.hist.tipSeen), 0.004, false, ['going up', 'going down']) : ''}</span></div>
           <div class="mbar"><div class="fill" style="width:${P(x)}"></div><div class="ghost" style="left:${P(x)};width:${P(cap)}"></div>${band}</div>
-          <div class="ms">${ready ? '<span class="go">够了!现在全力行动,可能点燃连锁反应</span>' : cap > 0 ? `你的组织力一次还能带出约 ${cnt(cap)} 人` : '组织力不够发起行动——收集气泡,或等一等'}</div>`;
+          <div class="ms">${ready ? '<span class="go">Enough! Go all out now — it may set off a chain reaction</span>' : cap > 0 ? `Your organizing power can bring out ~${cnt(cap)} people in one push` : 'Not enough organizing power to act — collect bubbles, or wait'}</div>`;
       }
       if (L.id === 'pyongyang') {
         const e = G.exposure;
-        opp = `<div class="mh"><b>🕵️ 暴露风险</b><span class="mv">${e < 25 ? '低' : e < 50 ? '中' : e < 75 ? '高' : '危险'}</span></div>
+        opp = `<div class="mh"><b>🕵️ Exposure risk</b><span class="mv">${e < 25 ? 'Low' : e < 50 ? 'Medium' : e < 75 ? 'High' : 'Critical'}</span></div>
           <div class="mbar danger"><div class="fill" style="width:${pct(e / 100)}"></div></div>
-          <div class="ms">${e >= 60 ? '<span class="warn">109 常务组随时会上门</span>' : '到顶全盘皆输 ·「销毁痕迹」可以降低'}</div>`;
+          <div class="ms">${e >= 60 ? '<span class="warn">Group 109 could come knocking any day</span>' : 'Max it out and all is lost · “Cover tracks” lowers it'}</div>`;
       } else if (!L.noAI) {
         const a = G.alert, s = G.stage(), nx = s < 3 ? STAGES[s + 1] : null;
-        opp = `<div class="mh" data-tip="${esc('当局的警觉。街上的人、人数的突增、你的每个动作和建设都会推高它;安静时慢慢回落。到 25 / 50 / 75 当局会依次升级。')}"><b>🚨 当局警觉</b><span class="stage-pill st${s}">${STAGES[s].name}</span></div>
+        opp = `<div class="mh" data-tip="${esc('How alert the regime is. People on the streets, sudden jumps in numbers, and every move and build of yours push it up; it slowly falls back when things are quiet. At 25 / 50 / 75 the regime escalates, one stage at a time.')}"><b>🚨 Regime alert</b><span class="stage-pill st${s}">${STAGES[s].name}</span></div>
           <div class="mbar danger"><div class="fill" style="width:${pct(a / 100)}"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div></div>
-          <div class="ms">${nx ? `到 ${(s + 1) * 25}:${nx.name}(${nx.tip})` : '<span class="warn">已是全面镇压</span>'}</div>`;
+          <div class="ms">${nx ? `At ${(s + 1) * 25}: ${nx.name} (${nx.tip})` : '<span class="warn">Total repression reached</span>'}</div>`;
       }
     } else {
       const left = G.maxRound - G.round;
-      main = `<div class="mh"><b>🏛 ${L.id === 'liwang' ? '王位' : '撑下去'}</b><span class="mv">还要 ${left} 轮 · 局面(据报):${r.tip.words}</span></div>
+      main = `<div class="mh"><b>🏛 ${L.id === 'liwang' ? 'The throne' : 'Hold out'}</b><span class="mv">${left} rounds left · Situation (reported): ${r.tip.words}</span></div>
         <div class="mbar time"><div class="fill" style="width:${pct(G.round / G.maxRound)}"></div></div>
-        <div class="ms">${G.streak.x > 0 || G.streak.d > 0 ? `<span class="warn">⚠ 局面正在失控(${Math.max(G.streak.x, G.streak.d)}/${(L.goal || {}).hold || 3})</span>` : '撑到最后就是胜利——星级看积怨与抓了多少人'}</div>`;
+        <div class="ms">${G.streak.x > 0 || G.streak.d > 0 ? `<span class="warn">⚠ Losing control (${Math.max(G.streak.x, G.streak.d)}/${(L.goal || {}).hold || 3})</span>` : 'Hold out to the end to win — stars depend on grievance and how many you arrest'}</div>`;
       const o = G.orgShown();
-      opp = `<div class="mh" data-tip="${esc('反对派在暗中组织。积怨越深、街上越热闹,涨得越快;满了就会发动一次大规模行动。抓串联者、对话让步能压下去。注意:你越凶,这个数字报得越低。')}"><b>✊ 反对派组织度</b><span class="mv">据报 · ${o >= 75 ? '即将发动' : o >= 45 ? '正在串联' : '零散'}</span></div>
+      opp = `<div class="mh" data-tip="${esc('The opposition is organizing in secret. The deeper the grievance and the busier the streets, the faster it rises; when it fills up, they launch a major action. Arresting organizers or conceding in talks keeps it down. Note: the harsher you are, the lower this number is reported.')}"><b>✊ Opposition organization</b><span class="mv">Reported · ${o >= 75 ? 'Imminent' : o >= 45 ? 'Networking' : 'Scattered'}</span></div>
         <div class="mbar org"><div class="fill" style="width:${pct(o / 100)}"></div></div>
-        <div class="ms">${o >= 75 ? '<span class="warn">随时可能发动大规模行动!</span>' : '满了就会发动一次大规模行动'}</div>`;
+        <div class="ms">${o >= 75 ? '<span class="warn">A major action could come at any moment!</span>' : 'When it fills up, they launch a major action'}</div>`;
     }
     $('m-main').innerHTML = main; $('m-opp').innerHTML = opp;
   }
   function renderBuild() {
     const lv = G.buildLevels(), keys = Object.keys(lv);
     if (!keys.length) { $('build').innerHTML = ''; return; }
-    $('build').innerHTML = `<div class="sec-t">${G.side === 'regime' ? '你的机器' : '你的组织'} <span class="tag">永久建设</span></div><div class="build ${G.side}">` + keys.map((k) => {
+    $('build').innerHTML = `<div class="sec-t">${G.side === 'regime' ? 'Your machine' : 'Your organization'} <span class="tag">permanent builds</span></div><div class="build ${G.side}">` + keys.map((k) => {
       const b = lv[k]; let pips = ''; for (let i = 0; i < b.max; i++) pips += `<i class="${i < b.n ? 'on' : ''}"></i>`;
       return `<div class="brow ${G.side}"><span>${b.icon}</span><span class="bn">${b.name}</span><span class="pipsx">${pips}</span></div>`;
     }).join('') + '</div>';
@@ -595,7 +595,7 @@
     btn.classList.remove('hidden');
     const n = G.affordableNodes();
     btn.className = 'btn tree-btn ' + G.side + (n ? ' pulse' : '');
-    btn.innerHTML = `<span>${G.side === 'regime' ? '🏛 政权建设' : '🧬 组织建设'} <small>(B)</small></span>${n ? `<span class="cnt">${n} 项可建</span>` : '<span class="era">点数不够</span>'}`;
+    btn.innerHTML = `<span>${G.side === 'regime' ? '🏛 Regime building' : '🧬 Movement building'} <small>(B)</small></span>${n ? `<span class="cnt">${n} available</span>` : '<span class="era">Not enough points</span>'}`;
   }
 
   /* ---------- 建设树 ---------- */
@@ -614,15 +614,15 @@
     const T = G.tree(), box = $('tree-box');
     box.className = 'modal treebox ' + (G.side === 'regime' ? 'regimeT' : '');
     let sel = null;
-    let h = `<div class="th"><h3>${G.side === 'regime' ? '🏛 政权建设' : '🧬 组织建设'}</h3><span class="pts">${cur()} <b>${Math.floor(G.me.ap)}</b></span><button class="btn" id="tree-close">关闭</button></div>
-      <div class="era" style="margin-top:4px">建成后永久生效。${G.side === 'movement' ? '每一项都会让当局更警觉——先闷声发展,还是先打出声势?' : ''}</div><div class="tcols">`;
+    let h = `<div class="th"><h3>${G.side === 'regime' ? '🏛 Regime building' : '🧬 Movement building'}</h3><span class="pts">${cur()} <b>${Math.floor(G.me.ap)}</b></span><button class="btn" id="tree-close">Close</button></div>
+      <div class="era" style="margin-top:4px">Builds are permanent. ${G.side === 'movement' ? 'Each one makes the regime more alert — grow quietly first, or make some noise first?' : ''}</div><div class="tcols">`;
     for (const b of T) {
       h += `<div class="tcol"><h4>${b.icon} ${b.name}</h4><div class="td">${b.desc}</div>`;
       for (const n of b.nodes) {
         const st = G.nodeState(n);
         if (treeSel === n.id) sel = { n, st };
         const cls = st.have ? 'have' : st.ok ? 'ok' : !st.reqOk ? 'locked' : '';
-        h += `<button class="tnode ${cls} ${treeSel === n.id ? 'sel' : ''}" data-node="${n.id}"><div class="tn"><span>${n.name}</span><span class="tc">${st.have ? '✓ 已建成' : cur() + ' ' + n.cost}</span></div><div class="tt">${n.tags.join(' · ')}</div></button>`;
+        h += `<button class="tnode ${cls} ${treeSel === n.id ? 'sel' : ''}" data-node="${n.id}"><div class="tn"><span>${n.name}</span><span class="tc">${st.have ? '✓ Built' : cur() + ' ' + n.cost}</span></div><div class="tt">${n.tags.join(' · ')}</div></button>`;
       }
       h += '</div>';
     }
@@ -631,9 +631,9 @@
       const { n, st } = sel;
       const reqNames = (n.req || []).map((id) => { for (const b of T) for (const q of b.nodes) if (q.id === id) return q.name; return null; }).filter(Boolean);
       h += `<div class="tdetail"><div class="tx"><b>${n.name}</b><br>${n.text}<div class="tags">${n.tags.join(' · ')}</div>
-        ${G.side === 'movement' && n.alert ? `<div class="warn">当局警觉 +${n.alert}</div>` : ''}
-        ${!st.reqOk && reqNames.length ? `<div class="warn">需要先建成:${reqNames.join(n.reqAny ? ' 或 ' : ' 和 ')}</div>` : ''}</div>
-        <button class="btn primary" id="tree-buy" ${st.ok ? '' : 'disabled'}>${st.have ? '已建成' : `建设 · ${cur()} ${n.cost}`}</button></div>`;
+        ${G.side === 'movement' && n.alert ? `<div class="warn">Regime alert +${n.alert}</div>` : ''}
+        ${!st.reqOk && reqNames.length ? `<div class="warn">Requires: ${reqNames.join(n.reqAny ? ' or ' : ' and ')}</div>` : ''}</div>
+        <button class="btn primary" id="tree-buy" ${st.ok ? '' : 'disabled'}>${st.have ? 'Built' : `Build · ${cur()} ${n.cost}`}</button></div>`;
     }
     box.innerHTML = h;
     $('tree-close').addEventListener('click', closeTree);
@@ -661,10 +661,10 @@
     const r = G.readout(), L = G.L, lab = L.labels || {};
     const rows = [];
     const h = G.hist, mv = MOV();
-    rows.push({ id: 'risk', i: '⚠️', l: '此刻站出来', v: r.risk.words, s: '被抓的后果:' + r.pen.words, lv: r.risk.level, max: 4, tr: arrow(delta(h.risk), 0.04, !mv) });
-    rows.push({ id: 'legit', i: '⚖️', l: '执法在人们眼中', v: r.legit.words, s: r.legit.level ? '越界的处罚会被记住' : '', lv: r.legit.level, max: 3, tr: arrow(delta(h.over), 0.05, mv ? null : false) });
-    rows.push({ id: 'army', i: '🪖', l: lab.army || '军警', tag: r.army.rumor ? '传闻' : '', v: r.army.words, lv: r.army.level, max: 4, tr: arrow(delta(h.dSeen), 0.02, mv) });
-    rows.push({ id: 'mood', i: '💢', l: '民间情绪', tag: G.side === 'regime' ? '可信度:' + r.mood.conf.split(':')[0] : '传闻', v: r.mood.words,
+    rows.push({ id: 'risk', i: '⚠️', l: "Standing up now", v: r.risk.words, s: "If caught: " + r.pen.words, lv: r.risk.level, max: 4, tr: arrow(delta(h.risk), 0.04, !mv) });
+    rows.push({ id: 'legit', i: '⚖️', l: "Enforcement seen as", v: r.legit.words, s: r.legit.level ? "Punishment over the line is remembered" : '', lv: r.legit.level, max: 3, tr: arrow(delta(h.over), 0.05, mv ? null : false) });
+    rows.push({ id: 'army', i: '🪖', l: lab.army || "Security forces", tag: r.army.rumor ? "rumor" : '', v: r.army.words, lv: r.army.level, max: 4, tr: arrow(delta(h.dSeen), 0.02, mv) });
+    rows.push({ id: 'mood', i: '💢', l: "Public mood", tag: G.side === 'regime' ? "Credibility: " + r.mood.conf.split(':')[0] : "rumor", v: r.mood.words,
       s: G.side === 'regime' && r.mood.bias >= 0.15 ? r.mood.conf.split(':')[1] || '' : '', lv: r.mood.level, max: 4, tr: arrow(delta(h.moodSeen), 0.03, mv) });
     $('readouts').innerHTML = rows.map((o) => {
       const changed = prevWords[o.id] != null && prevWords[o.id] !== o.v;
@@ -675,21 +675,21 @@
         ${o.lv != null ? `<div class="dots">${dots(o.lv, o.max)}</div>` : ''}</div>`;
     }).join('');
     for (const o of rows) prevWords[o.id] = o.v;
-    $('intel-tag').textContent = G.side === 'regime' ? '来自下面的报告' : '你的所见所闻';
+    $('intel-tag').textContent = G.side === 'regime' ? "Reports from below" : "What you see and hear";
     // 对手态势
     if (G.side === 'movement' && !L.noAI) {
       const nm = (k) => polName(k, G.pol[k]);
-      $('opp-stance').innerHTML = `<div class="opp-stance">当局态势:<br>执法 <b>${nm('enforce')}</b> · 警力 <b>${nm('police')}</b><br>抓捕 <b>${nm('target')}</b> · 舆论 <b>${nm('info')}</b></div>`;
+      $('opp-stance').innerHTML = `<div class="opp-stance">Regime stance:<br>Enforcement <b>${nm('enforce')}</b> · Police <b>${nm('police')}</b><br>Targets <b>${nm('target')}</b> · Media <b>${nm('info')}</b></div>`;
     } else $('opp-stance').innerHTML = '';
   }
   const RO_TIPS = {
-    crowd: '此刻公开站出来的人。每个亮点是一群人。',
-    risk: '如果你现在站出来,被抓的可能性。当局每一轮能抓的人数有限:人越多,每个人被抓的机会就越小。',
-    legit: '当前的处罚在人们眼中是否正当。一旦越过人们认可的界线,每一次处罚都会被旁观者记在心里(积怨),也会让执行者不安。',
-    army: '执行命令的人是否还愿意执行。他们也在看:街上有多少人、同僚在做什么、命令是否过火。',
-    mood: '人们心里积了多少怨气。它不会表现为上街,却在悄悄降低临界点。当局越凶,情报越报喜不报忧。',
-    tip: '需要多少人同时站出来,才会引发连锁反应。这是估计,不是精确值。',
-    exposure: '你的网络被发现的风险。每次行动都会增加,「销毁痕迹」能降低。到顶则全盘皆输。',
+    crowd: "People openly standing up right now. Each bright dot is a group of people.",
+    risk: "How likely you are to be arrested if you stand up now. The regime can only arrest so many people each round: the more people there are, the smaller each one’s chance of being caught.",
+    legit: "Whether people see the current punishments as legitimate. Once they go over the line people accept, every punishment is remembered by those watching (grievance) and unsettles the enforcers.",
+    army: "Whether those carrying out orders are still willing to. They are watching too: how many people are on the streets, what their comrades are doing, whether the orders go too far.",
+    mood: "How much resentment people are holding in. It does not show on the streets, but it quietly lowers the tipping point. The harsher the regime, the more its intelligence reports only good news.",
+    tip: "How many people must stand up at once to set off a chain reaction. This is an estimate, not an exact value.",
+    exposure: "The risk that your network is discovered. Every action raises it; “Cover tracks” lowers it. If it maxes out, all is lost.",
   };
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
@@ -701,16 +701,16 @@
     const st = G.me, cap = G.apCap;
     const inc = G.income(G.side);
     const raw = G.side === 'regime' ? G.regimeRawIncome() : inc;
-    const nm = G.side === 'regime' ? '政治资本' : '组织力';
-    let incText = G.side === 'regime' && raw < 0 ? '<span style="color:var(--red2)">入不敷出!代价正转嫁给百姓</span>' : `每轮 +${inc.toFixed(1)} · 另有气泡可收集`;
+    const nm = G.side === 'regime' ? "Political capital" : "Organizing power";
+    let incText = G.side === 'regime' && raw < 0 ? "<span style=\"color:var(--red2)\">In the red! The cost is falling on the people</span>" : `+${inc.toFixed(1)} per round · plus bubbles to collect`;
     if (G.side === 'movement' && G.L.id !== 'tutorial') {
       const v = G.vigor, dv = delta(G.hist.vigor || [], 2);
-      incText += `<div class="vig ${v < 0.6 ? 'bad' : v < 0.85 ? 'mid' : ''}" data-tip="${esc('组织元气:人群没能越过临界点、你带出来的人却被抓走时,抓走的多是你的骨干——以后每次出手能带出的人都会变少。安静下来,它会慢慢恢复。')}">组织元气 ${Math.round(v * 100)}% ${arrow(dv, 0.01, true)}</div>`;
+      incText += `<div class="vig ${v < 0.6 ? 'bad' : v < 0.85 ? 'mid' : ''}" data-tip="${esc('Organizational strength: when the crowd fails to cross the tipping point and the people you brought out are arrested, most of those taken are your core members — every later action brings out fewer people. It slowly recovers when things go quiet.')}">Organizational strength ${Math.round(v * 100)}% ${arrow(dv, 0.01, true)}</div>`;
     }
     const frac = clamp(st.ap - Math.floor(st.ap), 0, 1);
     $('res').className = 'res ' + G.side;
     $('res').innerHTML = `<div><div class="nm">${nm}</div><div class="inc">${incText}</div></div><div class="big">${cur()} ${Math.floor(st.ap)}<span class="frac"><i style="width:${(frac * 100).toFixed(0)}%"></i></span></div>`;
-    $('res').dataset.tip = G.side === 'regime' ? '政治资本:出牌、切换强硬政策、建设都要花。强硬政策每轮都有维持开销;人群越大、军心越乱,收入越少。点击城市里的「安定」「情报」气泡收集。' : '组织力:出牌、建设都要花。每轮恢复一点;街上的人越多恢复越快。点击城市里冒出的气泡收集。';
+    $('res').dataset.tip = G.side === 'regime' ? "Political capital: spent on playing cards, switching to harsher policies, and building. Harsh policies cost upkeep every round; the bigger the crowds and the shakier the troops, the lower your income. Collect it by clicking “Stability” and “Intelligence” bubbles in the city." : "Organizing power: spent on playing cards and building. It recovers a little each round, faster the more people are on the streets. Collect it by clicking the bubbles that pop up in the city.";
   }
 
   const polName = (k, id) => {
@@ -719,12 +719,12 @@
     return ov || (o ? o.name : id);
   };
   const polTitle = (k) => (G.L.policyNames && G.L.policyNames[k] && G.L.policyNames[k].name) || POLICIES[k].name;
-  const upWords = (u) => (u >= 0.5 ? '很高' : u >= 0.25 ? '高' : u >= 0.1 ? '中' : u > 0 ? '低' : u < 0 ? '省钱' : '无');
+  const upWords = (u) => (u >= 0.5 ? "Very high" : u >= 0.25 ? "High" : u >= 0.1 ? "Medium" : u > 0 ? "Low" : u < 0 ? "Saves money" : "None");
 
   function renderPolicies() {
     const box = $('policies');
     if (G.side !== 'regime') { box.innerHTML = ''; return; }
-    let h = '<div class="sec-t">政策 <span class="tag">常设 · 越强硬越贵</span></div>';
+    let h = "<div class=\"sec-t\">Policies <span class=\"tag\">standing · harsher costs more</span></div>";
     for (const k of POLICY_KEYS) {
       const P = POLICIES[k];
       const lock = G.locks[k] && G.locks[k].until > G.round ? G.locks[k] : null;
@@ -733,12 +733,12 @@
       for (const o of P.options) {
         const ps = G.policyState(k, o.id);
         const na = !ps.allowed || ps.needNet;
-        const tip = `<b>${polName(k, o.id)}</b>${o.short ? ' · ' + o.short : ''}<div class="tt-tags">维持开销:${upWords(o.upkeep || 0)}${o.cost ? ` · 切换需 ${o.cost} 点` : ''}</div>${na ? '<div class="tt-warn">本关不可用</div>' : ''}`;
+        const tip = `<b>${polName(k, o.id)}</b>${o.short ? ' · ' + o.short : ''}<div class="tt-tags">Upkeep: ${upWords(o.upkeep || 0)}${o.cost ? ` · switching costs ${o.cost}` : ''}</div>${na ? '<div class="tt-warn">Not available in this level</div>' : ''}`;
         h += `<button class="${ps.cur ? 'on' : ''} ${na ? 'na' : ''}" data-pol="${k}" data-opt="${o.id}" ${ps.ok ? '' : 'disabled'} data-tip="${esc(tip)}">${polName(k, o.id)}${o.cost && !ps.cur ? '<span class="c">●</span>' : ''}</button>`;
       }
       h += '</div></div>';
     }
-    h += '<div class="hint-line">越强硬:上街越可怕,但维持越贵;一旦越过人们认可的界线,积怨与军心不稳也随之而来。</div>';
+    h += "<div class=\"hint-line\">The harsher the policy, the scarier the streets, but the more it costs to keep up; once you go over the line people accept, grievance and unrest in the ranks follow.</div>";
     box.innerHTML = h;
     box.querySelectorAll('[data-pol]').forEach((b) => b.addEventListener('click', () => {
       if (G.setPolicy(b.dataset.pol, b.dataset.opt)) { renderAll(); Coach.notify('policy:' + b.dataset.pol); }
@@ -751,9 +751,9 @@
       const cs = G.cardState(c);
       const free = cs.cost === 0 && c.cost > 0;
       let cost = '';
-      if (free) cost = '<span class="free">免费</span>'; else cost = `<span class="num">${cur()} ${cs.cost}</span>`;
-      const warn = !cs.cond ? (c.whenText || '条件未满足') : cs.cd > 0 ? `冷却中:还要 ${cs.cd} 轮` : G.me.ap < cs.cost ? '资源不足' : '';
-      const tip = `<b>${c.icon} ${c.name}</b><br>${c.text}<div class="tt-tags">${(c.tags || []).join(' · ')}${c.cd ? ` · 冷却 ${c.cd} 轮` : ''}${c.once ? ' · 只能用一次' : ''}</div>${warn ? `<div class="tt-warn">${warn}</div>` : ''}`;
+      if (free) cost = "<span class=\"free\">Free</span>"; else cost = `<span class="num">${cur()} ${cs.cost}</span>`;
+      const warn = !cs.cond ? (c.whenText || "Conditions not met") : cs.cd > 0 ? `Cooldown: ${cs.cd} rounds left` : G.me.ap < cs.cost ? "Not enough resources" : '';
+      const tip = `<b>${c.icon} ${c.name}</b><br>${c.text}<div class="tt-tags">${(c.tags || []).join(' · ')}${c.cd ? ` · cooldown ${c.cd} rounds` : ''}${c.once ? ' · one use only' : ''}</div>${warn ? `<div class="tt-warn">${warn}</div>` : ''}`;
       return `<button class="card ${G.side} ${c.special ? 'special' : ''} ${free && cs.ok ? 'freebie' : ''}" data-card="${c.id}" ${cs.ok ? '' : 'disabled'} data-tip="${esc(tip)}">
         <div class="top"><span class="ic">${c.icon}</span><span class="cost">${cost}</span></div>
         <div class="nm">${c.name}</div><div class="tg">${(c.tags || []).slice(0, 2).join(' · ')}</div>
@@ -773,8 +773,8 @@
   }
 
   function renderNews() {
-    const K = { opp: G.side === 'movement' ? '当局' : '对方', crowd: '街头', mine: '你', army: (G.L.labels && G.L.labels.army && G.L.labels.army.length <= 3) ? G.L.labels.army : '军警', event: '事件', intel: '情报', arrest: '抓捕', calm: '平静', report: '回报', info: '消息' };
-    $('news').innerHTML = G.news.slice(0, 50).map((n) => `<div class="n ${n.kind} ${n.round >= G.round ? 'now' : ''}"><span class="d">${n.date}</span><span class="k">${K[n.kind] || '消息'}</span><span class="t">${n.text}</span></div>`).join('');
+    const K = { opp: G.side === 'movement' ? "Regime" : "Opponent", crowd: "On the streets", mine: "You", army: (G.L.labels && G.L.labels.army && G.L.labels.army.length <= 3) ? G.L.labels.army : "Security forces", event: "Event", intel: "Intelligence", arrest: "Arrests", calm: "Calm", report: "Report", info: "Word" };
+    $('news').innerHTML = G.news.slice(0, 50).map((n) => `<div class="n ${n.kind} ${n.round >= G.round ? 'now' : ''}"><span class="d">${n.date}</span><span class="k">${K[n.kind] || 'News'}</span><span class="t">${n.text}</span></div>`).join('');
   }
 
   /* ---------- 事件弹窗 ---------- */
@@ -814,36 +814,36 @@
     const lab = L.labels || {};
     $('end-box').className = 'modal end ' + (o.win ? 'win' : 'lose');
     $('end-box').innerHTML = `
-      <div class="kick">${L.chapter} · ${L.title} · ${o.win ? '胜利' : '失败'}</div>
+      <div class="kick">${L.chapter} · ${L.title} · ${o.win ? 'Victory' : 'Defeat'}</div>
       <h3 class="res-t">${o.title}</h3>
       ${o.win && L.id !== 'tutorial' ? `<div class="big-stars">${starsHtml(o.starCount, 3)}</div>` : ''}
       ${o.win && o.stars.length > 1 ? `<ul class="star-list">${o.stars.map((s) => `<li class="${s.ok ? 'ok' : ''}">${s.ok ? '★' : '☆'} ${s.text}</li>`).join('')}</ul>` : ''}
       <div class="tabpane" style="text-align:center">${o.text}</div>
       <div class="stat-row">
-        <div class="stat"><div class="k">最多时${lab.crowd || '街头'}</div><div class="v">${st.peakCrowd} 人</div></div>
-        <div class="stat"><div class="k">累计被带走</div><div class="v">${st.detained} 人</div></div>
-        <div class="stat"><div class="k">${lab.army || '军警'}最乱时</div><div class="v">${st.peakArmy}</div></div>
-        <div class="stat"><div class="k">结束时的积怨</div><div class="v">${st.moodEnd}</div></div>
+        <div class="stat"><div class="k">${lab.crowd || 'On the streets'} at peak</div><div class="v">${st.peakCrowd} people</div></div>
+        <div class="stat"><div class="k">Taken away in total</div><div class="v">${st.detained} people</div></div>
+        <div class="stat"><div class="k">${lab.army || 'Security forces'} at their shakiest</div><div class="v">${st.peakArmy}</div></div>
+        <div class="stat"><div class="k">Grievance at the end</div><div class="v">${st.moodEnd}</div></div>
       </div>
-      <div class="tabs"><button class="on" data-tab="replay">复盘 · 真相揭晓</button>${L.history ? '<button data-tab="hist">历史</button>' : ''}${L.lesson ? '<button data-tab="lesson">模型</button>' : ''}</div>
+      <div class="tabs"><button class="on" data-tab="replay">Debrief · The truth revealed</button>${L.history ? '<button data-tab="hist">History</button>' : ''}${L.lesson ? '<button data-tab="lesson">The model</button>' : ''}</div>
       <div class="tabpane" id="tab-replay">
         <canvas id="debrief"></canvas>
         <div class="legend">
-          <span><i style="background:#ffcf70"></i>街头的人</span>
-          <span><i style="background:#57c28a"></i>执行者抗命</span>
-          <span><i style="background:#ef6a5e"></i>真实积怨</span>
-          <span style="color:#ef6a5e"><i class="dash" style="color:#ef6a5e"></i>你看到的积怨</span>
-          <span><i style="background:#b392f0"></i>真实临界点</span>
-          <span style="color:#b392f0"><i class="dash" style="color:#b392f0"></i>你估计的临界点</span>
+          <span><i style="background:#ffcf70"></i>People on the streets</span>
+          <span><i style="background:#57c28a"></i>Enforcers refusing orders</span>
+          <span><i style="background:#ef6a5e"></i>True grievance</span>
+          <span style="color:#ef6a5e"><i class="dash" style="color:#ef6a5e"></i>Grievance as you saw it</span>
+          <span><i style="background:#b392f0"></i>True tipping point</span>
+          <span style="color:#b392f0"><i class="dash" style="color:#b392f0"></i>Your estimated tipping point</span>
         </div>
         <div class="reveal-note">${insight()}</div>
       </div>
-      ${L.history ? `<div class="tabpane hidden" id="tab-hist"><h4>历史上</h4>${L.history}</div>` : ''}
-      ${L.lesson ? `<div class="tabpane hidden" id="tab-lesson"><h4>${L.lesson.title}</h4>${L.lesson.text}<p style="color:var(--dim);font-size:13px;margin-top:12px">想亲手调每一个参数?去<a href="lab.html">模型实验室</a>。</p></div>` : ''}
+      ${L.history ? `<div class="tabpane hidden" id="tab-hist"><h4>What happened in history</h4>${L.history}</div>` : ''}
+      ${L.lesson ? `<div class="tabpane hidden" id="tab-lesson"><h4>${L.lesson.title}</h4>${L.lesson.text}<p style="color:var(--dim);font-size:13px;margin-top:12px">Want to tune every parameter yourself? Go to the <a href="lab.html">Model Lab</a>.</p></div>` : ''}
       <div class="actions">
-        <button class="btn" id="end-retry">再来一次</button>
-        ${next && L.id !== 'skirmish' ? `<button class="btn primary" id="end-next">下一关:${next.title} →</button>` : ''}
-        <button class="btn ghost" id="end-levels">${L.id === 'skirmish' ? '返回标题' : '返回关卡'}</button>
+        <button class="btn" id="end-retry">Try again</button>
+        ${next && L.id !== 'skirmish' ? `<button class="btn primary" id="end-next">Next level: ${next.title} →</button>` : ''}
+        <button class="btn ghost" id="end-levels">${L.id === 'skirmish' ? 'Back to title' : 'Back to levels'}</button>
       </div>`;
     $('ov-end').classList.add('show');
     $('end-box').querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => {
@@ -859,17 +859,17 @@
 
   function insight() {
     const h = G.hist, n = h.x.length;
-    const W = (v) => (v < 0.1 ? '平静' : v < 0.3 ? '隐忍' : v < 0.55 ? '积怨' : v < 0.8 ? '怨声载道' : '一触即发');
+    const W = (v) => (v < 0.1 ? "Calm" : v < 0.3 ? "Holding it in" : v < 0.55 ? "Aggrieved" : v < 0.8 ? "Seething" : "Explosive");
     const lines = [];
     let gap = 0, gi = 0;
     for (let i = 0; i < n; i++) if (h.mood[i] - h.moodSeen[i] > gap) { gap = h.mood[i] - h.moodSeen[i]; gi = i; }
-    if (G.side === 'regime' && gap > 0.2) lines.push(`在${G.dateLabel(gi)}前后,下面报上来的民间情绪是"${W(h.moodSeen[gi])}",而实际上已经是"${W(h.mood[gi])}"。执法越凶,下面的人越不敢说真话。`);
+    if (G.side === 'regime' && gap > 0.2) lines.push(`Around ${G.dateLabel(gi)}, the public mood reported from below was “${W(h.moodSeen[gi])}”, but in fact it was already “${W(h.mood[gi])}”. The harsher the enforcement, the less the people below dare to tell the truth.`);
     const quiet = h.x.slice(0, Math.max(1, n - 1)).every((v) => v < 0.03);
     const t0 = h.tip[0], tMin = Math.min(...h.tip);
-    if (quiet && t0 - tMin > 0.08) lines.push('整局下来街上几乎一直很安静,可临界点一直在下降——<b>沉默没有发出任何预警</b>。');
+    if (quiet && t0 - tMin > 0.08) lines.push("All game long the streets stayed almost completely quiet, yet the tipping point kept falling — <b>the silence gave no warning at all</b>.");
     const peakMood = Math.max(...h.mood);
-    if (peakMood > 0.55 && G.side === 'movement') lines.push('积怨一度高到"' + W(peakMood) + '"。它不表现为上街,却在把临界点往下压。');
-    if (!lines.length) lines.push('实线是真实发生的,虚线是你当时看到(或估计)的。两者之间的距离,就是这一关的"迷雾"。');
+    if (peakMood > 0.55 && G.side === 'movement') lines.push("At one point grievance ran as high as “" + W(peakMood) + "”. It does not show on the streets, but it keeps pushing the tipping point down.");
+    if (!lines.length) lines.push("Solid lines are what really happened; dashed lines are what you saw (or estimated) at the time. The gap between them is this level’s “fog”.");
     return lines.join('<br>');
   }
 
@@ -911,7 +911,7 @@
   $('mm-resume').addEventListener('click', () => $('ov-menu').classList.remove('show'));
   $('mm-restart').addEventListener('click', () => { $('ov-menu').classList.remove('show'); startLevel(curLevel, curOpts); });
   $('mm-help').addEventListener('click', () => { $('ov-menu').classList.remove('show'); $('ov-help').classList.add('show'); });
-  const autoLabel = () => { $('mm-auto').textContent = '自动收集气泡(只得一半):' + (SAVE.autoCollect ? '开' : '关'); };
+  const autoLabel = () => { $('mm-auto').textContent = "Auto-collect bubbles (half value): " + (SAVE.autoCollect ? "On" : "Off"); };
   autoLabel();
   $('mm-auto').addEventListener('click', () => { SAVE.autoCollect = !SAVE.autoCollect; persist(); autoLabel(); });
   $('mm-levels').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('levels'); });
@@ -959,62 +959,62 @@
   /* ================= 新手引导 ================= */
   // wait: 'click'(按继续) | 'play:ID' | 'round' | 'ap:N' | 'speed' | 'policy:KEY'
   const TUTORIAL = [
-    { target: '#stage', text: '周一的升旗仪式。一千名学生<b>按班级站在操场上</b>,每个小点是一个学生。<br>站出来提异议的人会<b>走出队列,站到主席台前</b>;被点名的会被带去左上角的<b>教导处</b>(变红)。台上和过道里的蓝色方块是老师。' },
-    { target: '#ro-risk', text: '看"此刻站出来"。教导主任一分钟<b>最多只能处理二十个人</b>。现在没人站出来——谁第一个出头,谁就一定被点名。' },
-    { target: '#m-main', text: '最上面这根条是关键。<b>黄色</b>是站出来的人,<b>紫色框</b>是"临界点":大约要这么多人同时站出来,风险才会被摊薄,连锁反应才会开始。' },
-    { target: '#res', text: '这是你的<b>组织力</b>。出牌、建设都要花它,每分钟恢复一点。' },
-    { target: '[data-card="t_small"]', text: '先试试看:打出<b>「几个人先站出来」</b>——你和同班九个最要好的同学。', wait: 'play:t_small', allow: ['t_small'] },
-    { target: '#btn-step', text: '点<b>「下一轮」</b>,看看会发生什么。', wait: 'round', allowSel: ['#btn-step'] },
-    { target: '.bubble', text: '你们十个人走到了台前,操场上冒出一个<b>「士气」气泡</b>。点它,收集组织力。<br>(局势变化时就会冒气泡,别让它们消失。)', wait: 'collect', allowSel: ['.bubble'] },
-    { target: '#btn-step', text: '再点一次<b>「下一轮」</b>。', wait: 'round', allowSel: ['#btn-step'] },
-    { target: '#stage', text: '十个人<b>全被点名带走了</b>。其他同学看在眼里——更不敢动了。<br>人太少的时候,每个站出来的人都会被抓。<b>这就是沉默的原因</b>:不是没人不满,而是没人愿意当那少数几个。' },
-    { target: '#tree-btn', text: '右边的<b>「组织建设」</b>是永久的升级,像给你的组织加技能。打开它。', wait: 'tree-open', allowSel: ['#tree-btn'] },
-    { target: '[data-node="m_net"]', text: '建成<b>「联络网」</b>:之后每次行动,带出的人多 25%。点它。', wait: 'tree:m_net', allow: ['tree:m_net'] },
-    { target: '#btn-step', text: '「全年级串联」要 3 点组织力。<b>点「下一轮」</b>,攒够它。', wait: 'ap:3', allowSel: ['#btn-step'] },
-    { target: '[data-card="t_big"]', text: '看最上面的条:斜纹已经越过了紫框——够了。打出<b>「全年级串联」</b>。', wait: 'play:t_big', allow: ['t_big'] },
-    { target: '.speed', text: '这次按 <b>▶</b>,让时间走起来,看着吧。', wait: 'speed', allowSel: ['.speed'] },
+    { target: '#stage', text: "Monday’s flag-raising ceremony. A thousand students <b>stand on the sports ground by class</b>; each small dot is one student.<br>Anyone who stands up to object <b>steps out of line and walks to the front of the podium</b>; anyone whose name is called is taken to the <b>dean’s office</b> at top left (turns red). The blue squares on the stage and in the aisles are teachers." },
+    { target: '#ro-risk', text: "Look at “Standing up now”. The dean can <b>deal with at most twenty people</b> a minute. Right now no one is standing up — whoever goes first is sure to be called out." },
+    { target: '#m-main', text: "The bar at the very top is the key. <b>Yellow</b> is the people standing up; the <b>purple frame</b> is the “tipping point”: roughly how many must stand up at once before the risk is spread thin and a chain reaction begins." },
+    { target: '#res', text: "This is your <b>organizing power</b>. Playing cards and building both cost it; it recovers a little every minute." },
+    { target: '[data-card="t_small"]', text: "Try it first: play <b>“Ten step out”</b> — you and the nine classmates you are closest to.", wait: 'play:t_small', allow: ['t_small'] },
+    { target: '#btn-step', text: "Click <b>“Next round”</b> and see what happens.", wait: 'round', allowSel: ['#btn-step'] },
+    { target: '.bubble', text: "The ten of you walked to the front, and a <b>“Morale” bubble</b> popped up on the sports ground. Click it to collect organizing power.<br>(Bubbles pop up whenever the situation changes. Don’t let them vanish.)", wait: 'collect', allowSel: ['.bubble'] },
+    { target: '#btn-step', text: "Click <b>“Next round”</b> again.", wait: 'round', allowSel: ['#btn-step'] },
+    { target: '#stage', text: "All ten <b>were called out and taken away</b>. The other students saw it — and now they dare even less.<br>When too few stand up, every one of them gets caught. <b>That is why there is silence</b>: not because no one is unhappy, but because no one wants to be one of the few." },
+    { target: '#tree-btn', text: "<b>“Movement building”</b> on the right gives permanent upgrades, like adding skills to your organization. Open it.", wait: 'tree-open', allowSel: ['#tree-btn'] },
+    { target: '[data-node="m_net"]', text: "Build <b>“Contact network”</b>: from then on, every action brings out 25% more people. Click it.", wait: 'tree:m_net', allow: ['tree:m_net'] },
+    { target: '#btn-step', text: "“Rally the grade” costs 3 organizing power. <b>Click “Next round”</b> to save up for it.", wait: 'ap:3', allowSel: ['#btn-step'] },
+    { target: '[data-card="t_big"]', text: "Look at the top bar: the hatching has passed the purple frame — that’s enough. Play <b>“Rally the grade”</b>.", wait: 'play:t_big', allow: ['t_big'] },
+    { target: '.speed', text: "This time press <b>▶</b> to let time run, and watch.", wait: 'speed', allowSel: ['.speed'] },
   ];
   const SYS = {
     movement: [
-      { target: '#m-main', text: '最上面左边这根条最重要:<b>黄色</b>是站出来的人,<b>斜纹</b>是你手里的组织力一次还能带出的人,<b>紫框</b>是临界点。<br><b>黄色加斜纹越过紫框,就是全力出手的时候。</b>' },
-      { target: '#m-opp', text: '右边是<b>当局警觉</b>。街上的每一次聚集、你的每个动作都会推高它;到 25 / 50 / 75,当局会依次升级为警戒、严打、全面镇压。安静时它会慢慢回落。' },
-      { target: '#tree-btn', text: '<b>组织建设</b>:传播、记忆、韧性三条路线的永久升级。它们同样会推高当局警觉——先闷声发展,还是先打出声势?(快捷键 B)' },
-      { target: '#stage', text: '局势变化时,城市里会冒出<b>气泡</b>:愤怒、士气、同情、消息。<b>点击收集</b>——它们是组织力最重要的来源。每隔几轮,还会有<b>突发事件</b>逼你做选择。' },
+      { target: '#m-main', text: "The bar at top left matters most: <b>yellow</b> is the people standing up, the <b>hatching</b> is how many more your organizing power can bring out in one go, and the <b>purple frame</b> is the tipping point.<br><b>When yellow plus hatching passes the purple frame, it’s time to go all in.</b>" },
+      { target: '#m-opp', text: "On the right is <b>Regime alert</b>. Every gathering on the streets and every move you make pushes it up; at 25 / 50 / 75 the regime escalates to Alert, Crackdown, then Total repression. It slowly falls back when things are quiet." },
+      { target: '#tree-btn', text: "<b>Movement building</b>: permanent upgrades along three paths — Spread, Memory, Resilience. They too raise Regime alert — grow quietly first, or make some noise first? (Hotkey B)" },
+      { target: '#stage', text: "When the situation changes, <b>bubbles</b> pop up in the city: anger, morale, sympathy, word. <b>Click to collect</b> — they are your main source of organizing power. Every few rounds, a <b>sudden event</b> will force you to choose." },
     ],
     regime: [
-      { target: '#m-main', text: '左边是你还要撑多久。撑到最后就算胜利——但星级要看积怨深不深、抓了多少人。' },
-      { target: '#m-opp', text: '右边是<b>反对派组织度</b>(据报)。它满了,对方就会发动一次大规模行动。积怨越深涨得越快;抓串联者、对话让步能压下去。<b>注意:你越凶,这个数字报得越低。</b>' },
-      { target: '#tree-btn', text: '<b>政权建设</b>:铁拳、天网、民心三条路线的永久升级。(快捷键 B)' },
-      { target: '#stage', text: '平静的日子会冒出<b>「安定」</b>气泡,抓人会冒出<b>「情报」</b>气泡。点击收集政治资本。' },
+      { target: '#m-main', text: "On the left is how long you still have to hold out. Last to the end and you win — but your stars depend on how deep the grievance runs and how many people you arrest." },
+      { target: '#m-opp', text: "On the right is <b>Opposition organization</b> (reported). When it fills up, the other side launches a major action. The deeper the grievance, the faster it rises; arresting organizers or conceding in talks keeps it down. <b>Note: the harsher you are, the lower this number is reported.</b>" },
+      { target: '#tree-btn', text: "<b>Regime building</b>: permanent upgrades along three paths — Iron fist, Dragnet, Hearts and minds. (Hotkey B)" },
+      { target: '#stage', text: "Quiet days produce <b>“Stability”</b> bubbles; arrests produce <b>“Intelligence”</b> bubbles. Click them to collect political capital." },
     ],
   };
   const COACH = {
     liwang: [
-      { target: '#policies', text: '这一关你是君主。右边是你的<b>常设政策</b>:执法多重、卫士多少、抓谁、言路开闭、囹圄松紧。<b>越强硬,上街越可怕——但每轮都要花钱维持。</b>' },
-      { target: '#ro-mood', text: '这是下面报上来的"民间情绪"。注意<b>可信度</b>:你越凶,下面的人越不敢说真话,报上来的就越平静。' },
-      { target: '#cards', text: '「卫巫监谤」能让你<b>暂时听到真话</b>,还能看见每家每户心里的怨气(红色)。' },
+      { target: '#policies', text: "In this level you are the king. On the right are your <b>standing policies</b>: how heavy the punishment, how many guards, whom to seize, whether the paths of speech are open or shut, how tight the prisons. <b>The harsher they are, the scarier the streets — but they cost money to keep up every round.</b>" },
+      { target: '#ro-mood', text: "This is the “public mood” as reported from below. Watch its <b>credibility</b>: the harsher you are, the less people below dare to tell the truth, and the calmer the reports sound." },
+      { target: '#cards', text: "“Shaman of Wei” lets you <b>hear the truth for a while</b>, and see the resentment in every household (red)." },
     ],
-    petrograd: [{ target: '#ro-army', text: '注意<b>驻军</b>。街上的人越多,士兵越动摇;士兵一动摇,能抓人的就少了,街上又会更安全——两层反馈会互相放大。「劝说士兵」要在人多的时候打。' }],
+    petrograd: [{ target: '#ro-army', text: "Watch the <b>garrison</b>. The more people on the streets, the more the soldiers waver; once they waver, fewer are left to make arrests, and the streets get safer still — the two feedback loops amplify each other. Play “Win over troops” when the crowds are big." }],
     qingming: [
-      { target: '#layer-btn', text: '一月里被压住的悲痛,藏在人们心里。打开右上角的<b>「暗流」</b>:橙色是"在观望"的人,红色是"蠢蠢欲动"的人。清明节(4月4日)那天,它会浮出水面。' },
-      { target: '#cards', text: '「列车上的标语」能让被压住的悲痛提前浮出来——但当局也会提前警觉。什么时候出手,由你决定。' },
+      { target: '#layer-btn', text: "The grief suppressed in January is hidden in people’s hearts. Open the <b>“Undercurrent”</b> at top right: orange are those “wavering”, red are those “ready to move”. On Qingming (April 4), it will break the surface." },
+      { target: '#cards', text: "“Slogans on trains” can bring the suppressed grief to the surface early — but it alerts the regime early too. When to strike is up to you." },
     ],
     seoul: [
-      { target: '#g-date', text: '六月之前每轮是一周,六月起每轮是一天。<b>把组织力留到六月。</b>' },
-      { target: '#cards', text: '朴钟哲之死被掩盖着。「曝光真相」能让悲愤浮出来;历史上,真相在5月18日被神父们公开。「明洞圣堂静坐」「领带部队」要等历史走到那一步才会出现。' },
+      { target: '#g-date', text: "Before June each round is a week; from June on, each round is a day. <b>Save your organizing power for June.</b>" },
+      { target: '#cards', text: "Park Jong-chul’s death is being covered up. “Expose the truth” can bring the grief and anger to the surface; historically, priests made the truth public on May 18. “Myeongdong sit-in” and “Necktie brigade” appear only once history reaches that point." },
     ],
     bucharest: [
-      { target: '#ro-mood', text: '你的情报几乎完全不可信:国家安全局越凶,下面的人越不敢说真话。左边「参谋」里的<b>「情报失真」</b>就是在提醒你这件事。' },
-      { target: '#policies', text: '所有高压政策都开着,还在勒紧腰带还外债——入不敷出的代价会变成看不见的积怨。接下来每一次弹窗里的选择,都很重要。' },
+      { target: '#ro-mood', text: "Your intelligence is almost worthless: the harsher the Securitate, the less people below dare to tell the truth. <b>“Intelligence distorted”</b> in the “Advisor” panel on the left is warning you about exactly this." },
+      { target: '#policies', text: "Every hard-line policy is switched on, and belts are being tightened to pay off the foreign debt — the cost of running in the red turns into invisible grievance. Every choice in the pop-ups ahead matters." },
     ],
-    iran: [{ target: '#cards', text: '每一次镇压之后,大约<b>六周</b>会迎来一次"四十日"悼念。记忆在那时最强——那也是你出手的最好时机。' }],
-    poland: [{ target: '#res', text: '戒严的所有手段都开着:军队进城、按名单拘押、封锁新闻……<b>它们非常贵</b>。入不敷出时,代价会转嫁给百姓,变成积怨。你得决定先放松哪一样。' }],
-    beijing: [{ target: '#ro-army', text: '这一关,<b>人再多也不够</b>。百万人上街并没有改变结局——决定结局的,是那些开进城的士兵会不会开枪。' }],
-    leipzig: [{ target: '#cards', text: '每周一的<b>「和平祈祷」免费</b>。教会圈里的人彼此信任,一个人出来能带出另一个。' }],
-    baizhi: [{ target: '#cards', text: '你手里有一张只能用一次的牌:<b>「桥上的横幅」</b>。它不会让很多人上街,却会让很多人<b>记住</b>。' }],
+    iran: [{ target: '#cards', text: "After every crackdown, about <b>six weeks</b> later comes a “fortieth-day” mourning. Memory is strongest then — and that is your best moment to act." }],
+    poland: [{ target: '#res', text: "Every tool of martial law is switched on: troops in the cities, detention by list, a news blackout… <b>They are very expensive</b>. When you run in the red, the cost falls on the people and turns into grievance. You must decide which to ease first." }],
+    beijing: [{ target: '#ro-army', text: "In this level, <b>no crowd is ever big enough</b>. A million people on the streets did not change the outcome — what decided it was whether the soldiers entering the city would open fire." }],
+    leipzig: [{ target: '#cards', text: "Every Monday the <b>“Peace prayers” are free</b>. People in church circles trust each other; one who comes out brings out another." }],
+    baizhi: [{ target: '#cards', text: "You hold a card you can play only once: <b>“Bridge banner”</b>. It won’t bring many people onto the streets, but it will make many people <b>remember</b>." }],
     pyongyang: [
-      { target: '#m-opp', text: '在这里,<b>别上街</b>。你的每一次行动都会增加暴露风险;到顶,你的网络会被一网打尽。' },
-      { target: '#m-main', text: '你的目标是这根条:让"临界点"从"看不到转机"变成一个<b>真实存在、而且不太高</b>的数字。' },
+      { target: '#m-opp', text: "Here, <b>stay off the streets</b>. Every action you take raises your exposure risk; if it maxes out, your whole network is rolled up." },
+      { target: '#m-main', text: "Your goal is this bar: turn the “tipping point” from “no turning point in sight” into a number that is <b>real, and not too high</b>." },
     ],
   };
 
@@ -1036,7 +1036,7 @@
       $('coach-prog').textContent = `${i + 1} / ${steps.length}`;
       const waiting = !!st.wait;
       $('coach-next').classList.toggle('hidden', waiting);
-      $('coach-wait').textContent = waiting ? '👉 请照做' : '';
+      $('coach-wait').textContent = waiting ? "👉 Your turn" : '';
       // 交互: 等待型步骤只放开目标控件
       if (G) G.allowCards = opts.lock ? (st.allow || []) : null;
       document.querySelectorAll('.coach-allow').forEach((e) => e.classList.remove('coach-allow'));

@@ -4,6 +4,8 @@
 
 纯前端、零依赖:双击 `index.html` 即可运行(或 `python3 -m http.server` 后访问)。
 
+**English version**: `en/index.html` (title-screen button "English"; offline single file `dist/Glances-on-the-Road.html`). It is generated from the Chinese source by `node i18n/build-en.js` using the translation table `i18n/en.json` — see `i18n/TRANSLATE.md`.
+
 **在别的电脑上玩**:把 `dist/道路以目.html` 这一个文件拷过去,双击即可——样式和脚本全部内联,不需要服务器,也不需要联网。它由 `node build.js` 生成;改了源码后重新运行一次。
 
 ## 玩法
@@ -73,7 +75,9 @@
 | `tests.js` | 论文数值自检 `node tests.js` |
 | `tune.js` | 沙盒场景叙事检查 `node tune.js` |
 | `playtest.js` | 关卡平衡测试 `node playtest.js [关卡id|all] [局数]` |
-| `build.js` → `dist/` | 打包离线单文件 `node build.js` |
+| `build.js` → `dist/` | 打包离线单文件(中英文) `node build.js` |
+| `i18n/` → `en/` | 英文版: 抽取中文字符串、译文表 `en.json`、生成 `en/` |
+| `video/` | 讲解视频: 脚本、逐帧渲染的场景页、渲染脚本 |
 
 ## 校验
 

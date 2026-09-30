@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glances on the Road · Model Lab</title>
+<style>
+  :root {
+    --bg: #0f1318; --panel: #161b22; --panel2: #1c232c; --line: #2b333d;
+    --fg: #d6dde5; --dim: #8b97a5; --acc: #58a6ff; --org: #d2a032;
+    --red: #ef6a5e; --grn: #7ec699; --pur: #c09aff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 13px/1.55 -apple-system, "PingFang SC", "Hiragino Sans GB", sans-serif; }
+  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+           padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+           position: sticky; top: 0; z-index: 5; }
+  header h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+  header h1 small { color: var(--dim); font-weight: normal; font-size: 12px; margin-left: 8px; }
+  button, select { background: var(--panel2); color: var(--fg); border: 1px solid var(--line);
+                   border-radius: 6px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; }
+  button:hover, select:hover { border-color: var(--acc); }
+  button.primary { background: #1f3a5f; border-color: #31659f; }
+  button.warn { background: #4a2723; border-color: #8a3d34; }
+  button.act  { background: #234233; border-color: #2f6b4c; }
+  main { display: grid; grid-template-columns: 348px 1fr; gap: 0; height: calc(100vh - 53px); }
+  aside { overflow-y: auto; padding: 10px 12px 40px; border-right: 1px solid var(--line); background: var(--panel); }
+  aside::-webkit-scrollbar { width: 8px; } aside::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  section { overflow-y: auto; padding: 12px 16px 60px; }
+  details { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; background: var(--panel2); }
+  details[open] { background: #171d24; }
+  summary { cursor: pointer; padding: 7px 10px; font-weight: 600; color: var(--fg); user-select: none; }
+  summary .tag { float: right; font-weight: normal; color: var(--dim); font-size: 11px; }
+  .body { padding: 4px 10px 10px; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+  .row label { flex: 0 0 118px; color: var(--dim); font-size: 12px; }
+  .row label:hover { color: var(--fg); }
+  .row input[type=range] { flex: 1; accent-color: var(--acc); }
+  .row .val { flex: 0 0 52px; text-align: right; font-variant-numeric: tabular-nums; color: var(--acc); }
+  .row select { flex: 1; padding: 3px 6px; }
+  .btnrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+  .btnrow button { flex: 1 1 auto; white-space: nowrap; }
+  .note { color: var(--dim); font-size: 11.5px; margin: 6px 0; }
+  .note b { color: var(--org); font-weight: 600; }
+  #statusbar { display: flex; flex-wrap: wrap; gap: 6px 18px; background: var(--panel);
+               border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; margin-bottom: 10px; }
+  #statusbar .item { white-space: nowrap; }
+  #statusbar .item b { color: var(--acc); font-variant-numeric: tabular-nums; }
+  #statusbar .item.alert b { color: var(--red); }
+  canvas.chart { display: block; background: var(--panel); border: 1px solid var(--line);
+                 border-radius: 8px; margin-bottom: 10px; width: 100%; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 1100px) { .grid2 { grid-template-columns: 1fr; } main { grid-template-columns: 300px 1fr; } }
+  .charttitle { font-size: 12px; color: var(--dim); margin: 2px 2px 4px; }
+  .charttitle b { color: var(--fg); }
+  #tests { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+           padding: 8px 12px; font-size: 12px; white-space: pre-wrap; }
+
+  #scenDesc { background: #1a2030; border: 1px solid #31405c; border-radius: 8px;
+              padding: 8px 12px; margin-bottom: 10px; color: #c4d2e8; font-size: 12.5px; }
+  #scenDesc b { color: var(--acc); }
+  .kbd { background:#0b0e12; border:1px solid var(--line); border-radius:4px; padding:0 5px; font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" style="color:var(--org);text-decoration:none;white-space:nowrap">← Back to game</a>
+  <h1>Model Lab <small>all parameters &amp; charts · implements the equations of “Glances on the Road: A Phase-Transition Model of Silence”</small></h1>
+  <label style="color:var(--dim)">Scenario</label>
+  <select id="scenario" style="min-width:220px"></select>
+  <button id="btnStep" class="primary">Step</button>
+  <button id="btnRun" class="primary">▶ Run</button>
+  <button id="btnReset">Reset</button>
+  <button id="btnRebuild" title="Regenerate the population/network from the parameters on the left">Rebuild world</button>
+  <span style="color:var(--dim)">Speed <span id="spdVal" class="val" style="display:inline">1</span> rounds/frame</span>
+  <input id="spd" type="range" min="1" max="30" value="1" style="width:90px">
+  <button id="btnCsv">Export CSV</button>
+</header>
+
+<main>
+<aside>
+  <div id="scenDesc">Choose a scenario to begin.</div>
+
+  <details open><summary>🏛 Repression apparatus <span class="tag">policy</span></summary><div class="body">
+    <div class="row"><label>Penalty P</label><input id="o_P" type="range" min="0.2" max="2" step="0.01"><span class="val" id="v_P"></span></div>
+    <div class="row"><label>Police capacity K₀ (people/round)</label><input id="o_K0" type="range" min="0" max="200" step="1"><span class="val" id="v_K0"></span></div>
+    <div class="row"><label>Legitimacy threshold P̄</label><input id="o_Pbar" type="range" min="0" max="1.5" step="0.01"><span class="val" id="v_Pbar"></span></div>
+    <div class="row"><label>Targeting</label><select id="o_targetMode">
+      <option value="uniform">Uniform random</option><option value="organizer">Organizers (cut ties)</option><option value="zealot">The most committed</option><option value="preventive">Preventive arrests (by list)</option></select></div>
+    <div class="row"><label>Tie-cutting strength</label><input id="o_netDamage" type="range" min="0" max="1" step="0.05"><span class="val" id="v_netDamage"></span></div>
+    <div class="row"><label>Release prob. per round</label><input id="o_releaseProb" type="range" min="0" max="1" step="0.05"><span class="val" id="v_releaseProb"></span></div>
+    <div class="note">P and P̄ together set how far things go “over the line”, (P−P̄)₊: it drives both memory accumulation and enforcer disobedience. P̄ is <b>the line society accepts</b>, not a technical parameter.</div>
+  </div></details>
+
+  <details><summary>🪖 Enforcers <span class="tag">policy</span></summary><div class="body">
+    <div class="row"><label>Headcount M</label><input id="o_M" type="range" min="10" max="2000" step="10"><span class="val" id="v_M"></span></div>
+    <div class="row"><label>Threshold scale ψ~U(0,·)</label><input id="o_psiScale" type="range" min="0.2" max="3" step="0.05"><span class="val" id="v_psiScale"></span></div>
+    <div class="row"><label>Crowd pressure α</label><input id="o_alpha" type="range" min="0" max="1.5" step="0.05"><span class="val" id="v_alpha"></span></div>
+    <div class="row"><label>Peer influence β</label><input id="o_beta" type="range" min="0" max="1.5" step="0.05"><span class="val" id="v_beta"></span></div>
+    <div class="row"><label>Disobedience coeff. δ</label><input id="o_delta" type="range" min="0" max="1.5" step="0.05"><span class="val" id="v_delta"></span></div>
+    <div class="row"><label>Initial refusal d₀</label><input id="o_d0" type="range" min="0" max="1" step="0.05"><span class="val" id="v_d0"></span></div>
+    <div class="note">Refusal rule: α·x + β·d + δ(P−P̄)₊ ≥ ψ. Each layer can be stable on its own and still become unstable when coupled (Property 4).</div>
+  </div></details>
+
+  <details><summary>📺 Information environment <span class="tag">policy</span></summary><div class="body">
+    <div class="row"><label>Global info weight ω</label><input id="o_omega" type="range" min="0" max="1" step="0.05"><span class="val" id="v_omega"></span></div>
+    <div class="row"><label>Propaganda compression</label><input id="o_globalScale" type="range" min="0" max="1" step="0.05"><span class="val" id="v_globalScale"></span></div>
+    <div class="row"><label>Rumor noise</label><input id="o_noise" type="range" min="0" max="0.3" step="0.01"><span class="val" id="v_noise"></span></div>
+    <div class="note">x̂=(1−ω)·acquaintances' participation+ω·(compressed global share). The smaller ω, the more people rely on those around them (church circles). More accurate information does not necessarily raise participation — it depends on which way it was biased before (Property 5).</div>
+  </div></details>
+
+  <details><summary>🧠 Memory &amp; mood <span class="tag">structure</span></summary><div class="body">
+    <div class="row"><label>Decay rate ρ</label><input id="o_memDecay" type="range" min="0" max="1" step="0.05"><span class="val" id="v_memDecay"></span></div>
+    <div class="row"><label>Conversion strength γ</label><input id="o_gamma" type="range" min="0" max="6" step="0.1"><span class="val" id="v_gamma"></span></div>
+    <div class="row"><label>Event visibility w</label><input id="o_vis" type="range" min="0" max="1" step="0.05"><span class="val" id="v_vis"></span></div>
+    <div class="row"><label>Memory kernel</label><select id="o_kernel">
+      <option value="exp">Exponential decay (default)</option><option value="memorial">Memorial peak (40th day)</option></select></div>
+    <div class="row"><label>Memorial peak delay</label><input id="o_memPeak" type="range" min="2" max="30" step="1"><span class="val" id="v_memPeak"></span></div>
+    <div class="row"><label>Memorial peak strength</label><input id="o_memPeakAmp" type="range" min="0" max="4" step="0.1"><span class="val" id="v_memPeakAmp"></span></div>
+    <div class="note">b←(1−ρ)b+γw(P−P̄)₊ζ. The same public record can hide very different amounts of accumulated memory — <b>repression debt</b> (Property 2).</div>
+  </div></details>
+
+  <details><summary>🕸 Social structure <span class="tag">applies after rebuild</span></summary><div class="body">
+    <div class="row"><label>Population N</label><input id="o_N" type="range" min="200" max="8000" step="100"><span class="val" id="v_N"></span></div>
+    <div class="row"><label>Tolerance distribution</label><select id="o_tolType">
+      <option value="uniform">Uniform [0,1]</option><option value="bell">Bell (peaked middle)</option>
+      <option value="bimodal">Bimodal (moderate/radical)</option><option value="ladder">Granovetter ladder</option>
+      <option value="low">Repressed society (all lowered)</option></select></div>
+    <div class="row"><label>Network</label><select id="o_netType">
+      <option value="full">Fully mixed (all see all)</option><option value="random">Random network</option>
+      <option value="clusters">Tight cliques (church circles)</option><option value="grid">Spatial square grid</option></select></div>
+    <div class="row"><label>Mean degree</label><input id="o_netDeg" type="range" min="2" max="30" step="1"><span class="val" id="v_netDeg"></span></div>
+    <div class="row"><label>Groups</label><input id="o_netGroups" type="range" min="4" max="100" step="1"><span class="val" id="v_netGroups"></span></div>
+    <div class="row"><label>Hard core x₀</label><input id="o_hardCore" type="range" min="0" max="0.05" step="0.001"><span class="val" id="v_hardCore"></span></div>
+    <div class="row"><label>Random seed</label><input id="o_seed" type="range" min="1" max="999" step="1"><span class="val" id="v_seed"></span></div>
+    <div class="note">Under uniform random targeting, punishment falls on individuals; changing the network or distribution requires <b>Rebuild world</b>. Hard core = people willing to bear the full penalty without waiting for anyone else (Property 6).</div>
+  </div></details>
+
+  <details open><summary>📣 Tactics (movement)<span class="tag">buttons</span></summary><div class="body">
+    <div class="row"><label>Action size (people)</label><input id="seedCount" type="range" min="1" max="200" step="1" value="30"><span class="val" id="v_seedCount">30</span></div>
+    <div class="row"><label>Placement</label><select id="seedMode"><option value="random">Random</option><option value="near">Near threshold (one step away)</option></select></div>
+    <div class="btnrow">
+      <button id="btnSeed" class="act">Launch action (next round)</button>
+      <button id="btnRecur" title="Automatically add a small action every round">Routine actions: off</button>
+    </div>
+    <div class="btnrow">
+      <button id="btnTV" title="For one round, visibility and global information are restored (like the Leipzig footage aired in West Germany)">Footage leak📼</button>
+      <button id="btnLink" title="Add random ties (networking)">Weave network🕸</button>
+    </div>
+    <div class="btnrow">
+      <button id="btnAmnesty" class="warn">Amnesty (free all)</button>
+      <button id="btnSpike" class="warn" title="One round of highly visible bloodshed">Bloodshed🩸</button>
+      <button id="btnCrack" class="warn" title="Three rounds of added pressure: P×1.3">Crackdown order📢</button>
+    </div>
+    <div class="note">The critical seed x₋ is “the last obstacle” (Property 8). Repeated failure of small actions does not prove a large one will fail — look at x₋ and the number of people near threshold first (distribution chart, bottom right).</div>
+  </div></details>
+
+  <details><summary>🧪 Model self-check</summary><div class="body">
+    <div class="btnrow"><button id="btnTest">Run the paper's numeric checks</button></div>
+    <div id="tests">Not run yet.</div>
+    <div class="note">Full suite of 37 checks (node): <span class="kbd">node tests.js</span></div>
+  </div></details>
+</aside>
+
+<section>
+  <div id="statusbar">
+    <span class="item">Round <b id="s_t">0</b></span>
+    <span class="item">Participation x <b id="s_x">0</b></span>
+    <span class="item">Refusal d <b id="s_d">0</b></span>
+    <span class="item">Enforcement capacity k <b id="s_k">0</b></span>
+    <span class="item">Arrested this round p <b id="s_p">0</b></span>
+    <span class="item">Total arrested R <b id="s_R">0</b></span>
+    <span class="item">Mean memory b̄ <b id="s_b">0</b></span>
+    <span class="item" id="s_mu_item">Backlash coeff. μ <b id="s_mu">0</b></span>
+    <span class="item">Critical seed x₋ <b id="s_xc">—</b></span>
+    <span class="item alert">Low-state recovery <b id="s_rec">1 round</b></span>
+  </div>
+
+  <div class="charttitle"><b>Time series</b> · participation xₜ (blue), refusal dₜ (orange), arrests pₜ (red), mean memory b̄ (green)</div>
+  <canvas id="chTime" class="chart" height="240"></canvas>
+
+  <div class="grid2">
+    <div>
+      <div class="charttitle"><b>Response function F(x)</b> · crossings with the diagonal are fixed points; ● stable, ○ unstable (= critical seed); shading = pulled-back zone</div>
+      <canvas id="chReact" class="chart" height="300"></canvas>
+    </div>
+    <div>
+      <div class="charttitle"><b>Bifurcation diagram</b> · P fixed, sweeping enforcement capacity k: steady-state participation vs. k (saddle-node bifurcation)</div>
+      <canvas id="chBif" class="chart" height="300"></canvas>
+    </div>
+  </div>
+
+  <div class="charttitle"><b>Effective tolerance distribution</b> τ+b (free population) · vertical line = current cost; shaded band = people near threshold (sets μ; Properties 3/10)</div>
+  <canvas id="chDist" class="chart" height="190"></canvas>
+
+  <div class="note" style="margin-top:14px">
+    Equations implemented (paper, p1–p8): c(x)=P·min(1,k/x); participation if τ+b≥c(x̂); refusal if αx+βd+δ(P−P̄)₊≥ψ;
+    memory b←(1−ρ)b+γw(P−P̄)₊ζ; update order: read state → arrest at current capacity → update who can act and memory → both layers re-decide.
+    Extensions: release / amnesty / the delayed memorial kernel are the supplementary transition rules the paper points to; the tie-cutting effect of targeted enforcement corresponds to the discussion of martial law in Poland.
+  </div>
+</section>
+</main>
+
+<script>window.SILENCE_LANG = 'en';</script>
+<script src="model.js"></script>
+<script src="lab.js"></script>
+
+</body>
+</html>

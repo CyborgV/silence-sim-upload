@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glances on the Road</title>
+<meta name="description" content="A strategy game about silence, fear and collective action. Built on “Glances on the Road: A Phase-Transition Model of Silence”.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="game.css">
+</head>
+<body>
+
+<!-- ============ Title ============ -->
+<section id="scr-title" class="screen active">
+  <canvas id="titleCanvas"></canvas>
+  <div class="title-wrap">
+    <div class="title-quote">King Li was a tyrant, and the people of the capital spoke ill of him. The king, enraged, found the shaman of Wei and set him to watch the critics; whoever he reported was put to death.<br>The people dared not speak. On the roads, they only exchanged glances.</div>
+    <h1>Glances on the Road</h1>
+    <div class="subtitle">道路以目 · a strategy game about silence and collective action</div>
+    <div class="menu">
+      <button class="btn primary" id="m-campaign">Start Campaign</button>
+      <button class="btn" id="m-tutorial">Tutorial</button>
+      <button class="btn" id="m-skirmish">Skirmish</button>
+      <a class="btn" href="lab.html">Model Lab <small>· all parameters &amp; charts</small></a>
+      <button class="btn ghost" id="m-help">How to play?</button>
+      <a class="btn ghost" href="../index.html">中文</a>
+    </div>
+  </div>
+  <div class="title-foot">Implements the equations of “Glances on the Road: A Phase-Transition Model of Silence” · The history aims to be accurate; the numbers are only illustrative</div>
+</section>
+
+<!-- ============ Level select ============ -->
+<section id="scr-levels" class="screen">
+  <div class="bar"><button class="btn ghost" data-go="title">← Back</button><h2>Campaign</h2><span class="sp"></span><span id="lv-total" class="stars"></span></div>
+  <div class="scroll">
+    <div class="lv-intro">Each level is a real piece of history. Sometimes you stand in the streets; sometimes you sit in the palace. <b>You cannot see anyone's “threshold” — only how many people are on the streets, the intelligence reported up from below, and rumors that may or may not be true.</b> The real numbers are revealed only in the debrief after each level.</div>
+    <div id="levelGrid" class="level-grid"></div>
+  </div>
+</section>
+
+<!-- ============ Briefing ============ -->
+<section id="scr-brief" class="screen">
+  <div class="bar"><button class="btn ghost" data-go="levels">← Levels</button><span class="sp"></span></div>
+  <div class="scroll"><div class="brief" id="briefBody"></div></div>
+</section>
+
+<!-- ============ Skirmish ============ -->
+<section id="scr-skirmish" class="screen">
+  <div class="bar"><button class="btn ghost" data-go="title">← Back</button><h2>Skirmish</h2></div>
+  <div class="scroll"><div class="brief">
+    <p>In a fictional city, choose your side and a type of society, and face a computer opponent over 60 rounds.</p>
+    <div class="goalbox"><h4>Your side</h4><div class="seg-sm" id="sk-side">
+      <button data-v="movement" class="on">📣 Movement</button><button data-v="regime">🏛 Regime</button></div></div>
+    <div class="goalbox"><h4>Society</h4><div class="seg-sm" id="sk-soc"></div><div id="sk-soc-desc" class="era" style="margin-top:8px"></div></div>
+    <div class="goalbox"><h4>Difficulty</h4><div class="seg-sm" id="sk-diff">
+      <button data-v="easy">Easy</button><button data-v="normal" class="on">Normal</button><button data-v="hard">Hard</button></div></div>
+    <div class="actions"><button class="btn primary" id="sk-start">Start</button></div>
+  </div></div>
+</section>
+
+<!-- ============ Game ============ -->
+<section id="scr-game" class="screen">
+  <header id="hud-top">
+    <button class="icon-btn" id="g-menu" title="Menu">≡</button>
+    <div class="lvl-title"><small id="g-chapter"></small><b id="g-title"></b></div>
+    <div class="datebox"><div class="date" id="g-date"></div><div class="timebar"><i id="g-timefill"></i></div></div>
+    <div class="speed">
+      <button id="sp0" data-sp="0" title="Pause (Space)">⏸</button>
+      <button id="sp1" data-sp="1" title="Normal speed">▶</button>
+      <button id="sp2" data-sp="2" title="Fast">▶▶</button>
+      <button id="sp3" data-sp="3" title="Very fast">▶▶▶</button>
+      <button id="btn-step" class="step" title="Advance one round only (→)">Next round ⏭</button>
+    </div>
+    <button class="guide-btn" id="g-guide" title="Tutorial guide: the Duke of Shao walks you through this level's screen and key points">💡 Guide</button>
+    <button class="icon-btn" id="g-help" title="How to play">?</button>
+  </header>
+  <div id="meters">
+    <div class="meter" id="m-main"></div>
+    <div class="meter" id="m-opp"></div>
+  </div>
+  <div id="hud-main">
+    <aside id="hud-left">
+      <div class="goalcard" id="goalcard"><div class="g1" id="goal-text"></div><div class="gbar"><i id="goal-bar"></i></div><div class="g2" id="goal-sub"></div></div>
+      <button class="trendbox" id="trendbox" title="Click to enlarge: trend chart and advisor analysis (A)">
+        <div class="sec-t">Trends <span class="tag">click to enlarge · A</span></div>
+        <canvas id="trend"></canvas>
+        <div class="trend-legend" id="trend-legend"></div>
+      </button>
+      <div id="advice"></div>
+      <div id="build"></div>
+      <div class="sec-t">Situation <span class="tag" id="intel-tag"></span></div>
+      <div id="readouts"></div>
+      <div class="chips" id="effects"></div>
+      <div id="opp-stance"></div>
+    </aside>
+    <div id="stage">
+      <canvas id="city"></canvas>
+      <div id="bubbles"></div>
+      <div id="headline"></div>
+      <div id="banner"></div>
+      <button id="layer-btn" class="layer-btn" title="Undercurrent: how many people in the city are just short of stepping out (rumor, may be wrong). On / off (L)"></button>
+      <div id="toasts"></div>
+      <div class="pausetag" id="pausetag">Paused · press ▶ or Space to resume</div>
+    </div>
+    <aside id="hud-right">
+      <div class="res" id="res"></div>
+      <button class="btn tree-btn" id="tree-btn"></button>
+      <div id="policies"></div>
+      <div class="sec-t" id="cards-title">Actions</div>
+      <div class="cards" id="cards"></div>
+    </aside>
+  </div>
+  <footer id="news"></footer>
+</section>
+
+<!-- ============ Modals ============ -->
+<div class="overlay" id="ov-event"><div class="modal" id="ev-box"></div></div>
+<div class="overlay" id="ov-end"><div class="modal end" id="end-box"></div></div>
+<div class="overlay" id="ov-tree"><div class="modal treebox" id="tree-box"></div></div>
+<div class="overlay" id="ov-analysis"><div class="modal analysis" id="an-box"></div></div>
+<div class="overlay" id="ov-menu"><div class="modal" style="width:min(360px,100%)">
+  <h3>Paused</h3>
+  <div class="choices">
+    <button class="choice" id="mm-resume">Resume</button>
+    <button class="choice" id="mm-restart">Restart level</button>
+    <button class="choice" id="mm-guide">💡 Tutorial guide</button>
+    <button class="choice" id="mm-help">How to play</button>
+    <button class="choice" id="mm-auto">Auto-collect bubbles: off</button>
+    <button class="choice" id="mm-levels">Back to level select</button>
+    <button class="choice" id="mm-title">Back to title</button>
+  </div>
+</div></div>
+<div class="overlay" id="ov-help"><div class="modal help">
+  <h3>How to play</h3>
+  <h4>In one sentence</h4>
+  <p>Everyone decides whether to step out by watching what others do — and what they do, in turn, changes everyone else's decision.</p>
+  <h4>Why nobody steps out</h4>
+  <p>The regime can only arrest so many people each round. When only a few step out, every one of them gets caught — so nobody wants to move first. As the numbers grow, the same police force is spread thinner, each person's chance of arrest falls, and more people are willing to join. <b>Below the “tipping point”, action is pulled back into silence; past it, a chain reaction begins.</b></p>
+  <h4>What you can't see</h4>
+  <ul>
+    <li><b>Grievance</b>: once punishment goes beyond the line people accept, every instance is remembered by those who watch. It doesn't show up as people on the streets, but it quietly lowers the tipping point.</li>
+    <li><b>Intelligence lies</b>: the harsher the regime, the less people below dare to tell the truth — and the calmer the reported “public mood” looks.</li>
+    <li><b>Blackouts</b>: what they suppress is not the memory, only its public airing. Once it comes out, it comes due twice over.</li>
+    <li><b>The enforcers are watching too</b>: the crowd on the streets, how their comrades feel, whether orders go too far — all of it makes soldiers and police hesitate. Once they defect, fewer people can be arrested.</li>
+  </ul>
+  <h4>How to tell what you did wrong</h4>
+  <ul>
+    <li><b>Trend chart</b> (left side; click it or press A to enlarge): people on the streets vs. the estimated tipping point, with every move by you and your opponent marked on the timeline. Enlarged, it also shows how grievance, troop morale and alert are moving; hover over it to see what happened in any round.</li>
+    <li><b>Advisor</b>: ranks “the main obstacle now” (or, for the regime, “the main hidden risk now”) — too few people, too high a cost, not enough anger, or people unable to see each other — and points out which cards in your hand address it.</li>
+    <li><b>Undercurrent layer</b> (top right of the city; L key): orange dots are people who are “wavering”, red dots are people “ready to move”. Dots growing denser mean an outbreak is getting closer; dots thinning out mean your strategy is failing. It is rumor, and can be wrong.</li>
+    <li><b>Report</b>: two rounds after each card you play or policy you change, a purple “Report” appears in the news bar: how the numbers changed, how many were arrested, and whether the tipping point and the undercurrent went up or down.</li>
+    <li><b>Organizational strength</b> (below your resources): when an action fails to cross the tipping point, most of those arrested are your core members. Keep sending small groups in and every later action will bring out fewer people; it recovers slowly while things are quiet. Careless card play has a price.</li>
+    <li>The ↑↓ next to the situation readouts show which way each value moved over the last two rounds: green is good for you, red is bad.</li>
+  </ul>
+  <h4>Play it like Plague Inc.</h4>
+  <ul>
+    <li><b>The two bars at the top</b>: the left one is your progress (movement: how far from the tipping point; regime: how long you still have to hold out); the right one is your opponent (Regime alert / Opposition organization / Exposure risk).</li>
+    <li><b>Bubbles</b>: whenever the situation shifts, bubbles pop up in the city. Click them to collect organizing power or political capital; they vanish after a while.</li>
+    <li><b>Build</b> (hotkey B): permanent upgrades along three paths. Every movement build makes the regime more alert.</li>
+    <li><b>Cards</b>: one-time use, with a cooldown. Cards that can bring people onto the streets show up as hatching on the progress bar — when the hatching passes the purple frame, it's time to strike.</li>
+    <li><b>Policies</b> (regime): standing settings for enforcement, police, arrest targets, media and detention. The harder the line, the higher the cost.</li>
+    <li><b>Random events</b> and <b>historical events</b> force you to choose. Every day brings its own headlines.</li>
+    <li>Time: pause (Space), advance round by round (→), or speed up. Number keys 1–9 play cards. When a level ends, the <b>Debrief</b> reveals the true values you couldn't see.</li>
+    <li>Time keeps moving (▶ by default). It stops automatically when you open a panel such as an event, Build or the menu, and resumes a moment after you close it. Space pauses; → advances one round.</li>
+    <li>Not sure where to start? Click <b>“💡 Guide”</b> at the top and the Duke of Shao will walk you through this level's screen and key points. It won't pop up unless you click it.</li>
+  </ul>
+  <div class="actions" style="justify-content:center;display:flex;margin-top:14px"><button class="btn primary" id="help-close">Got it</button></div>
+</div></div>
+
+<div id="coach-layer"><div id="coach-blocker"></div><div id="coach-hole"></div><div id="coach">
+  <div class="who"><span class="av">🧓</span><span>Duke of Shao</span><button id="coach-close" title="Close guide (Esc)">✕</button></div>
+  <div class="txt" id="coach-txt"></div>
+  <div class="row"><span class="prog" id="coach-prog"></span><span><span class="wait" id="coach-wait"></span> <button class="btn primary" id="coach-next" style="padding:6px 14px">Continue</button></span></div>
+</div></div>
+<div id="tooltip"></div>
+
+<script>window.SILENCE_LANG = 'en';</script>
+<script src="model.js"></script>
+<script src="engine.js"></script>
+<script src="timelines.js"></script>
+<script src="levels.js"></script>
+<script src="city.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
