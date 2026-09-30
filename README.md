@@ -77,7 +77,7 @@
 | `playtest.js` | 关卡平衡测试 `node playtest.js [关卡id|all] [局数]` |
 | `build.js` → `dist/` | 打包离线单文件(中英文) `node build.js` |
 | `i18n/` → `en/` | 英文版: 抽取中文字符串、译文表 `en.json`、生成 `en/` |
-| `video/` | 讲解视频: 脚本、逐帧渲染的场景页、渲染脚本 |
+| `video/` | 讲解视频(中英): 旁白脚本、逐帧渲染的场景页、渲染脚本 `node video/render.js zh\|en`,见 `video/README.md` |
 
 ## 校验
 

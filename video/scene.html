@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>video scenes</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: #0b0f15; overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #0b0f15; font-family: 'Noto Sans SC', sans-serif; color: #e8edf2; }
+  #city, #cv { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+  #ov { position: absolute; inset: 0; }
+  .el { position: absolute; will-change: opacity, transform; }
+  .title { font-family: 'Noto Serif SC', serif; font-weight: 900; font-size: 92px; letter-spacing: .06em; text-align: center; width: 1920px; left: 0; }
+  .sub { font-size: 34px; color: #9aa7b4; text-align: center; width: 1920px; left: 0; letter-spacing: .08em; }
+  .fx { font-size: 44px; color: #f3e9d2; }
+  .fx.big { font-size: 60px; }
+  .fx.box { border: 2px solid rgba(240,180,76,.7); border-radius: 18px; padding: 10px 28px; background: rgba(240,180,76,.06); }
+  .lab { font-size: 30px; color: #b9c3ce; }
+  .lab b { color: #f0b44c; }
+  .chip { font-size: 30px; padding: 10px 22px; border-radius: 14px; background: rgba(12,15,20,.86); border: 1px solid #3a4655; }
+  .count { font-family: 'Noto Serif SC', serif; font-size: 120px; font-weight: 900; color: #ffcf70; text-shadow: 0 0 30px rgba(255,190,80,.35); }
+  .count.red { color: #ff8a80; text-shadow: 0 0 30px rgba(229,83,75,.35); }
+  .small { font-size: 26px; color: #8f99a6; }
+  .katex { font-size: 1em; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="city"></canvas><canvas id="cv" width="1920" height="1080"></canvas><div id="ov"></div></div>
+<script>
+  // ?lang=en 时加载英文版游戏脚本(../en/), 否则中文版(../)
+  const LANG = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'zh';
+  window.SILENCE_LANG = LANG;
+  const base = LANG === 'en' ? '../en/' : '../';
+  for (const f of ['model.js', 'engine.js', 'timelines.js', 'levels.js', 'city.js']) document.write(`<script src="${base}${f}"><\/script>`);
+</script>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="script.js"></script>
+<script>
+(function () {
+  'use strict';
+  const W = 1920, H = 1080, FPS = 30;
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  const cityCv = document.getElementById('city');
+  const ov = document.getElementById('ov');
+  const ZH = LANG === 'zh';
+  const T = (zh, en) => (ZH ? zh : en.replace(/[‘’]/g, "'").replace(/[“”]/g, '"'));   // 思源黑体里弯引号是全角的
+  const K = (src) => katex.renderToString(src, { throwOnError: false });
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const ease = (t) => { t = clamp(t, 0, 1); return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; };
+  const COL = { bg: '#0b0f15', amber: '#f0b44c', amber2: '#ffd98a', crowd: '#ffcf70', purple: '#b392f0', red: '#ef6a5e', green: '#57c28a', blue: '#6f9cf5', dim: '#6d7885', grid: '#1b2430', fg: '#e8edf2' };
+  const { LEVELS } = window.SilenceLevels || {};
+  const { Game } = window.SilenceGame;
+
+  /* ---------- 小工具 ---------- */
+  let els = [];
+  function el(html, cls, x, y, opts) {
+    const d = document.createElement('div');
+    d.className = 'el ' + (cls || '');
+    d.innerHTML = html;
+    d.style.left = x + 'px'; d.style.top = y + 'px';
+    if (opts && opts.w) d.style.width = opts.w + 'px';
+    if (opts && opts.center) { d.style.transform = 'translateX(-50%)'; if (opts.w) d.style.textAlign = 'center'; }
+    d.style.opacity = 0;
+    ov.appendChild(d); els.push(d);
+    return d;
+  }
+  function tex(src, cls, x, y, opts) {
+    const d = el('', 'fx ' + (cls || ''), x, y, opts);
+    katex.render(src, d, { displayMode: false, throwOnError: false });
+    return d;
+  }
+  // 显隐: 在 t0 出现(淡入+上浮), t1 之后淡出
+  function show(d, lt, t0, t1, dy) {
+    const a = ease((lt - t0) / 0.6) * (t1 == null ? 1 : 1 - ease((lt - t1) / 0.5));
+    d.style.opacity = a.toFixed(3);
+    const base = d.style.transform.includes('translateX(-50%)') ? 'translateX(-50%) ' : '';
+    d.style.transform = base + `translateY(${((1 - ease((lt - t0) / 0.6)) * (dy == null ? 18 : dy)).toFixed(1)}px)`;
+  }
+  function clearEls() { for (const d of els) d.remove(); els = []; }
+  function text(s, x, y, size, color, align, weight, font) {
+    ctx.font = `${weight || 400} ${size}px ${font || "'Noto Sans SC', sans-serif"}`;
+    ctx.fillStyle = color; ctx.textAlign = align || 'left'; ctx.fillText(s, x, y); ctx.textAlign = 'left';
+  }
+  function bgDots(t, alpha) {
+    ctx.fillStyle = COL.bg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = `rgba(150,165,185,${alpha || 0.1})`;
+    for (let i = 0; i < 900; i++) {
+      const x = (i * 97.13) % W, y = ((i * 57.7) % H + t * 6 * ((i % 5) - 2)) % H;
+      ctx.fillRect(x, (y + H) % H, 2.2, 2.2);
+    }
+  }
+  function arrowLine(x0, y0, x1, y1, col, w) {
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w || 3;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    const a = Math.atan2(y1 - y0, x1 - x0), s = 14;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - s * Math.cos(a - 0.4), y1 - s * Math.sin(a - 0.4)); ctx.lineTo(x1 - s * Math.cos(a + 0.4), y1 - s * Math.sin(a + 0.4)); ctx.closePath(); ctx.fill();
+  }
+  function dot(x, y, r, col, hollow) {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    if (hollow) { ctx.fillStyle = COL.bg; ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.stroke(); }
+    else { ctx.fillStyle = col; ctx.fill(); }
+  }
+  // 坐标系: box {x,y,w,h}; fx/fy 把数值映到 0..1
+  function axes(box, xl, yl, xt, yt, fx, fy) {
+    ctx.strokeStyle = '#3a4655'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(box.x, box.y); ctx.lineTo(box.x, box.y + box.h); ctx.lineTo(box.x + box.w, box.y + box.h); ctx.stroke();
+    ctx.font = "22px 'Noto Sans SC', sans-serif"; ctx.fillStyle = COL.dim;
+    for (const [v, s] of xt || []) { const X = box.x + fx(v) * box.w; ctx.strokeStyle = COL.grid; ctx.beginPath(); ctx.moveTo(X, box.y); ctx.lineTo(X, box.y + box.h); ctx.stroke(); ctx.textAlign = 'center'; ctx.fillText(s, X, box.y + box.h + 32); }
+    for (const [v, s] of yt || []) { const Y = box.y + box.h - fy(v) * box.h; ctx.strokeStyle = COL.grid; ctx.beginPath(); ctx.moveTo(box.x, Y); ctx.lineTo(box.x + box.w, Y); ctx.stroke(); ctx.textAlign = 'right'; ctx.fillText(s, box.x - 12, Y + 8); }
+    ctx.textAlign = 'left';
+    text(xl, box.x + box.w, box.y + box.h + 70, 26, '#9aa7b4', 'right');
+    ctx.save(); ctx.translate(box.x - 84, box.y + box.h / 2); ctx.rotate(-Math.PI / 2); text(yl, 0, 0, 26, '#9aa7b4', 'center'); ctx.restore();
+  }
+  function curve(box, f, x0, x1, fx, fy, col, w, upto, dash) {
+    ctx.strokeStyle = col; ctx.lineWidth = w || 4; ctx.setLineDash(dash || []);
+    ctx.beginPath();
+    const n = 400, end = upto == null ? 1 : upto;
+    for (let i = 0; i <= n * end; i++) {
+      const v = x0 + (x1 - x0) * (i / n), y = f(v);
+      const X = box.x + fx(v) * box.w, Y = box.y + box.h - clamp(fy(y), -0.05, 1.05) * box.h;
+      i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  const P2 = (box, fx, fy) => (x, y) => [box.x + fx(x) * box.w, box.y + box.h - fy(y) * box.h];
+
+  /* ---------- 游戏画面(用真实的引擎与城市视图逐帧绘制) ---------- */
+  let city = null;
+  function footage(levelId, seed, picks) {
+    const L = LEVELS.find((l) => l.id === levelId);
+    const g = new Game(L, { seed: seed || 7 });
+    g.__picks = picks || {};
+    resolve(g);
+    if (!city) city = new window.SilenceCity(cityCv);
+    city.setGame(g); city.layerOn = false;
+    return g;
+  }
+  function resolve(g) { let n = 0; while (g.popup && n++ < 20) { const i = g.__picks[g.popup.title]; g.choose(i == null ? 0 : i); } }
+  function stepG(g, n) { for (let i = 0; i < (n || 1) && !g.over; i++) { g.step(); resolve(g); } }
+
+  /* ============================================================
+   * 各场景: enter(sc) 初始化; draw(lt, sc) 画第 lt 秒
+   * ============================================================ */
+  const V = {};
+
+  // 开场: 操场上的二十个人与二十一个人
+  V.assembly = {
+    enter(sc) {
+      cityCv.style.opacity = 1;
+      this.g = footage('tutorial', 7); this.phase = 0; this.acts = [];
+      const c = sc.cues;
+      const at = (t, f) => this.acts.push({ t, f });
+      at(c[1].t0 + 0.4, () => { this.phase = 20; this.g.addSeeds(20 / this.g.N); });
+      at(c[1].t0 + 1.8, () => stepG(this.g)); at(c[1].t0 + 3.4, () => stepG(this.g)); at(c[1].t0 + 5.0, () => stepG(this.g));
+      at(c[2].t0 - 0.1, () => { this.g = footage('tutorial', 7); this.phase = 21; this.g.addSeeds(21 / this.g.N); });
+      at(c[2].t0 + 1.2, () => stepG(this.g)); at(c[2].t0 + 2.4, () => stepG(this.g)); at(c[2].t0 + 3.6, () => stepG(this.g)); at(c[2].t0 + 4.8, () => stepG(this.g));
+      this.say = el(T('校领导:"从下周起,取消周末。"', 'Principal: “Starting next week — no more weekends.”'), 'chip', 960, 150, { center: true });
+      this.badge = el('', 'count', 1566, 0);
+      this.lab1 = el('', 'lab', 1570, 168); this.lab1.style.whiteSpace = 'nowrap'; this.lab1.style.fontSize = '26px';
+      this.taken = el('', 'lab', 1570, 254); this.taken.style.whiteSpace = 'nowrap'; this.taken.style.fontSize = '26px';
+    },
+    draw(lt, sc) {
+      while (this.acts.length && this.acts[0].t <= lt) this.acts.shift().f();
+      ctx.clearRect(0, 0, W, H);
+      city.frame(1000 / FPS);
+      show(this.say, lt, 0.6, sc.cues[1].t0);
+      const g = this.g, out = Math.round(g.x * g.N), gone = Math.round(g.sim.R * g.N);
+      if (this.phase) {
+        this.badge.innerHTML = String(out); this.badge.className = 'el count' + (this.phase === 20 && out === 0 ? ' red' : '');
+        this.lab1.innerHTML = T(`站出来的学生<br>从 <b>${this.phase}</b> 人开始`, `students standing<br>started with <b>${this.phase}</b>`);
+        this.taken.innerHTML = T(`被带去教导处:<b>${gone}</b>`, `taken to the office: <b>${gone}</b>`);
+        const t0 = this.phase === 20 ? sc.cues[1].t0 : sc.cues[2].t0;
+        show(this.badge, lt, t0, null, 0); show(this.lab1, lt, t0, null, 0); show(this.taken, lt, t0 + 1.5, null, 0);
+      }
+    },
+  };
+
+  V.title = {
+    enter() {
+      cityCv.style.opacity = 0;
+      this.t = el(T('沉默为什么会突然崩塌?', 'Why does silence collapse all at once?'), 'title', 0, 400);
+      this.s = el(T('道路以目 · 一个关于恐惧与集体行动的数学模型', 'Glances on the Road · the math of fear and collective action'), 'sub', 0, 560);
+    },
+    draw(lt, sc) { bgDots(lt, 0.08); show(this.t, lt, 0.3, sc.dur - 0.7, 30); show(this.s, lt, 0.9, sc.dur - 0.7); },
+  };
+
+  // 代价: c(x) = P·min(1, k/x)
+  V.cost = {
+    enter(sc) {
+      cityCv.style.opacity = 0;
+      const c = sc.cues;
+      this.items = [
+        [el(T('<b>τ</b> · 承受上限:每个人愿意为表态付出的代价,人人不同', '<b>τ</b> · tolerance: what each person is willing to pay to speak up — everyone differs'), 'lab', 110, 120, { w: 800 }), c[0].t0],
+        [tex(T('\\text{代价} = P \\times \\Pr(\\text{被抓})', '\\text{cost} = P \\times \\Pr(\\text{caught})'), '', 110, 300), c[1].t0],
+        [tex(T('\\Pr(\\text{被抓}) = \\min\\!\\left(1,\\ \\dfrac{k}{x}\\right)', '\\Pr(\\text{caught}) = \\min\\!\\left(1,\\ \\dfrac{k}{x}\\right)'), '', 110, 475), c[2].t0 + 1],
+        [tex('c(x) = P\\cdot\\min\\!\\left(1,\\ \\dfrac{k}{x}\\right)', 'big box', 110, 620), c[4].t0],
+        [tex(T('\\tau_i \\;\\ge\\; c(x)\\ \\Rightarrow\\ \\text{站出来}', '\\tau_i \\;\\ge\\; c(x)\\ \\Rightarrow\\ \\text{stand up}'), '', 110, 815), c[5].t0],
+      ];
+      this.kLab = el(T('<b>k</b>:每一轮最多能抓的人(占总人数的比例)', '<b>k</b>: the most the police can arrest per round (a share of everyone)'), 'lab', 110, 392, { w: 880 });
+      this.kT = c[2].t0;
+    },
+    draw(lt, sc) {
+      bgDots(lt, 0.05);
+      const c = sc.cues, P = 1, k = 0.04;
+      for (const [d, t0] of this.items) show(d, lt, t0);
+      show(this.kLab, lt, this.kT);
+      // 人人不同的承受上限: 一条钟形分布
+      const a0 = ease((lt - c[0].t0 - 0.5) / 1.2);
+      if (a0 > 0) {
+        ctx.globalAlpha = a0 * (1 - ease((lt - c[1].t0) / 0.6));
+        const bx = 140, by = 190, bw = 600, bh = 70;
+        ctx.strokeStyle = COL.amber; ctx.lineWidth = 3; ctx.beginPath();
+        for (let i = 0; i <= 100; i++) { const u = i / 100, y = Math.exp(-Math.pow((u - 0.45) / 0.16, 2) / 2); i ? ctx.lineTo(bx + u * bw, by + bh - y * bh) : ctx.moveTo(bx + u * bw, by + bh - y * bh); }
+        ctx.stroke(); ctx.globalAlpha = 1;
+      }
+      // 图: 代价曲线
+      const box = { x: 1040, y: 150, w: 760, h: 600 }, fx = (v) => v / 0.25, fy = (v) => v / 1.15;
+      const aPlot = ease((lt - c[2].t0) / 0.8);
+      if (aPlot > 0) {
+        ctx.globalAlpha = aPlot;
+        axes(box, T('站出来的比例 x', 'share of people standing up, x'), T('每个人面对的代价 c', 'cost each person faces, c'),
+          [[0, '0'], [0.04, 'k'], [0.1, '10%'], [0.2, '20%']], [[1, 'P']], fx, fy);
+        const prog = clamp((lt - c[2].t0 - 0.5) / 2.5, 0, 1);
+        curve(box, (x) => P * Math.min(1, k / Math.max(x, 1e-6)), 0.001, 0.25, fx, fy, COL.purple, 5, prog);
+        // 沿曲线移动的点
+        const m = clamp((lt - c[3].t0) / (c[3].t1 - c[3].t0), 0, 1);
+        if (lt > c[3].t0) {
+          const xv = 0.01 + m * 0.22, cv_ = P * Math.min(1, k / xv), [X, Y] = P2(box, fx, fy)(xv, cv_);
+          ctx.strokeStyle = 'rgba(255,207,112,.5)'; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(X, box.y + box.h); ctx.lineTo(X, Y); ctx.stroke(); ctx.setLineDash([]);
+          dot(X, Y, 11, COL.crowd);
+          const near = X > box.x + box.w - 300;
+          text(T(`被抓的机会 ${Math.round(Math.min(1, k / xv) * 100)}%`, `chance of arrest ${Math.round(Math.min(1, k / xv) * 100)}%`), near ? X - 20 : X + 20, near ? Y + 48 : Y - 18, 26, COL.amber2, near ? 'right' : 'left');
+        }
+        // τ 线与"会站出来"的区域
+        const aTau = ease((lt - c[5].t0) / 0.8);
+        if (aTau > 0) {
+          const tau = 0.35, xs = k / tau, [X0, Yt] = P2(box, fx, fy)(0, tau), [Xs] = P2(box, fx, fy)(xs, tau);
+          ctx.globalAlpha = aPlot * aTau;
+          ctx.fillStyle = 'rgba(87,194,138,.14)'; ctx.fillRect(Xs, box.y, box.x + box.w - Xs, box.h);
+          ctx.strokeStyle = COL.green; ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.moveTo(X0, Yt); ctx.lineTo(box.x + box.w, Yt); ctx.stroke(); ctx.setLineDash([]);
+          text(T('这个人的 τ', 'this person’s τ'), box.x + box.w - 10, Yt - 14, 26, COL.green, 'right');
+          text(T('代价 ≤ τ:站出来', 'cost ≤ τ: stands up'), Xs + 20, box.y + 40, 28, COL.green);
+        }
+        ctx.globalAlpha = 1;
+      }
+    },
+  };
+
+  // 反应函数与不动点 (均匀分布, P=1, k=2%), 平方根刻度
+  V.reaction = {
+    enter(sc) {
+      cityCv.style.opacity = 0;
+      const c = sc.cues;
+      this.items = [
+        [tex('F(x) = 1 - G\\big(c(x)\\big)', '', 100, 140), c[0].t0 + 0.5],
+        [el(T('G:承受上限的分布——代价以下的人不会站出来', 'G: the distribution of tolerances — people below the cost stay home'), 'lab', 100, 220, { w: 840 }), c[0].t0 + 2],
+        [tex('F(x^*) = x^*', '', 100, 320), c[1].t0 + 0.5],
+        [el(T('N = 1000 · τ ∼ 均匀[0,1] · P = 1 · k = 2%(二十个人)', 'N = 1000 · τ ∼ U[0,1] · P = 1 · k = 2% (20 people)'), 'chip', 100, 425), c[4].t0],
+        [tex('x_- = \\dfrac{1-\\sqrt{1-4Pk}}{2} \\approx 0.0204', 'big box', 100, 560), c[7].t0],
+        [el(T('= <b>20.4</b> 个人', '= <b>20.4</b> people'), 'lab', 110, 735), c[7].t0 + 1.2],
+        [tex('x_- = Pk + (Pk)^2 + 2(Pk)^3 + 5(Pk)^4 + 14(Pk)^5 + \\cdots', '', 100, 790), c[8].t0],
+        [el(T('1, 1, 2, 5, 14, 42… 卡塔兰数', '1, 1, 2, 5, 14, 42… the Catalan numbers'), 'lab', 100, 880), c[8].t0 + 1.2],
+      ];
+      this.items[6][0].style.fontSize = '36px';   // 级数那一行别伸进右边的图里
+      this.seq = el('', 'count', 100, 400);
+    },
+    draw(lt, sc) {
+      bgDots(lt, 0.05);
+      const c = sc.cues, k = 0.02, F = (x) => Math.max(0, 1 - k / Math.max(x, 1e-9));
+      for (const [d, t0] of this.items) show(d, lt, t0, d.classList.contains('chip') ? c[7].t0 - 0.3 : null);
+      const box = { x: 1040, y: 110, w: 740, h: 740 }, s = (v) => Math.sqrt(clamp(v, 0, 1)), at = P2(box, s, s);
+      const a = ease((lt - c[0].t0) / 0.8);
+      ctx.globalAlpha = a;
+      axes(box, T('此刻站出来的比例 x', 'share out now, x'), T('下一轮愿意站出来的比例', 'share willing next round'),
+        [[0.02, '2%'], [0.1, '10%'], [0.25, '25%'], [0.5, '50%'], [1, '100%']], [[0.02, '2%'], [0.1, '10%'], [0.5, '50%'], [1, '100%']], s, s);
+      curve(box, F, 0.0005, 1, s, s, COL.purple, 5, clamp((lt - c[0].t0 - 0.5) / 2.5, 0, 1));
+      text('F(x)', at(0.5, F(0.5))[0] - 60, at(0.5, F(0.5))[1] - 20, 30, COL.purple);
+      // 对角线
+      const aD = ease((lt - c[1].t0) / 0.8);
+      if (aD > 0) { ctx.globalAlpha = a * aD; curve(box, (x) => x, 0, 1, s, s, '#8f99a6', 3, clamp((lt - c[1].t0) / 1.5, 0, 1), [8, 8]); text('y = x', at(0.4, 0.4)[0] + 40, at(0.4, 0.4)[1] + 40, 26, '#8f99a6'); }
+      // 三个不动点
+      const aF = ease((lt - c[2].t0) / 0.8), xm = (1 - Math.sqrt(1 - 4 * k)) / 2, xp = (1 + Math.sqrt(1 - 4 * k)) / 2;
+      if (aF > 0) {
+        ctx.globalAlpha = a * aF;
+        dot(...at(0, 0), 12, COL.fg); text(T('稳定的沉默', 'stable silence'), at(0, 0)[0] - 12, box.y + box.h + 70, 26, COL.fg);
+        dot(...at(xp, xp), 12, COL.crowd); text(T('稳定的大规模参与', 'stable mass participation'), at(xp, xp)[0] - 20, at(xp, xp)[1] + 44, 26, COL.crowd, 'right');
+        dot(...at(xm, xm), 12, COL.red, true); text(T('不稳定的分界 = 临界点', 'unstable divide = tipping point'), at(xm, xm)[0] + 26, at(xm, xm)[1] + 8, 26, COL.red);
+      }
+      // 流向箭头
+      const aA = ease((lt - c[3].t0) / 0.8);
+      if (aA > 0) {
+        ctx.globalAlpha = a * aA;
+        const ph = ((lt - c[3].t0) * 0.35) % 1;
+        for (const q of [0.25, 0.6]) { const v = xm * (1 - ((q + ph) % 1) * 0.9); arrowLine(...at(v * 1.1, v * 1.1), ...at(v * 0.9, v * 0.9), COL.red, 3); }
+        for (const q of [0.1, 0.45, 0.8]) { const u = xm + (xp - xm) * ((q + ph) % 1); const u2 = Math.min(xp, u + (xp - xm) * 0.08); arrowLine(...at(u, u), ...at(u2, u2), COL.green, 3); }
+      }
+      // 蛛网图: 20 与 21
+      const web = (x0, t0, dur, col) => {
+        if (lt < t0) return;
+        let x = x0; const pts = [at(x, x)];
+        for (let i = 0; i < 6; i++) { const y = F(x); pts.push(at(x, y)); pts.push(at(y, y)); x = y; }
+        const prog = clamp((lt - t0) / dur, 0, 1) * (pts.length - 1);
+        ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(...pts[0]);
+        for (let i = 1; i <= Math.floor(prog); i++) ctx.lineTo(...pts[i]);
+        const f = prog - Math.floor(prog), i0 = Math.floor(prog);
+        if (i0 < pts.length - 1) ctx.lineTo(pts[i0][0] + (pts[i0 + 1][0] - pts[i0][0]) * f, pts[i0][1] + (pts[i0 + 1][1] - pts[i0][1]) * f);
+        ctx.stroke();
+        dot(...pts[0], 9, col);
+      };
+      ctx.globalAlpha = a;
+      web(0.020, c[5].t0 + 0.3, 1.6, COL.red);
+      web(0.021, c[6].t0 + 0.3, 7.5, COL.crowd);
+      ctx.globalAlpha = 1;
+      // 人数的数列
+      let seqTxt = '', t0 = null;
+      if (lt >= c[5].t0 && lt < c[6].t0) { t0 = c[5].t0; seqTxt = lt > c[5].t0 + 1.2 ? '20 → 0' : '20'; this.seq.className = 'el count red'; }
+      else if (lt >= c[6].t0 && lt < c[7].t0) {
+        t0 = c[6].t0; this.seq.className = 'el count';
+        const steps = ['21', '48', '580', '966'], n = 1 + Math.floor(clamp((lt - c[6].t0 - 0.3) / 2, 0, 3));
+        seqTxt = steps.slice(0, n).join(' → ');
+      }
+      this.seq.innerHTML = seqTxt; this.seq.style.fontSize = seqTxt.length > 12 ? '84px' : '120px';
+      if (t0 != null) show(this.seq, lt, t0, null, 0); else this.seq.style.opacity = 0;
+    },
+  };
+
+  // 记忆: 街上一直是零, 临界点却在下降 (承受上限 ~ N(0.25, 0.06), P=1, k=8%)
+  const erf = (x) => { const t = 1 / (1 + 0.3275911 * Math.abs(x)); const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; };
+  const Phi = (z) => 0.5 * (1 + erf(z / Math.SQRT2));
+  V.memory = {
+    enter(sc) {
+      cityCv.style.opacity = 0;
+      const c = sc.cues;
+      this.items = [
+        [tex('b_{t+1} = (1-\\rho)\\,b_t + \\gamma\\, w\\,(P-\\bar P)_+\\,\\zeta_t', '', 100, 180), c[1].t0 + 0.5],
+        [el(T(`<b>${K('\\bar P')}</b>:人们认可的界线 · <b>${K('(P-\\bar P)_+')}</b>:越界的部分 · <b>${K('\\zeta')}</b>:看见的抓捕`, `<b>${K('\\bar P')}</b>: the line people accept · <b>${K('(P-\\bar P)_+')}</b>: the overreach · <b>${K('\\zeta')}</b>: arrests people see`), 'lab', 100, 270, { w: 860 }), c[1].t0 + 1.5],
+        [tex('\\tau_i + b_i \\;\\ge\\; c(x)', 'big box', 100, 400), c[2].t0 + 0.5],
+      ];
+      this.street = el('', 'lab', 100, 590, { w: 820 });
+      this.tipTxt = el('', 'lab', 100, 650, { w: 820 });
+      this.rec = el('', 'small', 100, 760, { w: 860 });
+    },
+    draw(lt, sc) {
+      bgDots(lt, 0.05);
+      const c = sc.cues;
+      for (const [d, t0] of this.items) show(d, lt, t0);
+      const mu = 0.25, sd = 0.06, k = 0.08, bMax = 0.585;
+      const b = bMax * ease((lt - c[2].t0) / (c[3].t1 - c[2].t0 + 0.5));
+      const F = (x) => 1 - Phi((Math.min(1, k / Math.max(x, 1e-9)) - b - mu) / sd);
+      let xm = null, prev = F(1e-4) - 1e-4;
+      for (let i = 1; i <= 3000; i++) { const x = i / 3000 * 0.6, g = F(x) - x; if (prev < 0 && g >= 0) { xm = x; break; } prev = g; }
+      const box = { x: 1040, y: 110, w: 740, h: 740 }, sq = (v) => Math.sqrt(clamp(v, 0, 1)), fx = sq, fy = sq, at = P2(box, fx, fy);
+      const a = ease((lt - 0.3) / 0.8);
+      ctx.globalAlpha = a;
+      axes(box, T('此刻站出来的比例 x', 'share out now, x'), T('下一轮愿意站出来的比例', 'share willing next round'), [[0.05, '5%'], [0.1, '10%'], [0.3, '30%'], [0.6, '60%'], [1, '100%']], [[0.05, '5%'], [0.1, '10%'], [0.3, '30%'], [0.6, '60%'], [1, '100%']], fx, fy);
+      ctx.save(); ctx.beginPath(); ctx.rect(box.x - 20, box.y - 20, box.w + 40, box.h + 40); ctx.clip();
+      curve(box, (x) => x, 0, 1, fx, fy, '#8f99a6', 3, 1, [8, 8]);
+      curve(box, F, 0.0005, 1, fx, fy, COL.purple, 5);
+      dot(...at(0, 0), 13, COL.fg);
+      if (xm != null) {
+        const [X, Y] = at(xm, xm);
+        ctx.strokeStyle = 'rgba(239,106,94,.6)'; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X, box.y + box.h); ctx.stroke(); ctx.setLineDash([]);
+        dot(X, Y, 12, COL.red, true);
+        text(T('临界点', 'tipping point'), X - 24, Y - 20, 28, COL.red, 'right');
+      }
+      // 最后: 一次不大的聚集越过了它
+      const tS = c[4].t0 + 2.5;
+      if (lt > tS && xm != null) {
+        const x0 = xm * 1.25, pts = [at(x0, x0)]; let x = x0;
+        for (let i = 0; i < 6; i++) { const y = F(x); pts.push(at(x, y)); pts.push(at(y, y)); x = y; }
+        const prog = clamp((lt - tS) / 2.5, 0, 1) * (pts.length - 1);
+        ctx.strokeStyle = COL.crowd; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(...pts[0]);
+        for (let i = 1; i <= Math.floor(prog); i++) ctx.lineTo(...pts[i]); ctx.stroke(); dot(...pts[0], 9, COL.crowd);
+      }
+      ctx.restore();
+      ctx.globalAlpha = 1;
+      const pct = (v) => Math.round(v * 100) + '%';
+      this.street.innerHTML = T(`街上的人:<b>0</b>`, `people on the street: <b>0</b>`);
+      this.tipTxt.innerHTML = T(`临界点:<b style="color:#ef6a5e">${xm == null ? '—' : pct(xm)}</b>`, `tipping point: <b style="color:#ef6a5e">${xm == null ? '—' : pct(xm)}</b>`);
+      const nRec = Math.floor(clamp((lt - c[2].t0) / 0.7, 0, 30));
+      this.rec.innerHTML = T('公开的记录:', 'the public record: ') + Array(nRec).fill('0').join(' ');
+      show(this.street, lt, c[3].t0 - 1); show(this.tipTxt, lt, c[3].t0 - 1); show(this.rec, lt, c[2].t0 + 0.5);
+    },
+  };
+
+  // 布加勒斯特: 真实引擎里的一局(史实选择 + 12月21日召开大会)
+  function footageScene(levelId, seed, picks, preRounds, stepEvery, chipZh, chipEn, perStep) {
+    return {
+      enter(sc) {
+        cityCv.style.opacity = 1;
+        this.g = footage(levelId, seed, picks);
+        for (let i = 0; i < preRounds && !this.g.over; i++) { if (perStep) perStep(this.g, true); stepG(this.g); }
+        city.setGame(this.g); city.layerOn = false;
+        for (let i = 0; i < 60; i++) city.frame(1000 / FPS);   // 先让画面就位
+        this.next = 1.2;
+        this.place = T(chipZh, chipEn);
+        this.chip = el('', 'chip', 960, 236, { center: true }); this.chip.style.whiteSpace = 'nowrap';
+      },
+      draw(lt) {
+        if (lt >= this.next && !this.g.over) { if (perStep) perStep(this.g, false); stepG(this.g); this.next += stepEvery; }
+        ctx.clearRect(0, 0, W, H);
+        city.frame(1000 / FPS);
+        this.chip.innerHTML = `${this.place} · ${this.g.dateLabel()}`;
+        show(this.chip, lt, 0.3, null, 0);
+      },
+    };
+  }
+  V.bucharest = footageScene('bucharest', 42, { '特凯什牧师': 0, '蒂米什瓦拉': 1, '伊朗之行': 0, '电视讲话': 0, '12月21日 · 群众大会': 0,
+    "Pastor Tőkés": 0, 'Timișoara': 1, 'The Iran Trip': 0, 'TV Address': 0 }, 11, 2.6, '1989 · 布加勒斯特', '1989 · Bucharest');
+  V.petrograd = footageScene('petrograd', 7, {}, 22, 1.4, '1917 · 彼得格勒', '1917 · Petrograd', (g, pre) => { if (!pre) { g.addSeeds(0.05); g.scalePsi(0.4, 0.55); } else g.addSeeds(0.01); });
+  V.beijing = footageScene('beijing', 7, {}, 32, 1.6, '1989 · 北京', '1989 · Beijing', (g, pre) => { g.addSeeds(pre ? 0.03 : 0.08); g.scalePsi(1, 1.3); });
+  V.baizhi = footageScene('baizhi', 7, {}, 39, 2.2, '2022 · 上海 乌鲁木齐中路', '2022 · Shanghai, Urumqi Middle Road', (g, pre) => { if (!pre) g.addSeeds(0.035); });
+
+  // 两层反馈: 人群 ⇄ 执行者
+  V.twolayer = {
+    enter(sc) {
+      cityCv.style.opacity = 0;
+      const c = sc.cues;
+      this.items = [
+        [tex('\\alpha\\,x + \\beta\\,d + \\delta\\,(P-\\bar P)_+ \\;\\ge\\; \\psi_j', 'big box', 960, 50, { center: true }), c[1].t0 + 0.3],
+        [el(T('街上的人 · 同僚抗命 · 命令越界 ≥ 这个士兵的门槛', 'crowd · comrades refusing · overreach ≥ this soldier’s threshold'), 'lab', 960, 172, { center: true, w: 1400 }), c[1].t0 + 1.2],
+        [tex('k = k_0\\,(1-d)', '', 960, 880, { center: true }), c[2].t0 + 0.3],
+      ];
+    },
+    draw(lt, sc) {
+      bgDots(lt, 0.05);
+      const c = sc.cues;
+      for (const [d, t0] of this.items) show(d, lt, t0);
+      const A = [640, 560], B = [1280, 560], R = 170;
+      const loop = clamp((lt - c[2].t0) / (c[2].t1 - c[2].t0), 0, 1);
+      const xv = 0.08 + 0.6 * ease(loop), dv = 0.05 + 0.55 * ease(loop - 0.1);
+      const circ = (p, v, col, lab1, lab2) => {
+        ctx.save(); ctx.beginPath(); ctx.arc(p[0], p[1], R, 0, Math.PI * 2); ctx.clip();
+        ctx.fillStyle = col + '33'; ctx.fillRect(p[0] - R, p[1] + R - 2 * R * v, 2 * R, 2 * R * v); ctx.restore();
+        ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(p[0], p[1], R, 0, Math.PI * 2); ctx.stroke();
+        text(lab1, p[0], p[1] - 10, ZH ? 38 : 32, col, 'center', 700); text(lab2, p[0], p[1] + 40, 28, COL.fg, 'center');
+      };
+      const a = ease((lt - 0.3) / 0.8);
+      ctx.globalAlpha = a;
+      circ(A, xv, COL.crowd, T('街上的人 x', 'crowd x'), Math.round(xv * 100) + '%');
+      circ(B, dv, COL.green, T('士兵动摇 d', 'soldiers wavering d'), Math.round(dv * 100) + '%');
+      // 两条弧形箭头与流动的光点
+      const arc = (from, to, up, col, label, t0) => {
+        const aa = ease((lt - t0) / 0.8); if (aa <= 0) return;
+        ctx.globalAlpha = a * aa;
+        const mx = (from[0] + to[0]) / 2, my = from[1] + (up ? -230 : 230);
+        ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(from[0], from[1] + (up ? -R : R)); ctx.quadraticCurveTo(mx, my, to[0], to[1] + (up ? -R : R)); ctx.stroke();
+        const ex = to[0], ey = to[1] + (up ? -R : R); arrowLine(ex - (up ? 30 : -30), ey + (up ? -30 : 30), ex, ey, col, 4);
+        const y0_ = from[1] + (up ? -R : R), peak = (2 * y0_ + 2 * my) / 4;
+        text(label, mx, peak + (up ? -22 : 46), 28, col, 'center');
+        if (loop > 0) for (let q = 0; q < 3; q++) {
+          const u = ((lt * 0.5 + q / 3) % 1), x0 = from[0], y0 = from[1] + (up ? -R : R), x1 = to[0], y1 = to[1] + (up ? -R : R);
+          const px = (1 - u) * (1 - u) * x0 + 2 * (1 - u) * u * mx + u * u * x1, py = (1 - u) * (1 - u) * y0 + 2 * (1 - u) * u * my + u * u * y1;
+          dot(px, py, 8, col);
+        }
+      };
+      arc(A, B, true, COL.green, T('人越多,士兵越犹豫(α)', 'more people → soldiers hesitate (α)'), c[1].t0);
+      arc(B, A, false, COL.crowd, T('士兵犹豫 → k 变小 → 风险被摊薄', 'soldiers hesitate → k shrinks → risk thins out'), c[2].t0);
+      ctx.globalAlpha = 1;
+    },
+  };
+
+  // 信息: 审查把"看见的人数"打折
+  V.info = {
+    enter(sc) {
+      cityCv.style.opacity = 0;
+      const c = sc.cues;
+      this.items = [
+        [tex(T('\\hat{x}_i = (1-\\omega)\\,x_i^{\\text{身边}} + \\omega\\,\\lambda\\,x', '\\hat{x}_i = (1-\\omega)\\,x_i^{\\text{nearby}} + \\omega\\,\\lambda\\,x'), 'big', 960, 80, { center: true }), c[0].t0 + 0.4],
+        [el(T('λ:审查的压缩 —— λ = 1 如实,λ 越小,越看不见别人', 'λ: censorship’s compression — λ = 1 is honest; the smaller λ, the less you see of others'), 'lab', 960, 185, { center: true, w: 1400 }), c[0].t0 + 1.4],
+      ];
+    },
+    draw(lt, sc) {
+      bgDots(lt, 0.04);
+      const c = sc.cues;
+      for (const [d, t0] of this.items) show(d, lt, t0);
+      const lam = 1 - 0.7 * ease((lt - c[1].t0) / 3);
+      // 左: 人群网格(四成不满)
+      const cols = 22, rows = 12, gx = 140, gy = 300, sp = 34;
+      ctx.globalAlpha = ease((lt - 0.2) / 0.8);
+      for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+        const angry = ((i * 7 + j * 13) % 10) < 4;
+        const vis = angry ? 0.25 + 0.75 * lam : 1;
+        ctx.fillStyle = angry ? `rgba(239,106,94,${vis})` : 'rgba(150,165,185,.35)';
+        ctx.fillRect(gx + i * sp, gy + j * sp, 16, 16);
+      }
+      ctx.strokeStyle = COL.amber; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(gx + 10 * sp + 8, gy + 6 * sp + 8, sp * 2.6, 0, Math.PI * 2); ctx.stroke();
+      ctx.font = "24px 'Noto Sans SC', sans-serif";
+      const lw = ctx.measureText(T('他身边的人', 'his neighbors')).width + 20, ly = gy + 6 * sp - sp * 2.6 - 14;
+      ctx.fillStyle = 'rgba(11,15,21,.92)'; ctx.fillRect(gx + 10 * sp + 8 - lw / 2, ly - 24, lw, 34);
+      text(T('他身边的人', 'his neighbors'), gx + 10 * sp + 8, ly, 24, COL.amber, 'center');
+      // 右: 条形——真实 vs 他以为
+      const bx = 1080, bw = 640;
+      const bar = (y, v, col, label) => { ctx.fillStyle = '#1b2430'; ctx.fillRect(bx, y, bw, 40); ctx.fillStyle = col; ctx.fillRect(bx, y, bw * v, 40); text(label, bx, y - 14, 28, COL.fg); text(Math.round(v * 100) + '%', bx + bw * v + 12, y + 30, 28, col); };
+      const truth = 0.4, seen = 0.5 * 0.4 + 0.5 * lam * truth;
+      bar(360, truth, COL.red, T('实际上不满的人', 'actually unhappy'));
+      bar(470, seen, COL.amber, T('他以为不满的人', 'unhappy, as he sees it'));
+      // 临界点随 λ 升高 (均匀例子: k_eff = k / (ω λ + 1 − ω))
+      const k = 0.02, keff = k / (0.5 * lam + 0.5), tip = (1 - Math.sqrt(1 - 4 * keff)) / 2;
+      text(T('临界点', 'tipping point'), bx, 640, 30, COL.fg);
+      text((tip * 100).toFixed(1) + '%', bx, 720, 72, COL.red, 'left', 800, "'Noto Serif SC', serif");
+      text(T(`λ = ${lam.toFixed(2)}`, `λ = ${lam.toFixed(2)}`), bx + 380, 720, 40, COL.purple);
+      ctx.globalAlpha = 1;
+    },
+  };
+
+  V.outro = {
+    enter(sc) {
+      cityCv.style.opacity = 0;
+      const c = sc.cues;
+      this.a = el(T('沉默不等于同意。', 'Silence is not consent.'), 'title', 0, 330);
+      this.b = el(T('你,会是第二十一个人吗?', 'Would you be the twenty-first?'), 'title', 0, 470);
+      this.b.style.fontSize = '64px'; this.b.style.color = '#ffcf70';
+      this.c = el(T('游戏《道路以目》· 理论依据:《道路以目——沉默相变模型》· 链接在简介里', 'Game: Glances on the Road · Based on “Glances on the Road: A Phase-Transition Model of Silence” · link in the description'), 'sub', 0, 700);
+      this.c.style.fontSize = '28px';
+      this.t1 = c[1].t0;
+    },
+    draw(lt, sc) { bgDots(lt, 0.08); show(this.a, lt, 0.3, null, 30); show(this.b, lt, this.t1, null, 20); show(this.c, lt, this.t1 + 1.2); },
+  };
+
+  V.game = { enter() { cityCv.style.opacity = 0; this.t = el(T('(游戏画面)', '(gameplay)'), 'sub', 0, 500); }, draw(lt) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); show(this.t, lt, 0); } };
+
+  /* ---------- 时间轴 ---------- */
+  let TL = null, cur = -1;
+  window.VIDEO = {
+    init() { TL = window.VideoScript.timeline(LANG); return { total: TL.total, scenes: TL.scenes.map((s) => ({ id: s.id, visual: s.visual, start: s.start, dur: s.dur })) }; },
+    frame(t) {
+      let i = TL.scenes.findIndex((s) => t >= s.start && t < s.start + s.dur);
+      if (i < 0) i = TL.scenes.length - 1;
+      const sc = TL.scenes[i];
+      if (i !== cur) { clearEls(); ctx.clearRect(0, 0, W, H); cur = i; V[sc.visual].enter(sc); }
+      const lt = t - sc.start;
+      V[sc.visual].draw(lt, sc);
+      // 场景切换: 开头 0.35 秒从黑里亮起, 结尾 0.3 秒暗下去
+      const fade = Math.min(1, lt / 0.35, (sc.dur - lt) / 0.3);
+      document.getElementById('stage').style.filter = fade < 1 ? `brightness(${Math.max(0, fade).toFixed(3)})` : '';
+    },
+    // 封面(YouTube 缩略图): 静态一帧
+    thumb() {
+      clearEls(); cur = -1; cityCv.style.opacity = 0;
+      document.getElementById('stage').style.filter = '';
+      bgDots(0, 0.1);
+      // 右侧: 反应函数的剪影与两条蛛网
+      const box = { x: 1180, y: 150, w: 620, h: 620 }, s = (v) => Math.sqrt(clamp(v, 0, 1)), at = P2(box, s, s), k = 0.02, F = (x) => Math.max(0, 1 - k / Math.max(x, 1e-9));
+      ctx.globalAlpha = 0.9;
+      curve(box, (x) => x, 0, 1, s, s, '#56606d', 3, 1, [8, 8]);
+      curve(box, F, 0.0005, 1, s, s, COL.purple, 7);
+      const web = (x0, col) => { let x = x0; ctx.strokeStyle = col; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(...at(x, x)); for (let i = 0; i < 6; i++) { const y = F(x); ctx.lineTo(...at(x, y)); ctx.lineTo(...at(y, y)); x = y; } ctx.stroke(); };
+      web(0.020, COL.red); web(0.021, COL.crowd);
+      dot(...at((1 - Math.sqrt(1 - 4 * k)) / 2, (1 - Math.sqrt(1 - 4 * k)) / 2), 16, COL.red, true);
+      ctx.globalAlpha = 1;
+      el(T('道路以目', 'GLANCES ON THE ROAD'), 'lab', 90, 70).style.opacity = 1;
+      const h = el(T('沉默为什么<br>会突然崩塌?', 'Why silence<br>collapses<br>all at once'), 'title', 90, ZH ? 170 : 150);
+      Object.assign(h.style, { opacity: 1, textAlign: 'left', width: '1100px', fontSize: ZH ? '124px' : '112px', lineHeight: '1.15', letterSpacing: ZH ? '.04em' : '.01em' });
+      const a = el(T('20 人 → 0', '20 → 0'), 'count red', 90, ZH ? 520 : 590); a.style.opacity = 1; a.style.fontSize = '104px';
+      const b = el(T('21 人 → 全校', '21 → everyone'), 'count', 90, ZH ? 680 : 740); b.style.opacity = 1; b.style.fontSize = '104px';
+      const f = tex('c(x) = P\\cdot\\min\\!\\left(1,\\ \\dfrac{k}{x}\\right)', '', 1190, 820); f.style.opacity = 1; f.style.fontSize = '50px';
+    },
+    ready: async () => {
+      const srcs = await Promise.all(['scene.html', 'script.js', base + 'levels.js'].map((f) => fetch(f).then((r) => r.text())));
+      const chars = [...new Set(srcs.join('').replace(/[\x00-\x7f]/g, ''))].join('') + 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%.,:·→—';
+      await Promise.all(["400 30px 'Noto Sans SC'", "700 30px 'Noto Sans SC'", "900 30px 'Noto Serif SC'"].map((f) => document.fonts.load(f, chars)));
+      await document.fonts.ready;
+      return true;
+    },
+  };
+})();
+</script>
+</body>
+</html>
