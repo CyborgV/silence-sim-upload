@@ -419,6 +419,7 @@
       line(h.moodSeen, '#ef6a5e', [5, 3], (v) => v / 1.1);
       line(h.dSeen, '#57c28a', [5, 3], (v) => v / 0.7);
       line(h.uc, '#ff8a65', [], (v) => v / 0.5);
+      if (mov && h.vigor) line(h.vigor, '#f0b44c', [2, 3], (v) => v);
       if (mov) { if (!L.noAI) line(h.alert, '#8f99a6', [], (v) => v / 100); }
       else line(h.orgSeen, '#8f99a6', [], (v) => v / 100);
       ctx.fillStyle = '#6d7885'; ctx.fillText(G.dateLabel(0), pl, H - 6);
@@ -445,7 +446,7 @@
         <span style="color:#f0b44c">▲ 你的出手</span><span style="color:#e5534b">▼ 对手的出手</span>
         <span style="color:#ef6a5e"><i class="dash"></i>积怨(${mov ? '传闻' : '据报'})</span>
         <span style="color:#57c28a"><i class="dash"></i>${lab.army || '军警'}动摇(${mov ? '传闻' : '实情'})</span>
-        <span><i style="background:#ff8a65"></i>暗流</span>
+        <span><i style="background:#ff8a65"></i>暗流</span>${mov ? '<span style="color:#f0b44c"><i class="dash"></i>组织元气</span>' : ''}
         <span><i style="background:#8f99a6"></i>${mov ? '当局警觉' : '反对派组织度(据报)'}</span>
       </div>
       <div class="an-note">上半:人口比例(平方根刻度,1% · 10% · 25% · 50%)。下半:高低只看走向。<b>鼠标移到图上</b>,看那一轮发生了什么。</div>
@@ -699,7 +700,11 @@
     const inc = G.income(G.side);
     const raw = G.side === 'regime' ? G.regimeRawIncome() : inc;
     const nm = G.side === 'regime' ? '政治资本' : '组织力';
-    const incText = G.side === 'regime' && raw < 0 ? '<span style="color:var(--red2)">入不敷出!代价正转嫁给百姓</span>' : `每轮 +${inc.toFixed(1)} · 另有气泡可收集`;
+    let incText = G.side === 'regime' && raw < 0 ? '<span style="color:var(--red2)">入不敷出!代价正转嫁给百姓</span>' : `每轮 +${inc.toFixed(1)} · 另有气泡可收集`;
+    if (G.side === 'movement' && G.L.id !== 'tutorial') {
+      const v = G.vigor, dv = delta(G.hist.vigor || [], 2);
+      incText += `<div class="vig ${v < 0.6 ? 'bad' : v < 0.85 ? 'mid' : ''}" data-tip="${esc('组织元气:人群没能越过临界点、你带出来的人却被抓走时,抓走的多是你的骨干——以后每次出手能带出的人都会变少。安静下来,它会慢慢恢复。')}">组织元气 ${Math.round(v * 100)}% ${arrow(dv, 0.01, true)}</div>`;
+    }
     const frac = clamp(st.ap - Math.floor(st.ap), 0, 1);
     $('res').className = 'res ' + G.side;
     $('res').innerHTML = `<div><div class="nm">${nm}</div><div class="inc">${incText}</div></div><div class="big">${cur()} ${Math.floor(st.ap)}<span class="frac"><i style="width:${(frac * 100).toFixed(0)}%"></i></span></div>`;

@@ -204,7 +204,7 @@
       side: 'movement', name: '化整为零', icon: '🌫️', cost: 1, cd: 6,
       text: '分散、换地点、不留名。对方更难找到你,但别人也更难看见你。',
       tags: ['被抓风险 ↓', '可见度 ↓'],
-      run(g) { g.addEffect({ id: 'lowkey', name: '化整为零', icon: '🌫️', side: 'movement', rounds: 3, mod(m) { m.K0 *= 0.6; m.gs *= 0.8; } }); },
+      run(g) { g.addEffect({ id: 'lowkey', name: '化整为零', icon: '🌫️', side: 'movement', rounds: 3, mod(m) { m.K0 *= 0.78; m.gs *= 0.85; } }); },
     },
 
     /* ---- 关卡专属(行动方) ---- */
@@ -679,6 +679,7 @@
       this.tipCache = { t: -1, v: null };
       this.hist = { x: [], d: [], mood: [], moodSeen: [], tip: [], tipSeen: [], R: [], p: [], P: [], alert: [], org: [], dSeen: [], risk: [], over: [], orgSeen: [], uc: [] };
       this.reports = [];                                 // 行动回报: 出牌/改政策两轮后告诉玩家发生了什么
+      this.vigor = 1;                                    // 组织元气(行动方): 小行动一次次被抓, 抓走的是骨干
       this.diagCache = { t: -1, v: null }; this.ucCache = { t: -1, v: null };
       this.allowCards = null;                            // 教程用: 只允许这些牌
       if (level.setup) level.setup(this);
@@ -742,9 +743,10 @@
 
     /* ---------- 行动接口 ---------- */
     addSeeds(frac, mode) {
-      const mul = this._actor === 'me' ? this.seedMul : 1;
+      const mul = this._actor === 'me' ? this.seedMul * (this.side === 'movement' ? this.vigor : 1) : 1;
       const n = Math.max(1, Math.round(frac * this.N * (this.L.seedScale || 1) * mul));
       this.seedNext += n;
+      if (this._actor === 'me') this.mySeedNext = (this.mySeedNext || 0) + n;
       if (this._actor === 'me') this.fx.push({ type: 'seeds', n });
       if (mode === 'near') this.seedMode = 'near';
     }
@@ -1068,6 +1070,7 @@
         if (est != null && this.x + cap >= est) head = { kind: 'go', text: '你手里的组织力,一次能带出的人已经够到估计的临界点了。' };
         else if (est != null) head = { kind: 'gap', text: `你一次最多能带出约 ${fmtCount(Math.max(1, (this.x + cap) * this.N * this.scale))} 人,估计需要 ${r.tip.text.replace('约 ', '')}。` };
       }
+      if (this.vigor < 0.75) head = { kind: 'warn', text: `一次次没能越过临界点的行动,抓走的是你最骨干的人:组织元气只剩 ${Math.round(this.vigor * 100)}%,以后每次出手能带出的人都会变少。停一停、攒一攒——安静的时候元气会慢慢恢复。` };
       const g = this.L.goal || {};
       if (g.d != null && g.x == null) {
         // 这一关靠执行者倒戈取胜: 先说军心
@@ -1142,7 +1145,7 @@
       let p = this.reports.find((q) => q.round === r);
       if (!p) {
         const ro = this.readout();
-        p = { round: r, due: r + 2, names: [], x0: this.x, peak: this.x, R0: this.sim.R, tip0: ro.tip, mood0: ro.mood, army0: ro.army, uc0: this.undercurrent().frac };
+        p = { round: r, due: r + 2, names: [], x0: this.x, peak: this.x, R0: this.sim.R, tip0: ro.tip, mood0: ro.mood, army0: ro.army, uc0: this.undercurrent().frac, vig0: this.vigor };
         this.reports.push(p);
       }
       if (!p.names.includes(name)) p.names.push(name);
@@ -1180,6 +1183,7 @@
           const uc1 = this.undercurrent().frac;
           if (uc1 > p.uc0 * 1.15 + 0.005) verdict += '暗流在扩大。';
           else if (uc1 < p.uc0 * 0.85 - 0.005) verdict += '暗流在收缩。';
+          if (this.vigor < p.vig0 - 0.04) verdict += `组织元气受损(${Math.round(p.vig0 * 100)}% → ${Math.round(this.vigor * 100)}%)。`;
           if (!verdict) verdict = '暂时看不出变化。';
         } else {
           if (p.mood0.words !== ro.mood.words) verdict += `据报民间情绪「${p.mood0.words}」→「${ro.mood.words}」${ro.mood.bias >= 0.15 ? '(可能报喜不报忧)' : ''}。`;
@@ -1435,7 +1439,8 @@
       if (!this.L.noAI) (this.oppSide === 'regime' ? this._regimeAI() : this._movementAI());
       if (this.L.onRound) this.L.onRound(this);
       this._applyParams();
-      const seeds = this.seedNext, mode = this.seedMode;
+      const seeds = this.seedNext, mode = this.seedMode, mine = this.mySeedNext || 0;
+      this.mySeedNext = 0;
       this.seedNext = 0; this.seedMode = 'random';
       const R0 = s.R, d0 = this.d;
       this.prevX = this.x; this.prevD = d0;
@@ -1451,6 +1456,16 @@
       this.me.ap = clamp(this.me.ap + incMe, 0, this.apCap);
       this.opp.ap = clamp(this.opp.ap + incOpp, 0, this.apCap);
       const arrestedNow = s.R - R0;
+      // 组织元气: 人群没能越过临界点、却有人被抓——被抓走的多是你的骨干。安静下来才会慢慢恢复。
+      if (this.side === 'movement' && this.L.id !== 'tutorial') {
+        const t = this.tipping(), failing = this.x < (t === Infinity ? 1 : t);
+        // 伤得最重的是"出去的人几乎全被抓"的小行动; 大规模行动里被抓的只是一部分
+        if (mine > 0) this.lastMine = this.round;
+        const out = Math.max(this.prevX, seeds / this.N, 1e-6), share = Math.min(1, arrestedNow / out);
+        const yours = this.lastMine != null && this.round - this.lastMine <= 1;   // 只算你自己带出来的人
+        if (arrestedNow > 0 && failing && yours) this.vigor = Math.max(0.3, this.vigor - Math.min(0.15, arrestedNow * (this.L.vigorLoss || 4) * share));
+        else if (arrestedNow < 0.0005) this.vigor = Math.min(1, this.vigor + 0.025);
+      }
       this._spawnBubbles(arrestedNow, d0);
       if (!this.L.noAI) { if (this.side === 'movement') this._alertTick(); else this._orgTick(arrestedNow); }
       if (this.flags.anniv && this.round % 6 === 0) {
@@ -1499,6 +1514,7 @@
       h.tip.push(t === Infinity ? 1 : Math.min(1, t)); h.tipSeen.push(r.tip.shownFrac);
       h.P.push(this.sim.o.P);
       h.alert.push(this.alert); h.org.push(this.org);
+      (h.vigor || (h.vigor = [])).push(this.vigor);
       h.dSeen.push(r.army.shown); h.risk.push(r.risk.p); h.over.push(r.legit.over); h.orgSeen.push(this.orgShown());
       const uc = this.undercurrent(); h.uc.push(uc.frac);
     }
@@ -1506,7 +1522,7 @@
     /** 以当前资源, 一次最多能把多少人带上街(占人口比例, 含已安排的) */
     pushCapacity() {
       let ap = this.me.ap, tot = this.seedNext / this.N;
-      const ss = (this.L.seedScale || 1) * this.seedMul;
+      const ss = (this.L.seedScale || 1) * this.seedMul * (this.side === 'movement' ? this.vigor : 1);
       const cands = this.hand().filter((c) => SEEDS[c.id] || c.seedFn).map((c) => {
         const cs = this.cardState(c);
         return { cs, sz: (c.seedFn ? c.seedFn(this) : SEEDS[c.id]) * ss };

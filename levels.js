@@ -455,7 +455,7 @@
     rounds: 50, scale: 1000, arrestScale: 8, moodScale: 0.2, tipSpread: 0.35,
     world: { N: 2000, tolType: 'bell', tolMul: 0.9, tolAdd: -0.45, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.9, K0: 30, M: 200, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.8, memDecay: 0.1, vis: 0.9, omega: 0.7, globalScale: 0.8, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 1.9 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin', enforce: 'lenient', police: 'lean' }) },
-    troopPsi: 2.32,
+    troopPsi: 2.55,
     labels: { army: '军警', crowd: '广场上', plaza: '天安门广场', prison: '收容审查', barracks: '城郊营地', avenue: '长安街' },
     slogans: ['反腐败!', '新闻自由!', '对话!', '人民军队爱人民!', '民主万岁!'],
     cards: ['rally', 'march', 'mobilize', 'hunger', 'fraternize', 'blockade', 'goddess', 'memorial', 'samizdat', 'legal'],
@@ -523,7 +523,7 @@
    * 第八章 · 莱比锡 1989 (行动方)
    * ============================================================ */
   LEVELS.push({
-    id: 'leipzig', chapter: '第八章', title: '我们是人民', era: '1989年9月4日—10月16日', place: '莱比锡', icon: '⛪',
+    id: 'leipzig', chapter: '第八章', title: '我们是人民', era: '1989年9月4日—10月18日', place: '莱比锡', icon: '⛪',
     side: 'movement', role: '尼古拉教堂的和平祈祷会',
     blurb: '每周一,教堂的门开着。四个月前北京发生的事,每个人都知道。',
     intro: [
@@ -531,9 +531,9 @@
       '这个夏天,成千上万东德人经匈牙利逃往西方。留下的人开始喊:<b>"我们要留下来!"</b>',
       '当局有斯塔西(国家安全部)、有警察、有战斗队。他们还公开称赞了北京在六月的做法。',
     ],
-    goalText: '在10月16日前,让周一游行达到全城的四成(约12万人),并坚持两天。',
+    goalText: '在10月18日前,让游行达到全城的四成(约12万人),并坚持两天。',
     tips: ['周一的「和平祈祷」是免费的。', '当局把新闻压得越狠,一次「曝光真相」就越有力。', '教会、学校、工厂之间的联系(「串联织网」)会让人更容易互相带动。'],
-    rounds: 42, scale: 150, arrestScale: 5, moodScale: 0.2, randomEvents: ['death', 'mole', 'press', 'writer', 'letter', 'release', 'split'],
+    rounds: 45, scale: 150, arrestScale: 5, moodScale: 0.2, randomEvents: ['death', 'mole', 'press', 'writer', 'letter', 'release', 'split'],
     world: { N: 2000, tolType: 'uniform', tolMul: 0.37, tolAdd: -0.15, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.75, K0: 50, M: 150, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.5, memDecay: 0.15, vis: 0.8, omega: 0.6, globalScale: 0.75, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 1.9 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin', target: 'organizer' }) },
     labels: { army: '警察与战斗队', crowd: '环城大道上', plaza: '卡尔·马克思广场', prison: '斯塔西看守所', barracks: '人民警察营地', avenue: '环城大道' },
@@ -562,7 +562,7 @@
       { at: 36, if: (g) => g.x < 0.1, title: '人太少了', art: '🚨', text: '人不够多。警察和战斗队冲进了人群。', choices: [{ label: '……' }], run: (g) => g.forceOpp('crackdown', false) },
     ],
     endings: {
-      crowd: { title: '我们是人民', text: '十几万人在环城大道上游行,手里拿着蜡烛。没有人开枪。<br><br>两天后,昂纳克下台。三周后,柏林墙倒塌。' },
+      crowd: { title: '我们是人民', text: '十几万人在环城大道上游行,手里拿着蜡烛。没有人开枪。<br><br>10月18日,昂纳克下台。三周后,柏林墙倒塌。' },
       timeout: { title: '周一还会再来', text: '人没有多到让当局放弃。但下一个周一,教堂的门还会开着。' },
     },
     history: '莱比锡周一游行:9月下旬数千人,10月2日约两万人,10月9日约七万人,10月16日约十二万人。10月9日的游行被西格伯特·舍夫克和阿拉姆·拉多姆斯基从教堂塔楼上秘密拍摄,次日在西德电视台播出。10月18日昂纳克下台,11月9日柏林墙倒塌。<br><br>这一年六月,东德人民议院通过声明支持北京的镇压。10月9日,当局准备了"中国式解决"——最终没有下令。',
@@ -669,7 +669,7 @@
       '10月13日,北京海淀的四通桥上,一个男人挂出两条横幅:<b>"不要核酸要吃饭,不要封控要自由……"</b>',
       '这个国家有最严密的审查和最广的监控。在这里,站出来的人几乎一定会被找到。',
     ],
-    goalText: '在12月7日前,让各地同时站出来的人达到一个足以被看见的规模(约 1.2 万人),并坚持两天。',
+    goalText: '在12月7日前,让各地同时站出来的人达到一个足以被看见的规模(约 2 万人),并坚持两天。',
     tips: ['审查让每个人都低估了别人的愤怒——「翻墙转发」和「曝光真相」能打破它。', '举白纸的风险比喊口号小。', '悲剧会发生。那时候,人们的心里会有一个很大的缺口。'],
     rounds: 55, scale: 100, arrestScale: 2, moodScale: 0.2, tipSpread: 0.4, randomEvents: ['death', 'mole', 'prices', 'split', 'release', 'writer'],
     world: { N: 2000, tolType: 'uniform', tolMul: 0.46, netType: 'random', netDeg: 10, P: 1.0, Pbar: 0.85, K0: 42, M: 200, alpha: 0.08, beta: 0.4, delta: 0.15, gamma: 2.5, memDecay: 0.08, vis: 0.6, omega: 0.5, globalScale: 0.7, noise: 0.02, hardCore: 0.001, seed: 2022, psiScale: 2.0 },
@@ -684,7 +684,7 @@
     },
     startAP: 1, income: 0.9,
     ai: { aggression: 0.85, income: 1.4, lag: 2, start: { enforce: 'harsh', police: 'surge', info: 'blackout', target: 'organizer', release: 'long' }, cards: ['informants', 'editorial', 'cutnet'] },
-    goal: { x: 0.06, hold: 2 },
+    goal: { x: 0.1, hold: 2 },
     stars: [
       { text: '在11月底前成功', test: (g) => g.round <= 48 },
       { text: '被带走的人少于四百', test: (g) => g.sim.R < 0.1 },
