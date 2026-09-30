@@ -606,8 +606,8 @@
     }
 
     /** 经验反应函数 F(x) = 1 − G(c(x)),G 为(自由人口)分段线性经验分布 */
-    frozenF(x, P, k, useMem) {
-      const c = this.cost(k, x, P);
+    frozenF(x, P, k, useMem, shift) {
+      const c = this.cost(k, x, P) - (shift || 0);   // shift: 所有人的承受上限同时上移(游戏层: 假想"再多一点怨气")
       const t = this._freeTau(useMem), N = t.length;
       if (N === 0) return 0;
       if (c <= t[0]) return 1;
@@ -620,14 +620,14 @@
 
     /** 不动点扫描: F(x)=x 的解及其稳定性 (F'<1 稳定)
      *  阶梯型经验 F 会使 g 恰好落在 0 上, 故用带死区的符号变化检测 */
-    fixedPoints(P, k, useMem) {
+    fixedPoints(P, k, useMem, shift) {
       const pts = [];
       const M = 4000, EPS = 1e-9;
-      const g = (x) => this.frozenF(x, P, k, useMem) - x;
+      const g = (x) => this.frozenF(x, P, k, useMem, shift) - x;
       const S = (v) => (v > EPS ? 1 : v < -EPS ? -1 : 0);
       const record = (xr) => {
         const eps = 1e-4;
-        const slope = (this.frozenF(Math.min(1, xr + eps), P, k, useMem) - this.frozenF(Math.max(0, xr - eps), P, k, useMem)) / (2 * eps);
+        const slope = (this.frozenF(Math.min(1, xr + eps), P, k, useMem, shift) - this.frozenF(Math.max(0, xr - eps), P, k, useMem, shift)) / (2 * eps);
         if (!pts.some(q => Math.abs(q.x - xr) < 1e-4)) pts.push({ x: xr, stable: slope < 1, slope });
       };
       let xPrev = 0, sPrev = S(g(0));
@@ -691,12 +691,13 @@
     }
 
     /** 重量分析(按需调用): 不动点与临界种子
-     *  opts.useMem: 用有效承受上限 τ+b(含记忆债务); opts.kScale: 有效执行能力放大(宣传压缩使人低估人数) */
+     *  opts.useMem: 用有效承受上限 τ+b(含记忆债务); opts.kScale: 有效执行能力放大(宣传压缩使人低估人数)
+     *  opts.P / opts.shift: 假想的处罚强度 / 承受上限整体上移(游戏层做敏感性分析用) */
     analysis(opts) {
       opts = opts || {};
       const eff = this.eff(), d = this.meanU8(this.z), { k } = this.capacity(d);
       const kk = k * (opts.kScale || 1);
-      const roots = this.fixedPoints(eff.P, kk, !!opts.useMem);
+      const roots = this.fixedPoints(opts.P != null ? opts.P : eff.P, kk, !!opts.useMem, opts.shift || 0);
       const xc = roots.filter(q => !q.boundary && !q.stable);
       return { roots, xCrit: xc.length ? xc[0].x : null, k: kk };
     }

@@ -163,7 +163,7 @@ b { font-weight: 600; }
 #stage { position: relative; min-width: 0; min-height: 0; background: #0a0d12; overflow: hidden; }
 #city { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #toasts { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; width: min(560px, 92%); z-index: 3; }
-.toast { background: rgba(14,18,24,.92); border: 1px solid var(--line2); border-radius: 10px; padding: 7px 14px; font-size: 13.5px; box-shadow: 0 6px 20px rgba(0,0,0,.4); animation: toastIn .3s ease-out; text-align: center; }
+.toast { background: rgba(14,18,24,.92); border: 1px solid var(--line2); border-radius: 10px; padding: 8px 16px; font-size: 15px; box-shadow: 0 6px 20px rgba(0,0,0,.4); animation: toastIn .3s ease-out; text-align: center; }
 .toast.opp { border-color: rgba(229,83,75,.6); }
 .toast.good { border-color: rgba(87,194,138,.6); }
 .toast.crowd { border-color: rgba(240,180,76,.6); }
@@ -225,9 +225,16 @@ b { font-weight: 600; }
 @keyframes played { 30% { transform: scale(.96); border-color: #fff; } }
 
 /* 新闻 */
-#news { height: 118px; overflow-y: auto; background: var(--bg2); border-top: 1px solid var(--line); padding: 6px 14px; font-size: 13px; }
-#news .n { display: flex; gap: 10px; padding: 2px 0; color: #b8c2cd; }
-#news .n .d { color: var(--faint); flex: none; min-width: 110px; font-size: 12px; padding-top: 1px; }
+#news { height: 210px; overflow-y: auto; background: var(--bg2); border-top: 1px solid var(--line); padding: 8px 18px 10px; font-size: 15px; line-height: 1.65; }
+#news .n { display: flex; gap: 12px; padding: 6px 0; color: #c3ccd6; border-bottom: 1px solid rgba(255,255,255,.045); align-items: baseline; }
+#news .n.now { background: linear-gradient(90deg, rgba(240,180,76,.07), transparent 70%); }
+#news .n.now .t { color: #fff; }
+#news .n .d { color: var(--dim); flex: none; min-width: 132px; font-size: 13px; }
+#news .n .k { flex: none; font-size: 12px; line-height: 1.5; padding: 1px 8px; border-radius: 6px; background: rgba(255,255,255,.06); color: var(--dim); min-width: 40px; text-align: center; }
+#news .n.opp .k { background: rgba(229,83,75,.16); color: #ffb4ab; } #news .n.crowd .k, #news .n.mine .k { background: rgba(240,180,76,.16); color: var(--amber2); }
+#news .n.army .k { background: rgba(111,156,245,.16); color: #a9c7ff; } #news .n.arrest .k { background: rgba(229,83,75,.12); color: #ff9f95; }
+#news .n.event .k { background: rgba(233,220,192,.1); color: #e9dcc0; } #news .n.report .k { background: rgba(179,146,240,.18); color: #d2bdfa; }
+#news .n.report { color: #e2d6fb; }
 #news .n.opp { color: #ffb4ab; } #news .n.mine { color: var(--amber2); } #news .n.event { color: #e9dcc0; }
 #news .n.crowd { color: #ffd98a; } #news .n.army { color: #a9c7ff; } #news .n.intel { color: #a8b3bf; font-style: italic; }
 #news .n.arrest { color: #ff9f95; } #news .n.calm { color: #7f8b98; }
@@ -306,7 +313,7 @@ b { font-weight: 600; }
 #meters.solo { grid-template-columns: 1fr; }
 .meter { min-width: 0; }
 .meter .mh { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--dim); }
-.meter .mh b { color: var(--fg); font-size: 13.5px; }
+.meter .mh b { color: var(--fg); font-size: 13.5px; flex: none; white-space: nowrap; }
 .meter .mh .mv { color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mbar { position: relative; height: 14px; background: rgba(255,255,255,.06); border-radius: 7px; margin-top: 5px; overflow: hidden; }
 .mbar .fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #d9912c, var(--amber)); border-radius: 7px; transition: width .4s; }
@@ -348,9 +355,9 @@ b { font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .bubble { animation: none; } }
 
 /* 当日要闻 */
-#headline { position: absolute; left: 12px; bottom: 12px; max-width: min(560px, 70%); z-index: 3; pointer-events: none; }
-#headline .hl { background: rgba(12,15,20,.9); border: 1px solid var(--line2); border-left: 3px solid var(--amber); border-radius: 8px; padding: 7px 12px; font-size: 13.5px; line-height: 1.6; box-shadow: 0 6px 20px rgba(0,0,0,.45); animation: toastIn .35s ease-out; }
-#headline .hl .d { display: block; font-size: 11px; color: var(--dim); letter-spacing: .08em; }
+#headline { position: absolute; left: 12px; bottom: 12px; max-width: min(660px, 76%); z-index: 3; pointer-events: none; }
+#headline .hl { background: rgba(12,15,20,.92); border: 1px solid var(--line2); border-left: 4px solid var(--amber); border-radius: 10px; padding: 10px 16px; font-size: 16px; line-height: 1.65; box-shadow: 0 6px 20px rgba(0,0,0,.45); animation: toastIn .35s ease-out; }
+#headline .hl .d { display: block; font-size: 12.5px; color: var(--dim); letter-spacing: .08em; margin-bottom: 2px; }
 #headline .hl.opp { border-left-color: var(--red); } #headline .hl.army { border-left-color: var(--green); } #headline .hl.crowd { border-left-color: var(--amber2); }
 
 /* 大字横幅: 连锁反应 / 升级 / 差一点 */
@@ -409,17 +416,75 @@ b { font-weight: 600; }
   #stage { height: 52vh; min-height: 280px; order: 1; }
   #hud-right { order: 2; border: 0; border-top: 1px solid var(--line); }
   #hud-left { order: 3; border: 0; border-top: 1px solid var(--line); }
-  #news { height: 160px; }
+  #news { height: 240px; font-size: 15px; padding: 8px 14px; }
   #meters { grid-template-columns: 1fr; }
   .tcols { grid-template-columns: 1fr; }
   #headline { max-width: 92%; }
   .stat-row { grid-template-columns: repeat(2, 1fr); }
-  #news .n .d { min-width: 88px; }
+  #news .n { flex-wrap: wrap; gap: 4px 10px; }
+  #news .n .d { min-width: 0; }
+  #news .n .t { flex-basis: 100%; }
 }
 @media (max-width: 420px) {
   .speed button { min-width: 32px; padding: 0 5px; }
   .modal { padding: 18px 16px; }
 }
+
+/* ---------- 看清自己的策略 ---------- */
+.trend { font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--dim); }
+.trend.good { color: #6fd39b; } .trend.bad { color: #ff8a80; }
+.ro .v .trend { font-size: 12px; margin-left: 4px; }
+.trendbox { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 0; margin: 12px 0 4px; }
+.trendbox .sec-t { margin: 0 0 6px; }
+.trendbox canvas { display: block; width: 100%; height: 96px; border-radius: 8px; border: 1px solid var(--line); }
+.trendbox:hover canvas { border-color: var(--amber); }
+.trend-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11.5px; color: var(--dim); margin-top: 5px; }
+.trend-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+.trend-legend .tri { font-size: 9px; margin-right: -6px; } .trend-legend .tri.a { color: #f0b44c; } .trend-legend .tri.o { color: #e5534b; }
+.advice { margin: 10px 0 6px; padding: 10px 12px; border-radius: 10px; background: #12161d; border: 1px solid var(--line2); font-size: 13px; }
+.advice .ah { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--fg); margin-bottom: 6px; }
+.advice .lnk, .advice .chip { background: none; border: 0; color: var(--amber); font-size: 12.5px; padding: 0; }
+.ahd { font-size: 12.5px; line-height: 1.6; color: #d6dde5; background: rgba(255,255,255,.03); border-radius: 7px; padding: 6px 8px; margin-bottom: 8px; }
+.ahd.go { color: #ffe0a0; background: rgba(240,180,76,.1); } .ahd.stuck { color: #ffb4ab; } .ahd.warn { color: #ffb4ab; background: rgba(229,83,75,.08); }
+.af { display: grid; grid-template-columns: 1fr 70px 30px; gap: 8px; align-items: center; padding: 2px 0; font-size: 12.5px; color: #c9d1da; }
+.abar { height: 6px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.abar i { display: block; height: 100%; background: linear-gradient(90deg, #b392f0, #ef6a5e); border-radius: 4px; transition: width .4s; }
+.advice.regime .abar i { background: linear-gradient(90deg, #f0b44c, #ef6a5e); }
+.alv { color: var(--dim); font-size: 11.5px; text-align: right; }
+.advice .at, .an-diag .at { font-size: 12.5px; line-height: 1.65; color: #b9c3ce; margin: 8px 0 0; }
+.advice .ac { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; font-size: 12px; color: var(--dim); }
+.advice .ac .chip { border: 1px solid rgba(240,180,76,.45); border-radius: 12px; padding: 2px 9px; color: var(--amber2); }
+.advice .ac .chip:hover { background: rgba(240,180,76,.12); }
+.layer-btn { position: absolute; right: 10px; top: 10px; z-index: 4; display: flex; gap: 8px; align-items: center; padding: 5px 10px; border-radius: 9px; font-size: 12.5px;
+  background: rgba(12,15,20,.85); border: 1px solid var(--line2); color: var(--dim); }
+.layer-btn.on { color: var(--fg); border-color: rgba(255,138,101,.55); }
+.layer-btn .lg { font-size: 11.5px; color: var(--dim); }
+.layer-btn .lg i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; vertical-align: -1px; margin-right: 2px; }
+.layer-btn .lg .c1 { background: rgba(240,180,76,.8); } .layer-btn .lg .c2 { background: #ff6046; }
+.toast.report { border-color: rgba(179,146,240,.6); }
+.modal.analysis { width: min(980px, 100%); }
+.an-head { display: flex; justify-content: space-between; align-items: center; }
+.an-head h3 { margin: 0; } .an-head small { font-size: 13px; color: var(--dim); font-weight: 400; margin-left: 8px; }
+.an-chart { position: relative; margin-top: 10px; }
+.an-chart canvas { display: block; width: 100%; height: 320px; border-radius: 10px; border: 1px solid var(--line); cursor: crosshair; }
+.an-tip { position: absolute; top: 10px; width: 250px; background: rgba(10,13,18,.95); border: 1px solid var(--line2); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.6; pointer-events: none; opacity: 0; transition: opacity .12s; }
+.an-tip.show { opacity: 1; }
+.an-tip .acts { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; } .an-tip .acts span { padding: 0 6px; border-radius: 5px; background: rgba(255,255,255,.06); }
+.an-tip .acts .me { color: var(--amber2); } .an-tip .acts .op { color: #ffb4ab; }
+.an-tip .nws { margin-top: 4px; color: var(--dim); font-size: 12px; }
+.an-note { font-size: 12px; color: var(--dim); margin-top: 6px; }
+.an-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; }
+.an-cols h4 { margin: 0 0 8px; font-size: 14px; }
+.an-fine { font-size: 12px; color: var(--dim); line-height: 1.6; margin-top: 10px; }
+.an-reps .rp { font-size: 13px; line-height: 1.65; color: #e2d6fb; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+.an-reps .rp .d { display: block; font-size: 11.5px; color: var(--dim); }
+.an-reps .rp.dim { color: var(--dim); }
+@media (max-width: 760px) {
+  .an-cols { grid-template-columns: 1fr; } .an-chart canvas { height: 260px; } .layer-btn .lg { display: none; }
+  #toasts { top: 48px; }
+  .meter .mh { flex-wrap: wrap; } .meter .mh .mv { white-space: normal; }
+}
+.res .vig { font-size: 12px; color: #9fe0b5; margin-top: 3px; } .res .vig.mid { color: var(--amber2); } .res .vig.bad { color: #ff8a80; }
 
 </style>
 </head>
@@ -495,6 +560,12 @@ b { font-weight: 600; }
   <div id="hud-main">
     <aside id="hud-left">
       <div class="goalcard" id="goalcard"><div class="g1" id="goal-text"></div><div class="gbar"><i id="goal-bar"></i></div><div class="g2" id="goal-sub"></div></div>
+      <button class="trendbox" id="trendbox" title="点击放大:走势图与参谋分析 (A)">
+        <div class="sec-t">走势 <span class="tag">点击放大 · A</span></div>
+        <canvas id="trend"></canvas>
+        <div class="trend-legend" id="trend-legend"></div>
+      </button>
+      <div id="advice"></div>
       <div id="build"></div>
       <div class="sec-t">态势 <span class="tag" id="intel-tag"></span></div>
       <div id="readouts"></div>
@@ -506,6 +577,7 @@ b { font-weight: 600; }
       <div id="bubbles"></div>
       <div id="headline"></div>
       <div id="banner"></div>
+      <button id="layer-btn" class="layer-btn" title="暗流:城里有多少人离站出来只差一点(传闻,可能有错)。开 / 关 (L)"></button>
       <div id="toasts"></div>
       <div class="pausetag" id="pausetag">已暂停 · 按 ▶ 或空格继续</div>
     </div>
@@ -524,6 +596,7 @@ b { font-weight: 600; }
 <div class="overlay" id="ov-event"><div class="modal" id="ev-box"></div></div>
 <div class="overlay" id="ov-end"><div class="modal end" id="end-box"></div></div>
 <div class="overlay" id="ov-tree"><div class="modal treebox" id="tree-box"></div></div>
+<div class="overlay" id="ov-analysis"><div class="modal analysis" id="an-box"></div></div>
 <div class="overlay" id="ov-menu"><div class="modal" style="width:min(360px,100%)">
   <h3>暂停</h3>
   <div class="choices">
@@ -549,6 +622,15 @@ b { font-weight: 600; }
     <li><b>封锁</b>:压住的不是记忆,只是记忆的公开。一旦曝光,会加倍兑现。</li>
     <li><b>执行者也在看</b>:街上的人数、同僚的态度、命令是否过火,都会让士兵和警察犹豫。他们一倒戈,能抓的人就少了。</li>
   </ul>
+  <h4>怎么知道自己哪里做错了</h4>
+  <ul>
+    <li><b>走势图</b>(左侧,点击或按 A 放大):街上的人 vs 估计的临界点,你和对手每一次出手都标在时间轴上。放大后还能看积怨、军心、警觉的走向,鼠标移上去看那一轮发生了什么。</li>
+    <li><b>参谋</b>:把"眼下最大的阻力"(或当局一方"最大的隐患")排个序——是人太少、代价太重、怨气不够,还是人们看不见彼此——并提示手里哪些牌对症。</li>
+    <li><b>暗流图层</b>(城市右上角,L 键):橙色是"在观望"的人,红色是"蠢蠢欲动"的人。点越来越密,说明离爆发越来越近;变稀,说明你的策略在失效。它是传闻,会有错。</li>
+    <li><b>回报</b>:每次出牌或改政策,两轮后新闻栏里会有一条紫色的「回报」:人数怎么变了、被抓了多少、临界点和暗流是升是降。</li>
+    <li><b>组织元气</b>(资源下方):没能越过临界点的行动,抓走的多是你的骨干。一次次把小队伍送进去,以后每次能带出的人都会变少;安静的时候它会慢慢恢复。乱出牌是会付代价的。</li>
+    <li>态势读数旁边的 ↑↓ 是最近两轮的变化方向:绿色对你有利,红色对你不利。</li>
+  </ul>
   <h4>像《瘟疫公司》一样玩</h4>
   <ul>
     <li><b>最上面两根条</b>:左边是你的进度(民间:离临界点还差多少;当局:还要撑多久),右边是对手(当局警觉 / 反对派组织度 / 暴露风险)。</li>
@@ -558,6 +640,7 @@ b { font-weight: 600; }
     <li><b>政策</b>(当局):常设的执法力度、警力、抓捕方式、舆论、关押。越强硬越贵。</li>
     <li><b>突发事件</b>与<b>历史事件</b>会逼你做选择。每一天都有当日要闻。</li>
     <li>时间:暂停(空格)、一轮一轮走(→)、加速。数字键 1–9 出牌。关卡结束后,<b>复盘</b>揭晓你看不到的真实数值。</li>
+    <li>时间一直在走(默认 ▶)。打开事件、建设、菜单这类面板时自动停住,关掉后片刻继续。空格暂停,→ 只走一轮。</li>
     <li>不知道从哪下手?点上方的<b>「💡 引导」</b>,召公会讲解这一关的界面和要点。不点它就不会弹出。</li>
   </ul>
   <div class="actions" style="justify-content:center;display:flex;margin-top:14px"><button class="btn primary" id="help-close">知道了</button></div>
@@ -974,8 +1057,8 @@ b { font-weight: 600; }
     }
 
     /** 经验反应函数 F(x) = 1 − G(c(x)),G 为(自由人口)分段线性经验分布 */
-    frozenF(x, P, k, useMem) {
-      const c = this.cost(k, x, P);
+    frozenF(x, P, k, useMem, shift) {
+      const c = this.cost(k, x, P) - (shift || 0);   // shift: 所有人的承受上限同时上移(游戏层: 假想"再多一点怨气")
       const t = this._freeTau(useMem), N = t.length;
       if (N === 0) return 0;
       if (c <= t[0]) return 1;
@@ -988,14 +1071,14 @@ b { font-weight: 600; }
 
     /** 不动点扫描: F(x)=x 的解及其稳定性 (F'<1 稳定)
      *  阶梯型经验 F 会使 g 恰好落在 0 上, 故用带死区的符号变化检测 */
-    fixedPoints(P, k, useMem) {
+    fixedPoints(P, k, useMem, shift) {
       const pts = [];
       const M = 4000, EPS = 1e-9;
-      const g = (x) => this.frozenF(x, P, k, useMem) - x;
+      const g = (x) => this.frozenF(x, P, k, useMem, shift) - x;
       const S = (v) => (v > EPS ? 1 : v < -EPS ? -1 : 0);
       const record = (xr) => {
         const eps = 1e-4;
-        const slope = (this.frozenF(Math.min(1, xr + eps), P, k, useMem) - this.frozenF(Math.max(0, xr - eps), P, k, useMem)) / (2 * eps);
+        const slope = (this.frozenF(Math.min(1, xr + eps), P, k, useMem, shift) - this.frozenF(Math.max(0, xr - eps), P, k, useMem, shift)) / (2 * eps);
         if (!pts.some(q => Math.abs(q.x - xr) < 1e-4)) pts.push({ x: xr, stable: slope < 1, slope });
       };
       let xPrev = 0, sPrev = S(g(0));
@@ -1059,12 +1142,13 @@ b { font-weight: 600; }
     }
 
     /** 重量分析(按需调用): 不动点与临界种子
-     *  opts.useMem: 用有效承受上限 τ+b(含记忆债务); opts.kScale: 有效执行能力放大(宣传压缩使人低估人数) */
+     *  opts.useMem: 用有效承受上限 τ+b(含记忆债务); opts.kScale: 有效执行能力放大(宣传压缩使人低估人数)
+     *  opts.P / opts.shift: 假想的处罚强度 / 承受上限整体上移(游戏层做敏感性分析用) */
     analysis(opts) {
       opts = opts || {};
       const eff = this.eff(), d = this.meanU8(this.z), { k } = this.capacity(d);
       const kk = k * (opts.kScale || 1);
-      const roots = this.fixedPoints(eff.P, kk, !!opts.useMem);
+      const roots = this.fixedPoints(opts.P != null ? opts.P : eff.P, kk, !!opts.useMem, opts.shift || 0);
       const xc = roots.filter(q => !q.boundary && !q.stable);
       return { roots, xCrit: xc.length ? xc[0].x : null, k: kk };
     }
@@ -1330,7 +1414,7 @@ b { font-weight: 600; }
       side: 'movement', name: '化整为零', icon: '🌫️', cost: 1, cd: 6,
       text: '分散、换地点、不留名。对方更难找到你,但别人也更难看见你。',
       tags: ['被抓风险 ↓', '可见度 ↓'],
-      run(g) { g.addEffect({ id: 'lowkey', name: '化整为零', icon: '🌫️', side: 'movement', rounds: 3, mod(m) { m.K0 *= 0.6; m.gs *= 0.8; } }); },
+      run(g) { g.addEffect({ id: 'lowkey', name: '化整为零', icon: '🌫️', side: 'movement', rounds: 3, mod(m) { m.K0 *= 0.78; m.gs *= 0.85; } }); },
     },
 
     /* ---- 关卡专属(行动方) ---- */
@@ -1375,6 +1459,29 @@ b { font-weight: 600; }
         g.addSeeds(1 / g.N);
         griefAll(g, 0.025);
         g.addEffect({ id: 'banner', name: '横幅照片流传', icon: '🪧', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = Math.min(1, m.gs + 0.2); } });
+      },
+    },
+    sanctuary: {
+      side: 'movement', name: '明洞圣堂静坐', icon: '⛪', cost: 2, cd: 99, once: true, special: true,
+      text: '示威者退进明洞天主教堂。神父们站在门口:要抓他们,先从我们身上踩过去。',
+      tags: ['上街 +少量', '一个抓不走的据点', '持续六轮'],
+      run(g) {
+        g.addSeeds(0.015);
+        g.addEffect({ id: 'sanctuary', name: '明洞静坐', icon: '⛪', side: 'movement', rounds: 6, mod(m) { m.K0 *= 0.75; m.vis = Math.max(m.vis, 0.9); } });
+      },
+    },
+    necktie: {
+      side: 'movement', name: '领带部队', icon: '👔', cost: 2, cd: 5, special: true,
+      text: '午休时间,打着领带的上班族走出写字楼,在人行道上鼓掌、从窗口扔下卫生纸卷,然后加入了队伍。',
+      tags: ['上街 +较多', '中产加入', '执法更容易被看作越界'],
+      when: (g) => !!g.flags.necktie, whenText: '要等到六月,街上已经有人的时候',
+      run(g) {
+        g.addSeeds(0.03);
+        g.base.Pbar = Math.max(0.3, g.base.Pbar - 0.03);
+        // 中产的加入: 这不再只是学生的事——一部分人的承受上限整体上移
+        const s = g.sim;
+        for (let i = 0; i < s.o.N; i++) if (s.rng() < 0.25) s.tau[i] += 0.02;
+        s.tauDirty = true;
       },
     },
     blankpaper: {
@@ -1522,7 +1629,7 @@ b { font-weight: 600; }
   };
   for (const [id, v] of Object.entries(CARD_ECON)) { CARDS[id].cost = v[0]; CARDS[id].alert = v[1] || 0; CARDS[id].org = v[2] || 0; }
   /* 能把人带上街的牌: 规模(占人口比例) */
-  const SEEDS = { rally: 0.015, march: 0.04, mobilize: 0.03, strike: 0.08, goddess: 0.03, blankpaper: 0.035, hunger: 0.006, t_small: 0.01, t_big: 0.025 };
+  const SEEDS = { rally: 0.015, march: 0.04, mobilize: 0.03, strike: 0.08, goddess: 0.03, blankpaper: 0.035, hunger: 0.006, sanctuary: 0.015, necktie: 0.03, t_small: 0.01, t_big: 0.025 };
   CARDS.prayer.seedFn = (g) => (g.isMonday() ? 0.022 : 0.01);
 
   /* ---------- 气泡: 局势变化时冒出来, 点击收集 ---------- */
@@ -1720,7 +1827,11 @@ b { font-weight: 600; }
   class Game {
     constructor(level, opts) {
       opts = opts || {};
-      this.L = level;
+      // 历史事件会改动对手 AI 的设置(如戒严后更警觉): 每局拷一份, 不污染关卡定义, 重玩时从头开始
+      const copy1 = (o) => (Array.isArray(o) ? o.slice() : o && typeof o === 'object' ? Object.assign({}, o) : o);
+      const ai = level.ai ? Object.assign({}, level.ai) : level.ai;
+      if (ai) for (const k in ai) ai[k] = copy1(ai[k]);
+      this.L = Object.assign({}, level, { ai });
       this.side = level.side;                            // 玩家阵营 'movement' | 'regime'
       this.oppSide = this.side === 'movement' ? 'regime' : 'movement';
       this.diff = DIFFS[opts.diff || 'normal'];
@@ -1776,7 +1887,10 @@ b { font-weight: 600; }
       this.intelNoise = { mood: 0, army: 0, tip: 0 };
       this.prevX = 0; this.prevD = 0;
       this.tipCache = { t: -1, v: null };
-      this.hist = { x: [], d: [], mood: [], moodSeen: [], tip: [], tipSeen: [], R: [], p: [], P: [], alert: [], org: [] };
+      this.hist = { x: [], d: [], mood: [], moodSeen: [], tip: [], tipSeen: [], R: [], p: [], P: [], alert: [], org: [], dSeen: [], risk: [], over: [], orgSeen: [], uc: [] };
+      this.reports = [];                                 // 行动回报: 出牌/改政策两轮后告诉玩家发生了什么
+      this.vigor = 1;                                    // 组织元气(行动方): 小行动一次次被抓, 抓走的是骨干
+      this.diagCache = { t: -1, v: null }; this.ucCache = { t: -1, v: null };
       this.allowCards = null;                            // 教程用: 只允许这些牌
       if (level.setup) level.setup(this);
       this.aiStage = this.stage();
@@ -1839,9 +1953,10 @@ b { font-weight: 600; }
 
     /* ---------- 行动接口 ---------- */
     addSeeds(frac, mode) {
-      const mul = this._actor === 'me' ? this.seedMul : 1;
+      const mul = this._actor === 'me' ? this.seedMul * (this.side === 'movement' ? this.vigor : 1) : 1;
       const n = Math.max(1, Math.round(frac * this.N * (this.L.seedScale || 1) * mul));
       this.seedNext += n;
+      if (this._actor === 'me') this.mySeedNext = (this.mySeedNext || 0) + n;
       if (this._actor === 'me') this.fx.push({ type: 'seeds', n });
       if (mode === 'near') this.seedMode = 'near';
     }
@@ -1919,7 +2034,7 @@ b { font-weight: 600; }
     play(id) {
       const c = CARDS[id];
       if (!c) return false;
-      const cs = this.cardState(Object.assign({ id }, c));
+      const cs = this.cardState(this.card(id));   // 关卡可以改写牌的出牌条件(when)
       if (!cs.ok) return false;
       this.me.ap -= cs.cost;
       if (this.freebies[id] > 0) this.freebies[id] = 0;
@@ -1931,6 +2046,7 @@ b { font-weight: 600; }
       this.actions.push({ round: this.round, id, side: this.side });
       this.fx.push({ type: 'card', id, side: this.side });
       this.log(`你:「${this.card(id).name}」`, 'mine');
+      this._noteAction(this.card(id).name);
       this.sim.tauDirty = true;
       this.tipCache.t = -1;
       this._applyParams();
@@ -1974,6 +2090,7 @@ b { font-weight: 600; }
       this.polCd[key] = 2;
       this.actions.push({ round: this.round, id: key + ':' + id, side: this.side });
       this.log(`你把「${POLICIES[key].name}」改为「${ps.opt.name}」`, 'mine');
+      this._noteAction(`${POLICIES[key].name}→${ps.opt.name}`);
       this.tipCache.t = -1;
       this._applyParams();
       if (this.onPlay) this.onPlay('policy:' + key);
@@ -2100,23 +2217,194 @@ b { font-weight: 600; }
     /* ---------- 临界点: 真值 ---------- */
     tipping() {
       if (this.tipCache.t === this.round) return this.tipCache.v;
-      const o = this.sim.o;
-      const inf = this.sim.net ? o.omega * o.globalScale + (1 - o.omega) : o.globalScale;
-      const ana = this.sim.analysis({ useMem: true, kScale: 1 / Math.max(0.05, inf) });
-      let v;
-      const roots = ana.roots.filter(q => !q.boundary);
-      const unstable = roots.find(q => !q.stable);
-      if (unstable) v = unstable.x;
-      else {
-        const high = roots.find(q => q.stable && q.x > 0.05);
-        if (high) {
-          // 没有分界: 若零点附近 F(x)>x → 一点就着; 否则(只有低位稳定点)是极高门槛
-          const f = this.sim.frozenF(0.002, o.P, ana.k, true);
-          v = f > 0.002 ? 0 : Infinity;
-        } else v = Infinity;
-      }
+      const v = this._tipCalc();
       this.tipCache = { t: this.round, v };
       return v;
+    }
+    /** 临界点; ov 给出假想的改变(敏感性分析): kMul 执行能力倍率, Pmul 处罚倍率, gsAdd 消息可见度, shift 怨气(承受上限整体上移) */
+    _tipCalc(ov) {
+      ov = ov || {};
+      const o = this.sim.o;
+      const gs = clamp(o.globalScale + (ov.gsAdd || 0), 0, 1);
+      const inf = this.sim.net ? o.omega * gs + (1 - o.omega) : gs;
+      const P = ov.Pmul ? this.sim.eff().P * ov.Pmul : undefined;
+      const ana = this.sim.analysis({ useMem: true, kScale: (ov.kMul || 1) / Math.max(0.05, inf), P, shift: ov.shift || 0 });
+      const roots = ana.roots.filter(q => !q.boundary);
+      const unstable = roots.find(q => !q.stable);
+      if (unstable) return unstable.x;
+      const high = roots.find(q => q.stable && q.x > 0.05);
+      if (!high) return Infinity;
+      // 没有分界: 若零点附近 F(x)>x → 一点就着; 否则(只有低位稳定点)是极高门槛
+      const f = this.sim.frozenF(0.002, P != null ? P : o.P, ana.k, true, ov.shift || 0);
+      return f > 0.002 ? 0 : Infinity;
+    }
+
+    /* ---------- 参谋: 眼下的主要阻力 / 隐患 ----------
+     * 行动方: 对临界点做敏感性分析——同样"一步"的改变(抓捕能力 −30%、处罚 −25%、怨气 +一档、消息 +25%),
+     * 哪一个能让临界点降得最多, 它就是眼下最大的阻力。只给定性的强弱, 不给数字。
+     * 当局: 列出正在侵蚀安全边际的因素; 它们和你的情报一样会"报喜不报忧"。 */
+    diagnose() {
+      if (this.diagCache.t === this.round && !this.diagDirty) return this.diagCache.v;
+      this.diagDirty = false;
+      const v = this.side === 'movement' ? this._diagMovement() : this._diagRegime();
+      this.diagCache = { t: this.round, v };
+      return v;
+    }
+    _diagMovement() {
+      const CAP = 1.2, T = (ov) => { const t = this._tipCalc(ov); return t === Infinity ? CAP : t; };
+      const base = this.tipping(), B = base === Infinity ? CAP : base;
+      const ms = this.moodScale || 0.2;
+      const f = [
+        { id: 'capacity', name: '当局抓得过来', drop: B - T({ kMul: 0.7 }),
+          advice: '人太少,当局抓得过来。需要一次带出更多人(攒够组织力、同一轮打出几张牌),或者先动摇执行者——同样的警力被更多人摊薄,每个人的风险才会下降。',
+          cards: ['strike', 'march', 'mobilize', 'fraternize', 'blockade', 'prayer', 'blankpaper'] },
+        { id: 'penalty', name: '被抓的代价太重', drop: B - T({ Pmul: 0.75 }),
+          advice: '被抓的后果太重,很少有人承受得起。营救被捕者、低调的参与方式能降低代价;当局一旦越界,重罚也会变成积怨,反过来压低临界点。',
+          cards: ['legal', 'lowkey', 'hide', 'prayer'] },
+        { id: 'anger', name: '怨气还不够', drop: B - T({ shift: 0.25 * ms }),
+          advice: '人们还不够愤怒,或者愤怒被封锁压着没有浮出来。悼念与曝光能让记忆浮出水面;当局每一次越界的处罚,也都会被记住。',
+          cards: ['memorial', 'leak', 'hunger', 'banner', 'cassette'] },
+        { id: 'info', name: '人们看不见彼此', drop: B - T({ gsAdd: 0.25 }),
+          advice: '人们看不见彼此——每个人都以为只有自己这么想。地下刊物、串联织网、传播类的建设能让人知道"别人也在"。',
+          cards: ['samizdat', 'network', 'usb', 'market', 'cassette'] },
+      ];
+      const mx = Math.max(...f.map((q) => q.drop));
+      for (const q of f) q.v = mx > 1e-4 ? clamp(q.drop / mx, 0, 1) : 0;
+      f.sort((a, b) => b.v - a.v);
+      let head;
+      if (base === 0) head = { kind: 'go', text: '一点就着:任何一点火星都可能燎原。现在就是出手的时候。' };
+      else if (mx <= 1e-4 && base === Infinity) head = { kind: 'stuck', text: '看不到转机:任何单独一项改变都不够。多管齐下,或者等待时机(一次越界的镇压、一个纪念日……)。' };
+      else {
+        const r = this.readout(), cap = this.pushCapacity();
+        const est = r.tip.kind === 'est' ? r.tip.est : null;
+        if (est != null && this.x + cap >= est) head = { kind: 'go', text: '你手里的组织力,一次能带出的人已经够到估计的临界点了。' };
+        else if (est != null) head = { kind: 'gap', text: `你一次最多能带出约 ${fmtCount(Math.max(1, (this.x + cap) * this.N * this.scale))} 人,估计需要 ${r.tip.text.replace('约 ', '')}。` };
+      }
+      if (this.vigor < 0.75) head = { kind: 'warn', text: `一次次没能越过临界点的行动,抓走的是你最骨干的人:组织元气只剩 ${Math.round(this.vigor * 100)}%,以后每次出手能带出的人都会变少。停一停、攒一攒——安静的时候元气会慢慢恢复。` };
+      const g = this.L.goal || {};
+      if (g.d != null && g.x == null) {
+        // 这一关靠执行者倒戈取胜: 先说军心
+        const r = this.readout();
+        head = { kind: 'army', text: `这一关要赢,靠的是执行者倒戈。${(this.L.labels && this.L.labels.army) || '军警'}眼下「${r.army.words}」(传闻),目标是「成建制倒戈」。街上的人越多、越和士兵说话,他们越动摇。` };
+      }
+      return { side: 'movement', title: '眼下的主要阻力', factors: f, head, top: f[0] };
+    }
+    _diagRegime() {
+      const bias = this.intelBias(), o = this.sim.o;
+      const moodSeen = (this.meanGrievance() / this.moodScale) * (1 - bias);
+      const raw = this.regimeRawIncome();
+      const f = [
+        { id: 'grievance', name: '积怨在侵蚀安全边际', v: clamp(moodSeen / 0.9, 0, 1),
+          advice: '积怨不会表现为上街,却在把临界点往下压。把执法降到人们认可的界线以内;对话、特赦、安抚类的建设能让它慢慢消退。',
+          cards: ['dialogue', 'amnesty', 'subsidy'] },
+        { id: 'overline', name: '处罚越过了界线', v: clamp((o.P - o.Pbar) / 0.6, 0, 1),
+          advice: '你的处罚已经越过人们认可的界线:每抓一个人,旁观者都记在心里,执行者也会不安。把「执法」降到常规或以下。',
+          cards: [] },
+        { id: 'army', name: '执行者在动摇', v: clamp(this.d / 0.35, 0, 1),
+          advice: '执行者在动摇。越界的命令、街上的人数、同僚的态度都会让他们犹豫。发饷、轮换能暂时稳住,但治标不治本。',
+          cards: ['bonus', 'rotate'] },
+        { id: 'money', name: '财政入不敷出', v: raw < 0 ? clamp(-raw / (0.6 * this.econ), 0.2, 1) : 0,
+          advice: '强硬政策的开销超过了收入,代价正转嫁给百姓,变成积怨。关掉最贵、却最不必要的那一项。',
+          cards: [] },
+        { id: 'org', name: '反对派在组织', v: clamp(this.orgShown() / 100, 0, 1),
+          advice: '反对派的组织度满了就会发动大规模行动。抓串联者、对话让步都能把它压下去。',
+          cards: ['informants', 'cutnet', 'dialogue'] },
+        { id: 'intel', name: '情报失真', v: clamp(bias / 0.5, 0, 1),
+          advice: '下面的人不敢说真话——你看到的"平静"可能是假的,上面几条也可能被低估了。「线人」这类牌能暂时听到真话。',
+          cards: ['informants'] },
+      ];
+      f.sort((a, b) => b.v - a.v);
+      const r = this.readout();
+      const head = { kind: bias >= 0.3 ? 'warn' : 'info', text: `下面报上来的局势:「${r.tip.words}」${bias >= 0.15 ? '(可信度' + (bias >= 0.4 ? '低' : '中') + ')' : ''}。` };
+      return { side: 'regime', title: '眼下的隐患', factors: f, head, top: f[0] };
+    }
+
+    /* ---------- 暗流: 城里有多少人"离站出来只差一点" ----------
+     * 性质十: 临界反馈由"门槛附近的人数"决定。对每个自由的人, 比较 τ+b 与两种假想人数下的代价:
+     *   2 = 只要约 5% 的人上街就会加入(蠢蠢欲动); 1 = 约四分之一的人上街才会加入(在观望)。
+     * 玩家看到的是经过迷雾的版本: 民间一方是传闻(有错有漏), 当局一方越凶, 越多的人藏起心思。 */
+    undercurrent() {
+      if (this.ucCache.t === this.round && this.ucCache.v) return this.ucCache.v;
+      const s = this.sim, N = this.N, o = s.o, P = s.eff().P;
+      const { k } = s.capacity(this.d);
+      const inf = s.net ? o.omega * o.globalScale + (1 - o.omega) : o.globalScale;
+      const kk = k / Math.max(0.05, inf);
+      const c5 = s.cost(kk, 0.05, P), c25 = s.cost(kk, 0.25, P);
+      const tier = new Uint8Array(N);
+      const rng = mulberry32((this.round + 1) * 7919 + (o.seed || 1));
+      const bias = this.intelBias();
+      let shown = 0, free = 0;
+      for (let i = 0; i < N; i++) {
+        if (s.r[i] || s.a[i]) continue;
+        free++;
+        const q = s.tau[i] + s.b[i];
+        let t = q >= c5 ? 2 : q >= c25 ? 1 : 0;
+        if (this.side === 'regime') { if (t && rng() < bias * 1.4) t--; }
+        else { const u = rng(); if (u < 0.12) t = Math.max(0, t - 1); else if (u > 0.95 && t < 2) t++; }
+        tier[i] = t;
+        if (t) shown += t === 2 ? 1 : 0.5;
+      }
+      const v = { tier, frac: free ? shown / free : 0 };
+      this.ucCache = { t: this.round, v };
+      return v;
+    }
+
+    /* ---------- 行动回报 ---------- */
+    _noteAction(name) {
+      const r = this.round;
+      let p = this.reports.find((q) => q.round === r);
+      if (!p) {
+        const ro = this.readout();
+        p = { round: r, due: r + 2, names: [], x0: this.x, peak: this.x, R0: this.sim.R, tip0: ro.tip, mood0: ro.mood, army0: ro.army, uc0: this.undercurrent().frac, vig0: this.vigor };
+        this.reports.push(p);
+      }
+      if (!p.names.includes(name)) p.names.push(name);
+      this.diagDirty = true;
+    }
+    _reports() {
+      for (const p of this.reports) p.peak = Math.max(p.peak, this.x);
+      const due = this.reports.filter((p) => this.round >= p.due);
+      if (!due.length) return;
+      this.reports = this.reports.filter((p) => this.round < p.due);
+      const ro = this.readout(), lab = this.L.labels || {};
+      const cnt = (v) => fmtCount(Math.max(0, v) * this.N * this.scale);
+      for (const p of due) {
+        const what = '「' + p.names.join('」「') + '」';
+        const parts = [];
+        const crowdL = lab.crowd || '街上';
+        if (p.peak > p.x0 + 0.002 || this.x > 0.002) parts.push(`${crowdL}最多约 ${cnt(p.peak)} 人,现在约 ${cnt(this.x)} 人`);
+        else parts.push(`${crowdL}依旧空无一人`);
+        const arrested = (this.sim.R - p.R0) * this.N * this.arrestScale;
+        if (arrested >= 1) parts.push(`这期间被带走约 ${fmtCount(arrested)} 人`);
+        let verdict = '';
+        if (this.side === 'movement') {
+          const t0 = p.tip0, t1 = ro.tip;
+          if (t1.kind === 'tinder' || (t1.kind === 'est' && this.x >= t1.est && this.x > 0.02)) verdict = '连锁反应已经开始。';
+          else if (p.peak > p.x0 + 0.004 && t0.kind === 'est') {
+            const ratio = p.peak / t0.est;
+            verdict = ratio < 0.5 ? `离估计的临界点(${t0.text.replace('约 ', '')})还差得远——人不够多,每个人面对的风险没有被摊薄。` : ratio < 1 ? '只差一点就到临界点了。' : '人数一度越过了估计的临界点,却没能留住——估计本身可能偏低。';
+          }
+          if (verdict.startsWith('连锁')) { /* 已经点着了, 临界点的变化不再重要 */ }
+          else if (t0.kind === 'est' && t1.kind === 'est') {
+            if (t1.est < t0.est * 0.88) verdict += `估计的临界点降低了(${cnt(t0.est)} → ${cnt(t1.est)} 人)。`;
+            else if (t1.est > t0.est * 1.12) verdict += `估计的临界点反而升高了(${cnt(t0.est)} → ${cnt(t1.est)} 人)。`;
+          } else if (t0.kind === 'none' && t1.kind === 'est') verdict += '临界点出现了——转机第一次变得可见。';
+          else if (t0.kind === 'est' && t1.kind === 'none') verdict += '临界点消失了——眼下看不到转机。';
+          const uc1 = this.undercurrent().frac;
+          if (uc1 > p.uc0 * 1.15 + 0.005) verdict += '暗流在扩大。';
+          else if (uc1 < p.uc0 * 0.85 - 0.005) verdict += '暗流在收缩。';
+          if (this.vigor < p.vig0 - 0.04) verdict += `组织元气受损(${Math.round(p.vig0 * 100)}% → ${Math.round(this.vigor * 100)}%)。`;
+          if (!verdict) verdict = '暂时看不出变化。';
+        } else {
+          if (p.mood0.words !== ro.mood.words) verdict += `据报民间情绪「${p.mood0.words}」→「${ro.mood.words}」${ro.mood.bias >= 0.15 ? '(可能报喜不报忧)' : ''}。`;
+          if (p.army0.words !== ro.army.words) verdict += `${lab.army || '军警'}「${p.army0.words}」→「${ro.army.words}」。`;
+          if (p.tip0.words !== ro.tip.words) verdict += `局势「${p.tip0.words}」→「${ro.tip.words}」。`;
+          if (!verdict) verdict = '据报一切如常。';
+        }
+        const text = `${what}之后:${parts.join(';')}。${verdict}`;
+        this.log(text, 'report');
+        this.fx.push({ type: 'report', text });
+      }
     }
     /** 去掉行动方的临时效果(传单、记者……)之后的临界点: 衡量"持久的"变化 */
     structuralTipping() {
@@ -2158,6 +2446,7 @@ b { font-weight: 600; }
       const dNoise = this.side === 'regime' ? 0 : this.intelNoise.army;
       const dShown = clamp(d + dNoise, 0, 1);
       const army = band(dShown, [0.05, 0.15, 0.35, 0.6], ['令行禁止', '私下抱怨', '人心浮动', '公开抗命', '成建制倒戈']);
+      army.shown = dShown;
       army.rumor = this.side !== 'regime';
       const moodTrue = this.meanGrievance() / this.moodScale;
       const bias = this.intelBias();
@@ -2309,7 +2598,7 @@ b { font-weight: 600; }
             ev, title: ev.title, art: ev.art || '📜', date: this.dateLabel(),
             text: typeof ev.text === 'function' ? ev.text(this) : ev.text,
             quote: ev.quote,
-            choices: (ev.choices || [{ label: '继续' }]).map(c => ({ label: c.label, hint: c.hint })),
+            choices: (ev.choices || [{ label: '继续' }]).map(c => ({ label: c.label, hint: c.hint, wise: !!c.wise })),
           };
           this.fx.push({ type: 'popup' });
           return true;
@@ -2334,7 +2623,7 @@ b { font-weight: 600; }
       const flav = (L.flavor && L.flavor[ev.id]) || {};
       const E = Object.assign({}, ev, flav);
       this.popup = { ev: E, title: E.title, art: E.art, date: this.dateLabel(), text: E.text, quote: E.quote, random: true,
-        choices: E.choices.map((c) => ({ label: c.label, hint: c.hint })) };
+        choices: E.choices.map((c) => ({ label: c.label, hint: c.hint, wise: !!c.wise })) };
       this.fx.push({ type: 'popup' });
       return true;
     }
@@ -2360,7 +2649,8 @@ b { font-weight: 600; }
       if (!this.L.noAI) (this.oppSide === 'regime' ? this._regimeAI() : this._movementAI());
       if (this.L.onRound) this.L.onRound(this);
       this._applyParams();
-      const seeds = this.seedNext, mode = this.seedMode;
+      const seeds = this.seedNext, mode = this.seedMode, mine = this.mySeedNext || 0;
+      this.mySeedNext = 0;
       this.seedNext = 0; this.seedMode = 'random';
       const R0 = s.R, d0 = this.d;
       this.prevX = this.x; this.prevD = d0;
@@ -2376,6 +2666,16 @@ b { font-weight: 600; }
       this.me.ap = clamp(this.me.ap + incMe, 0, this.apCap);
       this.opp.ap = clamp(this.opp.ap + incOpp, 0, this.apCap);
       const arrestedNow = s.R - R0;
+      // 组织元气: 人群没能越过临界点、却有人被抓——被抓走的多是你的骨干。安静下来才会慢慢恢复。
+      if (this.side === 'movement' && this.L.id !== 'tutorial') {
+        const t = this.tipping(), failing = this.x < (t === Infinity ? 1 : t);
+        // 伤得最重的是"出去的人几乎全被抓"的小行动; 大规模行动里被抓的只是一部分
+        if (mine > 0) this.lastMine = this.round;
+        const out = Math.max(this.prevX, seeds / this.N, 1e-6), share = Math.min(1, arrestedNow / out);
+        const yours = this.lastMine != null && this.round - this.lastMine <= 1;   // 只算你自己带出来的人
+        if (arrestedNow > 0 && failing && yours) this.vigor = Math.max(0.3, this.vigor - Math.min(0.15, arrestedNow * (this.L.vigorLoss || 4) * share));
+        else if (arrestedNow < 0.0005) this.vigor = Math.min(1, this.vigor + 0.025);
+      }
       this._spawnBubbles(arrestedNow, d0);
       if (!this.L.noAI) { if (this.side === 'movement') this._alertTick(); else this._orgTick(arrestedNow); }
       if (this.flags.anniv && this.round % 6 === 0) {
@@ -2410,6 +2710,7 @@ b { font-weight: 600; }
       this._applyParams();
       this._news(arrested, d0);
       this._record();
+      this._reports();
       this._check();
       if (!this.over) this._pollEvents();
     }
@@ -2423,12 +2724,15 @@ b { font-weight: 600; }
       h.tip.push(t === Infinity ? 1 : Math.min(1, t)); h.tipSeen.push(r.tip.shownFrac);
       h.P.push(this.sim.o.P);
       h.alert.push(this.alert); h.org.push(this.org);
+      (h.vigor || (h.vigor = [])).push(this.vigor);
+      h.dSeen.push(r.army.shown); h.risk.push(r.risk.p); h.over.push(r.legit.over); h.orgSeen.push(this.orgShown());
+      const uc = this.undercurrent(); h.uc.push(uc.frac);
     }
 
     /** 以当前资源, 一次最多能把多少人带上街(占人口比例, 含已安排的) */
     pushCapacity() {
       let ap = this.me.ap, tot = this.seedNext / this.N;
-      const ss = (this.L.seedScale || 1) * this.seedMul;
+      const ss = (this.L.seedScale || 1) * this.seedMul * (this.side === 'movement' ? this.vigor : 1);
       const cands = this.hand().filter((c) => SEEDS[c.id] || c.seedFn).map((c) => {
         const cs = this.cardState(c);
         return { cs, sz: (c.seedFn ? c.seedFn(this) : SEEDS[c.id]) * ss };
@@ -2680,6 +2984,8 @@ b { font-weight: 600; }
     H(34, '德累斯顿:示威者推选出"二十人小组",市长同意和他们谈。', (g) => g.addAlert(-5)),
     H(37, '党报的口气第一次变了:愿意"讨论"。'),
     H(40, '工厂里,有人把"我们是人民"写在了机床上。'),
+    H(42, '10月16日,周一。尼古拉教堂外,环城大道上的人比上周更多了。', (g) => g.addSeeds(0.01)),
+    H(43, '东柏林:统一社会党政治局里,有人开始商量让昂纳克下台。'),
   ];
 
   /* ---------------- 2022 (每轮一天) ---------------- */
@@ -2723,6 +3029,69 @@ b { font-weight: 600; }
     H(46, '冬天又要来了。'),
   ];
 
+  /* ---------------- 清明 1976 (每轮半天, 3月19日起) ---------------- */
+  TL.qingming = [
+    H(2, '车间里,有人把总理的照片夹在了工作证里。'),
+    H(4, '广播里在念"反击右倾翻案风"的文章。念的人声音很平,听的人没有抬头。'),
+    H(6, '纪念碑前零零星星有人献花。不远处有人看着,记下了他们的样子。', (g) => g.addAlert(2), 'opp'),
+    H(8, '单位的学习会上,有人小声问:总理的追悼会为什么开得那么匆忙?没有人回答。'),
+    H(10, '有人在纪念碑的汉白玉栏杆上系了一朵小白花。', (g) => g.addSeeds(0.004)),
+    H(12, '《文汇报》头版的一篇文章里有这样一句:"党内那个走资派要把被打倒至今不肯悔改的走资派扶上台。"读报的人都明白它影射的是谁。', (g) => { g.griefAll(0.02); g.sim.reveal(0.1); }),
+    H(14, '北京的工厂里,有人偷偷传看那份报纸。'),
+    H(16, '据说,质问的电报和信件寄到了文汇报社。'),
+    H(20, '从南京开来的列车上还看得出"打倒张春桥"的字迹。北京站的工人看见了。', (g) => g.addSeeds(0.005)),
+    H(22, '纪念碑前的花圈多了起来。有单位整队送来,也有人一个人扛着来。', (g) => g.addSeeds(0.006)),
+    H(24, '有人在纪念碑前朗读悼词。围着听的人越来越多。'),
+    H(26, '据说,中央认定南京的事是"反革命事件"。', (g) => g.addAlert(8), 'opp'),
+    H(27, '夜里,纪念碑前还有人守着花圈。'),
+    H(29, '下了夜班的工人没有回家,直接去了广场。', (g) => g.addSeeds(0.006)),
+    H(31, '广场上有人举着手电筒,一字一字地抄诗。', (g) => g.griefAll(0.008)),
+  ];
+
+  /* ---------------- 首尔 1987 (1—5月每轮一周, 6月每轮一天) ---------------- */
+  TL.seoul = [
+    H(1, '1月19日,警方承认对朴钟哲施以"水刑",两名警察被捕。', (g) => g.griefAll(0.01)),
+    H(2, '全国的大学校园里挂出了黑色的横幅。'),
+    H(3, '2月7日,各地的朴钟哲追悼会被警方阻止,许多人被带走。', (g) => g.addSeeds(0.006), 'arrest'),
+    H(5, '工厂和教会的聚会上,人们在低声谈论"拷问"。'),
+    H(7, '3月3日,朴钟哲的四十九日。"驱逐拷问国民平和大行进"又被驱散。', (g) => g.addSeeds(0.008)),
+    H(9, '在野党为修宪问题争吵不休。'),
+    H(11, '樱花开了。校园里很安静。'),
+    H(14, '大学教授们接连发表反对"护宪"的时局声明。', (g) => g.griefAll(0.008)),
+    H(15, '神父、牧师、作家、电影人也发表了声明。', (g) => g.griefAll(0.006)),
+    H(16, '光州事件七周年快到了。'),
+    H(19, '5月27日,在野党、宗教界与学生组织联合成立"民主宪法争取国民运动本部"。', (g) => { g.bonusIncome += 0.1; }),
+    H(20, '六月。执政党定于6月10日提名卢泰愚为总统候选人。'),
+    H(23, '校园里,学生们在准备"六一〇国民大会"。'),
+    H(27, '国民运动本部宣布:6月10日傍晚六点,开车的人一起按喇叭,教堂一起敲钟。'),
+    H(30, '明洞圣堂:示威者在教堂里静坐,神父们守在门口。'),
+    H(33, '釜山、光州、大田……各地的街头都有人。', (g) => g.addSeeds(0.01)),
+    H(34, '明洞静坐结束,示威者安全离开了教堂。'),
+    H(35, '晚报的头版上,是一排排的催泪弹和一张张哭泣的脸。'),
+    H(37, '6月18日,"驱逐催泪弹大会":全国几十座城市同时上街。', (g) => g.addSeeds(0.03)),
+    H(40, '执政党内部在争论:让步,还是镇压?'),
+    H(43, '6月24日,全斗焕与在野党领袖金泳三会谈,没有结果。'),
+    H(47, '街头的人没有散去。'),
+  ];
+
+  /* ---------------- 布加勒斯特 1989 (每轮半天, 12月15日起) ---------------- */
+  TL.bucharest = [
+    H(1, '蒂米什瓦拉:几十名教友手挽着手,守在牧师住所门前。'),
+    H(2, '围在牧师门前的人越来越多,罗马尼亚人也加入了匈牙利族教友。', (g) => g.addSeeds(0.006), 'crowd'),
+    H(4, (g) => (g.flags.shot ? '蒂米什瓦拉的街上开进了坦克。医院里挤满了伤员。' : '蒂米什瓦拉的街上,人们还在议论昨天的事。')),
+    H(5, '国家安全局的报告:局势已经控制。', null, 'intel'),
+    H(7, (g) => (g.flags.shot ? '据说,死者的遗体被连夜运往布加勒斯特,秘密火化。' : '有人在收听自由欧洲电台的罗马尼亚语广播。'), (g) => { if (g.flags.shot) { const s = g.sim; for (let i = 0; i < g.N; i++) s.latent[i] += 0.03; } }),
+    H(8, '自由欧洲电台和美国之音在广播蒂米什瓦拉的消息。', (g) => g.sim.reveal(0.3)),
+    H(9, '排队买面包的人压低了声音,说着一个城市的名字。'),
+    H(13, (g) => (g.x > 0.02 ? '大学广场上出现了路障。有人在喊"我们不走"。' : '夜里的布加勒斯特很安静,街灯是黑的。')),
+    H(16, (g) => (g.x > 0.05 ? '国家电视台的大楼外聚满了人。' : '工厂照常开工。')),
+    H(18, '圣诞节快到了。'),
+    H(20, '12月25日,圣诞节。'),
+    H(24, '报告说:一切正常。', null, 'intel'),
+    H(28, '人们在排队买过年的肉。'),
+    H(33, '新年前夜。'),
+  ];
+
   const api = { TL };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   global.SilenceTimelines = api;
@@ -2752,6 +3121,7 @@ b { font-weight: 600; }
   const ymd = (t) => { const d = new Date(t); return [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), d.getUTCDay()]; };
   const dayFmt = (y, m, d, withYear) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [Y, M, D] = ymd(t0 + r * DAY); return (withYear === false ? '' : Y + '年') + M + '月' + D + '日'; }; };
   const weekFmt = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [Y, M, D] = ymd(t0 + r * 7 * DAY); return `${Y}年${M}月${D}日`; }; };
+  const halfDayFmt = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [, M, D] = ymd(t0 + Math.floor(r / 2) * DAY); return M + '月' + D + '日 · ' + (r % 2 ? '夜' : '昼'); }; };
   const monthFmt = (y, m) => (r) => { const mm = m - 1 + r; return `${y + Math.floor(mm / 12)}年${(mm % 12) + 1}月`; };
   const weekday = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => ymd(t0 + r * DAY)[3]; };
 
@@ -2932,10 +3302,77 @@ b { font-weight: 600; }
   });
 
   /* ============================================================
-   * 第三章 · 伊朗 1978 (行动方)
+   * 第三章 · 清明 1976 (行动方)
    * ============================================================ */
   LEVELS.push({
-    id: 'iran', chapter: '第三章', title: '四十日', era: '1978年1月—1979年2月', place: '库姆 · 大不里士 · 德黑兰', icon: '🕯️',
+    id: 'qingming', chapter: '第三章', title: '清明', era: '1976年3月19日—4月5日', place: '北京 · 天安门广场', icon: '💮',
+    side: 'movement', role: '北京一家工厂的青年工人',
+    blurb: '一月里,悼念被压了下去。三个月后,清明节要到了。',
+    intro: [
+      '1976年1月8日,周恩来逝世。灵车经过长安街那天,十里长街站满了送行的人;此后的悼念活动却被层层限制,报纸上的消息少得可怜。',
+      '年初,"反击右倾翻案风"运动愈演愈烈,矛头指向邓小平。三月下旬,上海《文汇报》的一篇文章被许多人读作影射总理。',
+      '3月19日,北京一所小学的师生把一个花圈送到了人民英雄纪念碑下。<b>清明节就要到了。</b>一个人去送花圈,可能会被单位追查;如果全城的人都去呢?',
+    ],
+    goalText: '在4月5日夜之前,让三成北京人来到广场悼念,并坚持一天(两个半天)。',
+    tips: ['一月里的悼念被压下去了,悲痛却没有消失——它藏在人们心里。清明节、曝光会让它浮出来。', '清明节是所有人都知道的日子:不用串联,大家也知道哪一天该去。', '单位会追查去过广场的人。人越多,越查不过来。'],
+    rounds: 36, scale: 4000, arrestScale: 20, moodScale: 0.2, tipSpread: 0.3,
+    randomEvents: ['mole', 'split', 'release', 'letter'],
+    world: { N: 2000, tolType: 'bell', tolMul: 0.42, netType: 'clusters', netGroups: 40, P: 1.0, Pbar: 0.75, K0: 40, M: 150, alpha: 0.15, beta: 0.5, delta: 0.1, gamma: 1.5, memDecay: 0.05, vis: 0.7, omega: 0.6, globalScale: 0.5, noise: 0.01, hardCore: 0.002, seed: 1976, psiScale: 1.8, latentDecay: 0.005 },
+    policies: { start: Object.assign({}, STD_POL, { info: 'blackout', enforce: 'harsh' }) },
+    setup: (g) => { const s = g.sim; for (let i = 0; i < g.N; i++) s.latent[i] = 0.05 + s.rng() * 0.1; },   // 一月里被压住的悲痛
+    labels: { army: '民兵', crowd: '广场上', plaza: '人民英雄纪念碑', prison: '公安局', barracks: '劳动人民文化宫', avenue: '长安街' },
+    slogans: ['悼念总理', '还我花圈', '扬眉剑出鞘'],
+    cards: ['memorial', 'samizdat', 'rally', 'march', 'network', 'lowkey', 'leak'],
+    cardNames: {
+      memorial: { name: '送花圈', text: '用白纸扎一个花圈,写上挽联,送到纪念碑下。' },
+      samizdat: { name: '抄诗', text: '纪念碑四周贴满了诗。人们一句一句地抄在本子上,带回单位、带回家。' },
+      rally: { name: '去纪念碑前', text: '下了班,去广场上站一站,看一看那些花圈和诗。' },
+      march: { name: '全车间一起去', text: '工友们扛着花圈,排着队走到广场。' },
+      network: { name: '厂里串联', text: '车间、班组、同学之间,约好一起去。' },
+      lowkey: { name: '不留名', text: '挽联不写单位,诗不署名字。' },
+      leak: { name: '列车上的标语', text: '南京的学生把标语刷在开往北京的列车上。车厢被冲洗,标语又被刷上。消息顺着铁路传开。', when: (g) => g.round >= 18, whenText: '要等南京的消息传来(3月28日前后)' },
+    },
+    startAP: 2, income: 1.0,
+    ai: { aggression: 0.7, alertMul: 0.6, income: 1.2, lag: 2, start: { enforce: 'harsh', police: 'normal', info: 'blackout', target: 'uniform' }, max: { police: 'surge' }, cards: ['editorial', 'informants', 'bonus'] },
+    oppSay: { editorial: '《人民日报》:要警惕"一小撮"借悼念之名兴风作浪。', informants: '单位里在追查:谁去过广场,谁抄过诗。', bonus: '首都民兵指挥部召开动员会。' },
+    goal: { x: 0.3, hold: 2 },
+    stars: [
+      { text: '在清明节(4月4日)之前做到', test: (g) => g.round <= 31 },
+      { text: '被抓的人少于两千', test: (g) => g.sim.R < 0.05 },
+    ],
+    dateFmt: halfDayFmt(1976, 3, 19),
+    events: [
+      { at: 0, title: '第一个花圈', art: '💮', text: '3月19日,一所小学的师生把一个花圈送到了人民英雄纪念碑下。<br><br>一月里,悼念总理的活动被层层限制。可人们没有忘。纪念碑就在那里——去不去,是每个人自己的事;去的人多不多,却是所有人的事。', choices: [{ label: '开始' }] },
+      { at: 18, title: '南京', art: '🚂', text: '南京的学生和市民到雨花台悼念总理,又把"打倒张春桥"之类的标语刷在开往北京的列车上。车站派人冲洗,标语又被刷上。<br><br>列车进了北京站,车厢上的字迹还看得出来。', choices: [
+        { label: '把消息传开', hint: '「列车上的标语」免费 · 当局警觉 +6', run: (g) => { g.giveFree('leak', 3); g.addAlert(6); } },
+        { label: '先别声张', hint: '保存力量' },
+      ] },
+      { at: 28, news: '各单位传达上级通知:不许去天安门广场送花圈。', kind: 'opp', run: (g) => { g.forcePolicy('info', 'blackout', 6, '单位传达'); g.forceOpp('editorial', false); } },
+      { at: 30, news: '纪念碑四周的花圈越堆越高,松墙上挂满了诗。', kind: 'crowd', run: (g) => g.giveFree('samizdat', 2) },
+      { at: 32, title: '清明', art: '🌸', text: '4月4日,星期天,清明节。从早到晚,人流涌向广场。花圈一层一层堆上纪念碑的台阶,有人站在高处念诗:<br><br>"欲悲闻鬼叫,我哭豺狼笑。洒泪祭雄杰,扬眉剑出鞘。"', choices: [
+        { label: '全家都去', hint: '很多人来到广场 · 被压住的悲痛浮出水面', run: (g) => { g.addSeeds(0.05); g.sim.reveal(0.4); } },
+        { label: '自己去送一次花圈', hint: '少量的人 · 悲痛浮出一些', run: (g) => { g.addSeeds(0.02); g.sim.reveal(0.2); } },
+      ] },
+      { at: 33, title: '花圈不见了', art: '🚚', text: '4月4日深夜,中央政治局认定这是一起"反革命"事件。当夜,纪念碑前的花圈被卡车一车一车地拉走,诗被撕掉,守在那里的人被带走。', choices: [{ label: '……' }], run: (g) => { g.griefAll(0.04); g.sim.reveal(0.5); g.addAlert(30); g.forcePolicy('enforce', 'terror', 4, '"反革命事件"'); } },
+      { at: 34, title: '还我花圈', art: '🔥', text: '4月5日,星期一。一早赶到广场的人发现花圈没了。"还我花圈!还我战友!"人群围住了广场东南角的小楼(联合指挥部),一辆广播车被掀翻,小楼起了火。', choices: [
+        { label: '留在广场', hint: '带出很多人 · 今晚会清场', run: (g) => g.addSeeds(0.04) },
+        { label: '天黑前回家', hint: '保护自己' },
+      ] },
+      { at: 35, title: '4月5日夜', art: '🌑', text: '傍晚六点半起,广场上的高音喇叭反复播放北京市委第一书记吴德的广播讲话,要人们离开。晚上九点多,广场上的灯突然全亮了——上万名民兵,和公安干警、卫戍部队一起,手持木棍冲进广场。', choices: [{ label: '……' }], run: (g) => { g.forcePolicy('police', 'martial', 9, '清场'); g.forceOpp('crackdown', false); } },
+    ],
+    endings: {
+      crowd: { title: '人民的悼念', text: '清明前后,来到广场的人数以百万计。花圈、挽联和诗把纪念碑围了一层又一层。<br><br>4月5日夜,广场被清场;两天后,邓小平被撤销一切职务,这次悼念被定性为"反革命事件"。<br>可它没有被忘记。1978年11月,中共北京市委宣布:天安门事件"完全是革命行动"。那些诗后来被编成了《天安门诗抄》。' },
+      timeout: { title: '花圈被收走了', text: '4月5日夜,广场被清场。来的人不够多,这次悼念没能成为全城的事。<br><br>——可在人们心里,记忆还在。两年后,这次事件被平反。' },
+    },
+    history: '1976年1月8日周恩来逝世,此后的悼念活动受到限制。3月下旬,《文汇报》的文章引发南京、北京等地民众不满;南京学生把标语刷上开往北京的列车。3月底起,人们陆续到天安门广场人民英雄纪念碑前献花圈、贴诗词,4月4日清明节达到高潮。当夜中央政治局将其定性为反革命事件,花圈被连夜清走。4月5日,民众与维持秩序的人员发生冲突,当晚民兵、公安干警和卫戍部队清场,许多人被打伤、被抓。4月7日,邓小平被撤销党内外一切职务。1978年11月,中共北京市委宣布天安门事件"完全是革命行动"。',
+    lesson: { title: '性质六 · 小规模行动可能被吸回同一个低位状态', text: '一月里,悼念被一次次压回沉默:每一次小规模行动,最后都只剩下那批本来就愿意承担完整代价的人。可"反复看见小行动没有扩散",只说明它们没有跨过相关障碍,不能证明更大的行动也会失败。清明节是一个人人都知道的日子;被压住的悲痛也在那一天浮出水面——改变的正是"别人也会去"这一判断,和人们愿意承担的代价。' },
+  });
+
+  /* ============================================================
+   * 第四章 · 伊朗 1978 (行动方)
+   * ============================================================ */
+  LEVELS.push({
+    id: 'iran', chapter: '第四章', title: '四十日', era: '1978年1月—1979年2月', place: '库姆 · 大不里士 · 德黑兰', icon: '🕯️',
     side: 'movement', role: '反对派网络',
     blurb: '人死后第四十天要悼念。悼念会上若再有人死去,四十天后又是一次悼念。',
     intro: [
@@ -2981,10 +3418,10 @@ b { font-weight: 600; }
   });
 
   /* ============================================================
-   * 第四章 · 波兰 1981 (朝廷)
+   * 第五章 · 波兰 1981 (朝廷)
    * ============================================================ */
   LEVELS.push({
-    id: 'poland', chapter: '第四章', title: '戒严之夜', era: '1981年12月—1982年10月', place: '华沙 · 格但斯克 · 卡托维兹', icon: '❄️',
+    id: 'poland', chapter: '第五章', title: '戒严之夜', era: '1981年12月—1982年10月', place: '华沙 · 格但斯克 · 卡托维兹', icon: '❄️',
     side: 'regime', role: '救国军事委员会',
     blurb: '坦克开上街头,名单上的人一夜之间消失。你可以让国家安静下来——代价是什么?',
     intro: [
@@ -3035,10 +3472,79 @@ b { font-weight: 600; }
   });
 
   /* ============================================================
-   * 第五章 · 北京 1989 (行动方)
+   * 第六章 · 首尔 1987 六月抗争 (行动方)
+   * 1—5月每轮一周, 6月每轮一天: 时间在六月慢了下来
+   * ============================================================ */
+  const seoulFmt = (r) => (r < 20 ? weekFmt(1987, 1, 14)(r) : dayFmt(1987, 6, 1)(r - 20));
+  LEVELS.push({
+    id: 'seoul', chapter: '第六章', title: '六月', era: '1987年1月14日—6月30日', place: '首尔 · 明洞 · 全国', icon: '👔',
+    side: 'movement', role: '首尔一所大学的学生,后来是国民运动本部的组织者',
+    blurb: '一个学生死在审讯室里。警方说:"啪地一拍桌子,他\'呃\'的一声就倒下了。"',
+    intro: [
+      '1987年1月14日,首尔大学学生朴钟哲在南营洞的警察对共分室里接受审讯时死亡。警方的说法是:"啪地一拍桌子,他\'呃\'的一声就倒下了。"',
+      '全斗焕将军在1980年光州的血泊之后掌权。宪法规定总统由"选举人团"间接选出——明年,他将把权力交给自己指定的接班人。',
+      '人们要的是一部让自己投票选总统的宪法。<b>一个人的死,会被压下去,还是会被记住?</b>',
+    ],
+    goalText: '在6月底之前,让全国三分之一以上的人走上街头,并坚持两天——逼当局接受总统直选。',
+    tips: ['朴钟哲的死被掩盖着:悲愤藏在人们心里。「曝光真相」能让它浮出来——越晚曝光,当局越难收场;越早,越早被压下去。', '六月之前每轮是一周,六月每轮是一天。积蓄的力量,要留到六月。', '明洞圣堂是一个警察不敢进去的地方。中产阶级(「领带部队」)一加入,就不再只是学生的事。'],
+    rounds: 50, scale: 5000, arrestScale: 25, moodScale: 0.2, tipSpread: 0.3,
+    randomEvents: ['death', 'mole', 'press', 'writer', 'split', 'release'],
+    world: { N: 2000, tolType: 'bell', tolMul: 0.34, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.7, K0: 55, M: 160, alpha: 0.2, beta: 0.5, delta: 0.15, gamma: 1.8, memDecay: 0.06, vis: 0.6, omega: 0.6, globalScale: 0.55, noise: 0.01, hardCore: 0.004, seed: 1987, psiScale: 1.6, latentDecay: 0.01 },
+    policies: { start: Object.assign({}, STD_POL, { enforce: 'harsh', police: 'surge', info: 'spin', target: 'organizer' }) },
+    labels: { army: '战警', crowd: '街头', plaza: '明洞圣堂', prison: '南营洞', barracks: '军营', avenue: '世宗大路' },
+    slogans: ['打倒独裁!', '撤销护宪!', '还我钟哲!', '直选!'],
+    cards: ['rally', 'march', 'memorial', 'leak', 'network', 'fraternize', 'sanctuary', 'necktie'],
+    cardNames: {
+      memorial: { name: '追悼会', text: '为朴钟哲举行追悼会。追悼会结束,人们会走到街上。' },
+      leak: { name: '曝光真相', text: '把被掩盖的审讯细节送到神父、记者手里。封锁压住的不是记忆,只是记忆的公开。' },
+      network: { name: '校园与教会串联', text: '学生会、教会、在野党,约好同一天、同一个时间。' },
+      fraternize: { name: '向战警喊话', text: '"你们也是被征来的年轻人。"对着盾牌后面的脸说话。' },
+    },
+    startAP: 2, income: 1.0,
+    ai: { aggression: 0.75, income: 1.2, lag: 2, start: { enforce: 'harsh', police: 'surge', info: 'spin', target: 'organizer' }, max: { police: 'surge', enforce: 'harsh' }, cards: ['editorial', 'informants', 'crackdown', 'bonus'] },
+    oppSay: { editorial: '政府发言人:一小撮"左倾势力"企图颠覆国家。', informants: '便衣警察在校园里拍照,登记示威者的脸。', crackdown: '战警发射了成排的催泪弹。', bonus: '战警部队加发津贴。' },
+    goal: { x: 0.35, hold: 2 },
+    stars: [
+      { text: '在6月20日之前做到', test: (g) => g.round <= 39 },
+      { text: '被带走的人少于五千', test: (g) => g.sim.R < 0.05 },
+    ],
+    dateFmt: seoulFmt,
+    setup: (g) => { g.flags.necktie = false; },
+    events: [
+      { at: 0, title: '南营洞', art: '🚿', text: '1月14日,首尔大学语言学系的学生朴钟哲被带到南营洞的治安本部对共分室,追问一位学长的下落。他没有说。<br><br>第二天,警方宣布他死于"休克":"啪地一拍桌子,他\'呃\'的一声就倒下了。"<br>给他做检查的医生看到的是另一回事。', choices: [{ label: '记住他' }], run: (g) => { const s = g.sim; for (let i = 0; i < g.N; i++) s.latent[i] += 0.06 + s.rng() * 0.06; g.griefAll(0.01); } },
+      { at: 13, title: '四一三护宪措施', art: '📺', text: '4月13日,全斗焕发表特别谈话:修宪讨论到此为止,等明年汉城奥运会之后再说。明年的总统,仍将由选举人团选出。<br><br>这意味着:他指定的接班人,将在一个没有对手的选举里当选。', choices: [
+        { label: '联署反对', hint: '教授、神父、作家接连发表声明 · 积怨上升', run: (g) => { g.griefAll(0.03); g.giveFree('network', 2); } },
+        { label: '沉默', hint: '保存力量' },
+      ] },
+      { at: 18, title: '五一八', art: '⛪', text: '5月18日,光州事件七周年的弥撒上,天主教正义实现全国司祭团宣读了一份声明:朴钟哲之死,警方掩盖了真相——参与拷问的警察不止两个,上面知道,还安排了顶罪。', choices: [
+        { label: '让全国都知道', hint: '被压住的悲愤浮出水面 · 人人看见', run: (g) => { g.sim.reveal(0.7); g.addEffect({ id: 'priests', name: '司祭团声明', icon: '⛪', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = Math.min(1, m.gs + 0.3); } }); } },
+      ] },
+      { at: 28, title: '李韩烈', art: '🩸', text: '6月9日,延世大学门前。学生李韩烈被一枚平射的催泪弹击中后脑,倒在同学的怀里。那张照片第二天登上了报纸。<br><br>明天,执政党要提名卢泰愚为总统候选人。', choices: [
+        { label: '明天上街', hint: '「大游行」免费 · 积怨上升', run: (g) => { g.griefAll(0.04); g.giveFree('march', 2); } },
+      ] },
+      { at: 29, title: '六一〇', art: '📣', text: '6月10日,执政党在体育馆里提名卢泰愚。同一时间,"声讨拷问杀人掩盖、撤销护宪"国民大会在全国二十多座城市举行。<br><br>傍晚,被驱散的示威者退进了明洞圣堂。', choices: [
+        { label: '守住明洞', hint: '「明洞圣堂静坐」免费', run: (g) => { g.addSeeds(0.025); g.giveFree('sanctuary', 3); } },
+      ] },
+      { at: 31, news: '午休时间,市中心打着领带的上班族走出写字楼,为示威队伍鼓掌。', kind: 'crowd', run: (g) => { g.flags.necktie = true; g.giveFree('necktie', 2); } },
+      { at: 38, title: '6月19日', art: '🪖', text: '据后来披露,全斗焕在这一天上午下令:军队准备进驻首尔等城市。<br><br>同一天,美国大使李洁明递交了里根总统的亲笔信。明年就是汉城奥运会,全世界都在看。', choices: [{ label: '……' }], run: (g) => {
+        if (g.x >= 0.06 || g.d >= 0.15) { g.log('傍晚,出兵的命令被收回了。', 'army'); g.L.ai.aggression = 0.5; g.scalePsi(0.3, 0.8); }
+        else { g.log('军队开进了城市。', 'opp'); g.flags.martialLaw = true; g.L.ai.max = {}; g.forcePolicy('police', 'martial', 99, '出兵'); g.forcePolicy('enforce', 'terror', 99, '出兵'); g.forceOpp('crackdown', false); }
+      } },
+      { at: 45, news: '6月26日,"国民平和大行进":全国三十多座城市,上百万人上街。', kind: 'crowd', run: (g) => g.addSeeds(0.035) },
+    ],
+    endings: {
+      crowd: { title: '六二九宣言', text: '6月29日,执政党总统候选人卢泰愚发表"六二九宣言":接受总统直选,赦免金大中,恢复政治犯的公民权,保障新闻自由……<br><br>7月9日,李韩烈的葬礼上,上百万人送他。12月,韩国举行了十六年来第一次总统直选。' },
+      timeout: { title: '护宪', text: '街头的人不够多,也不够久。"护宪措施"维持了下去,明年的总统仍由选举人团选出。<br><br><b>这不是历史。</b>历史上,六月的街头最终逼得当局让步。' },
+    },
+    history: '1987年1月14日,首尔大学学生朴钟哲在南营洞治安本部对共分室受水刑致死,警方起初声称"一拍桌子他就倒下了",随后承认拷问,但只承认两名警察涉案。4月13日,全斗焕发表"护宪措施",拒绝修宪。5月18日,天主教正义实现全国司祭团揭露警方掩盖真相。5月27日,民主宪法争取国民运动本部成立。6月9日,延世大学学生李韩烈被催泪弹击中头部(7月5日去世)。6月10日起,全国各地爆发大规模示威,明洞圣堂静坐持续数日,上班族也加入了街头。据后来披露,6月19日全斗焕曾下令军队准备出动,随后收回。6月26日"国民平和大行进"遍及全国。6月29日,卢泰愚发表"六二九宣言",接受总统直选。',
+    lesson: { title: '性质三 · 一次处罚会不会带来更多参与者,可以写成明确的局部条件', text: '"越压越反"并不总成立。反作用需要两个条件同时满足:事件足以改变人们的参与意愿,而且恰好有足够多的人位于当前门槛附近。一月里,朴钟哲的死没有立刻带来大游行;经过四一三、五一八,门槛附近的人越来越多——六月的一枚催泪弹,才带来了成倍的人。' },
+  });
+
+  /* ============================================================
+   * 第七章 · 北京 1989 (行动方)
    * ============================================================ */
   LEVELS.push({
-    id: 'beijing', chapter: '第五章', title: '春夏之交', era: '1989年4月15日—6月4日', place: '北京', icon: '🎓',
+    id: 'beijing', chapter: '第七章', title: '春夏之交', era: '1989年4月15日—6月4日', place: '北京', icon: '🎓',
     side: 'movement', role: '高校学生自治联合会',
     blurb: '百万人上街,政权并没有倒下。决定结局的,是那些开进城的士兵。',
     intro: [
@@ -3049,9 +3555,9 @@ b { font-weight: 600; }
     goalText: '在6月4日前,让戒严部队倒戈(军心"成建制倒戈"并维持两天)。',
     tips: ['街上的人数会影响士兵,但光靠人多压不垮军队。', '戒严后,「拦阻军车」和「劝说士兵」是你最重要的牌。', '当局可能调来与本地毫无联系的部队——他们不会和人群说话。'],
     rounds: 50, scale: 1000, arrestScale: 8, moodScale: 0.2, tipSpread: 0.35,
-    world: { N: 2000, tolType: 'bell', tolMul: 0.9, tolAdd: -0.45, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.9, K0: 30, M: 200, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.8, memDecay: 0.1, vis: 0.9, omega: 0.7, globalScale: 0.8, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 3.0 },
+    world: { N: 2000, tolType: 'bell', tolMul: 0.9, tolAdd: -0.45, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.9, K0: 30, M: 200, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.8, memDecay: 0.1, vis: 0.9, omega: 0.7, globalScale: 0.8, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 1.9 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin', enforce: 'lenient', police: 'lean' }) },
-    troopPsi: 2.4,
+    troopPsi: 2.55,
     labels: { army: '军警', crowd: '广场上', plaza: '天安门广场', prison: '收容审查', barracks: '城郊营地', avenue: '长安街' },
     slogans: ['反腐败!', '新闻自由!', '对话!', '人民军队爱人民!', '民主万岁!'],
     cards: ['rally', 'march', 'mobilize', 'hunger', 'fraternize', 'blockade', 'goddess', 'memorial', 'samizdat', 'legal'],
@@ -3116,10 +3622,10 @@ b { font-weight: 600; }
   });
 
   /* ============================================================
-   * 第六章 · 莱比锡 1989 (行动方)
+   * 第八章 · 莱比锡 1989 (行动方)
    * ============================================================ */
   LEVELS.push({
-    id: 'leipzig', chapter: '第六章', title: '我们是人民', era: '1989年9月4日—10月16日', place: '莱比锡', icon: '⛪',
+    id: 'leipzig', chapter: '第八章', title: '我们是人民', era: '1989年9月4日—10月18日', place: '莱比锡', icon: '⛪',
     side: 'movement', role: '尼古拉教堂的和平祈祷会',
     blurb: '每周一,教堂的门开着。四个月前北京发生的事,每个人都知道。',
     intro: [
@@ -3127,10 +3633,10 @@ b { font-weight: 600; }
       '这个夏天,成千上万东德人经匈牙利逃往西方。留下的人开始喊:<b>"我们要留下来!"</b>',
       '当局有斯塔西(国家安全部)、有警察、有战斗队。他们还公开称赞了北京在六月的做法。',
     ],
-    goalText: '在10月16日前,让周一游行达到全城的四成(约12万人),并坚持两天。',
+    goalText: '在10月18日前,让游行达到全城的四成(约12万人),并坚持两天。',
     tips: ['周一的「和平祈祷」是免费的。', '当局把新闻压得越狠,一次「曝光真相」就越有力。', '教会、学校、工厂之间的联系(「串联织网」)会让人更容易互相带动。'],
-    rounds: 42, scale: 150, arrestScale: 5, moodScale: 0.2, randomEvents: ['death', 'mole', 'press', 'writer', 'letter', 'release', 'split'],
-    world: { N: 2000, tolType: 'uniform', tolMul: 0.37, tolAdd: -0.15, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.75, K0: 50, M: 150, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.5, memDecay: 0.15, vis: 0.8, omega: 0.6, globalScale: 0.75, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 1.3 },
+    rounds: 45, scale: 150, arrestScale: 5, moodScale: 0.2, randomEvents: ['death', 'mole', 'press', 'writer', 'letter', 'release', 'split'],
+    world: { N: 2000, tolType: 'uniform', tolMul: 0.37, tolAdd: -0.15, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.75, K0: 50, M: 150, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.5, memDecay: 0.15, vis: 0.8, omega: 0.6, globalScale: 0.75, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 1.9 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin', target: 'organizer' }) },
     labels: { army: '警察与战斗队', crowd: '环城大道上', plaza: '卡尔·马克思广场', prison: '斯塔西看守所', barracks: '人民警察营地', avenue: '环城大道' },
     slogans: ['我们是人民!', '不要暴力!', '我们要留下来!', '新闻自由!'],
@@ -3158,7 +3664,7 @@ b { font-weight: 600; }
       { at: 36, if: (g) => g.x < 0.1, title: '人太少了', art: '🚨', text: '人不够多。警察和战斗队冲进了人群。', choices: [{ label: '……' }], run: (g) => g.forceOpp('crackdown', false) },
     ],
     endings: {
-      crowd: { title: '我们是人民', text: '十几万人在环城大道上游行,手里拿着蜡烛。没有人开枪。<br><br>两天后,昂纳克下台。三周后,柏林墙倒塌。' },
+      crowd: { title: '我们是人民', text: '十几万人在环城大道上游行,手里拿着蜡烛。没有人开枪。<br><br>10月18日,昂纳克下台。三周后,柏林墙倒塌。' },
       timeout: { title: '周一还会再来', text: '人没有多到让当局放弃。但下一个周一,教堂的门还会开着。' },
     },
     history: '莱比锡周一游行:9月下旬数千人,10月2日约两万人,10月9日约七万人,10月16日约十二万人。10月9日的游行被西格伯特·舍夫克和阿拉姆·拉多姆斯基从教堂塔楼上秘密拍摄,次日在西德电视台播出。10月18日昂纳克下台,11月9日柏林墙倒塌。<br><br>这一年六月,东德人民议院通过声明支持北京的镇压。10月9日,当局准备了"中国式解决"——最终没有下令。',
@@ -3166,10 +3672,98 @@ b { font-weight: 600; }
   });
 
   /* ============================================================
-   * 第七章 · 2022 四通桥与白纸 (行动方)
+   * 第九章 · 布加勒斯特 1989 (朝廷)
    * ============================================================ */
   LEVELS.push({
-    id: 'baizhi', chapter: '第七章', title: '一张白纸', era: '2022年10月13日—12月7日', place: '北京 · 上海 · 乌鲁木齐', icon: '📄',
+    id: 'bucharest', chapter: '第九章', title: '最后一次大会', era: '1989年12月15日—12月31日', place: '蒂米什瓦拉 · 布加勒斯特', icon: '🎙️',
+    side: 'regime', role: '尼古拉·齐奥塞斯库',
+    blurb: '国家安全局的报告说:一切正常。报告一直都这么说。',
+    intro: [
+      '1989年12月。柏林墙倒了,布拉格的人上了街,保加利亚换了领导人。在你的国家,一切照旧。',
+      '为了还清外债,你让全国勒紧了腰带:面包、肉、牛奶凭票供应,冬天的公寓里只有几个小时的暖气,晚上街灯是黑的。国家安全局(Securitate)无处不在,每个单位都有人打报告。',
+      '<b>报告说:人民拥护你。</b>报告一直都这么说。',
+    ],
+    quote: '沉默的记录,不足以确定沉默背后的反应结构。——《道路以目》',
+    goalText: '撑到1989年最后一天,别让街头失控,也别让军队倒戈。',
+    tips: ['你的情报几乎完全不可信:执法越凶,下面的人越不敢说真话。「国家安全局线人」能让你暂时听到真话。', '勒紧腰带省下的钱,正变成看不见的积怨。补贴能买来平静——真正的平静。', '十万人站在同一个广场上,每个人都能看见别人。'],
+    rounds: 34, scale: 5000, arrestScale: 30, moodScale: 0.2, tipSpread: 0.3,
+    randomEvents: ['r_ringleaders', 'r_rumor', 'r_hawks', 'r_advisor', 'r_pay'],
+    world: { N: 2000, tolType: 'uniform', tolMul: 0.4, netType: 'random', netDeg: 6, P: 1.0, Pbar: 0.7, K0: 50, M: 150, alpha: 0.3, beta: 0.45, delta: 0.2, gamma: 2, memDecay: 0.03, vis: 0.8, omega: 0.8, globalScale: 0.8, noise: 0.01, hardCore: 0.003, seed: 1989, psiScale: 1.6 },
+    policies: { start: { enforce: 'harsh', police: 'surge', target: 'preventive', info: 'blackout', release: 'long' } },
+    setup: (g) => { g.griefAll(0.13); g.flagTop(0.03); },   // 多年的配给、寒冷与监视
+    labels: { army: '军队', crowd: '街头', plaza: '宫殿广场', prison: '国家安全局', barracks: '国防部', avenue: '胜利大道' },
+    slogans: ['打倒齐奥塞斯库!', '蒂米什瓦拉!', '我们是人民!', '军队和我们在一起!'],
+    policyNames: {
+      police: { name: '警力', options: { lean: '精简', normal: '常规', surge: '国家安全局', martial: '军队进城' } },
+      info: { name: '舆论', options: { open: '如实报道', spin: '报喜不报忧', blackout: '只播领袖' } },
+    },
+    cardNames: {
+      informants: { name: '国家安全局线人', text: '让线人去听人们私下说什么。这几天你会听到真话——最敢说话的人也会先被抓。' },
+      editorial: { name: '电视讲话', text: '在电视上谴责"流氓"和"外国特务"。' },
+      crackdown: { name: '开枪', text: '命令军队和国家安全局向人群开枪。街道会空——枪声也会被所有人听见。' },
+      subsidy: { name: '恢复暖气与供应', text: '给公寓通上暖气,让商店里有面包和肉。花掉的是还债省下的钱。' },
+      dialogue: { name: '派人谈判', text: '承认一部分诉求:工资、供应、不再驱逐牧师。' },
+      amnesty: { name: '释放被捕者', text: '放掉这几天抓起来的人。' },
+      bonus: { name: '给军官加薪', text: '升职、加薪、许诺。让将军们记得是谁在养活他们。' },
+    },
+    cards: ['informants', 'subsidy', 'dialogue', 'amnesty', 'bonus', 'editorial', 'crackdown'],
+    startAP: 4, income: 1.2,
+    ai: { income: 1.0, every: 2, base: 0.01, smart: 0.8, aggression: 0.8, orgRate: 1.2, cards: ['rally', 'march', 'strike', 'memorial', 'leak', 'fraternize'],
+      pushNews: '全城罢工,人们涌向市中心!',
+      chatter: ['排队买面包的人在小声说话,看见戴皮帽的人就散了。', '有人在收听自由欧洲电台。', '公寓里只有几个小时的暖气。', '有人在墙上写了一个名字,又被刷掉了。'] },
+    goal: { x: 0.25, d: 0.5, hold: 2, dHold: 2 },
+    stars: [
+      { text: '没有下令开枪', test: (g) => !g.flags.shot },
+      { text: '年底时民间积怨不超过"积怨"', test: (g) => g.meanGrievance() / g.moodScale < 0.55 },
+    ],
+    dateFmt: halfDayFmt(1989, 12, 15),
+    events: [
+      { at: 0, title: '特凯什牧师', art: '⛪', text: '12月15日,蒂米什瓦拉。匈牙利族归正会牧师特凯什·拉斯洛接到了驱逐令——他在外国电视上批评了你的政策。<br><br>他的教友们手挽手,围在牧师住所门前,不让警察进去。', choices: [
+        { label: '照常驱逐', hint: '规矩就是规矩', run: (g) => { g.forceOpp('rally', false); g.griefAll(0.01, 0.5); } },
+        { label: '暂缓驱逐', wise: true, hint: '人群会散——你会显得软弱', run: (g) => { g.base.Pbar += 0.03; g.org = Math.min(100, g.org + 6); } },
+      ] },
+      { at: 3, title: '蒂米什瓦拉', art: '🔥', text: '围在牧师门前的人越来越多,罗马尼亚人也加入了。人群冲进县党委大楼,把你的画像和书扔出窗外,喊着"打倒齐奥塞斯库"。<br><br>县里请示:要不要开枪?', choices: [
+        { label: '开枪', hint: '街道会空——枪声也会被所有人听见', run: (g) => { g.flags.shot = true; g.selfCard('crackdown', '12月17日,军队和国家安全局在蒂米什瓦拉向人群开枪。'); } },
+        { label: '水龙和警棍', hint: '驱散,但不开枪', run: (g) => g.addEffect({ id: 'hose', name: '水龙驱散', icon: '🚒', side: 'regime', rounds: 2, mod(m) { m.K0 *= 1.4; } }) },
+        { label: '派人去谈', wise: true, hint: '承认一部分诉求 · 对手会觉得你软', run: (g) => g.selfCard('dialogue', '县里派人和人群谈判。') },
+      ] },
+      { at: 6, title: '伊朗之行', art: '✈️', text: '按计划,你今天出发去德黑兰进行国事访问,20日回来。夫人埃列娜会替你主持政治执行委员会。<br><br>取消出访,全世界都会猜到国内出了事。', choices: [
+        { label: '按计划出访', hint: '接下来两天你无法出牌、也不能改政策', run: (g) => { g.flags.away = true; g.allowCards = []; g.log('你飞往德黑兰。', 'mine'); } },
+        { label: '取消出访', wise: true, hint: '花费 3 点 · 反对派士气 ↑', run: (g) => { g.me.ap = Math.max(0, g.me.ap - 3); g.org = Math.min(100, g.org + 8); } },
+      ] },
+      { at: 10, if: (g) => !!g.flags.shot, news: '蒂米什瓦拉全城罢工。军队撤回了兵营,市民在歌剧院广场上宣布:这里是"自由城市"。', kind: 'crowd', run: (g) => { if (g.flags.away) { g.flags.away = false; g.allowCards = null; } g.scalePsi(0.2, 0.8); g.forceOpp('strike', false); } },
+      { at: 10, if: (g) => !g.flags.shot, news: '蒂米什瓦拉的工厂里,工人们在议论这几天的事。有人在厂门口停了下来,又走了进去。', kind: 'event', run: (g) => { if (g.flags.away) { g.flags.away = false; g.allowCards = null; } g.forceOpp('rally', false); } },
+      { at: 11, title: '电视讲话', art: '📺', text: '你从德黑兰回来,当晚在电视上发表讲话。', choices: [
+        { label: '谴责"流氓"和外国特务', hint: '怕的人会退缩——被冤枉的人会记住', run: (g) => { g.selfCard('editorial', '你在电视上说:蒂米什瓦拉的事件是外国特务和流氓挑起的。'); } },
+        { label: '宣布涨工资、增加供应', wise: true, hint: '花费 2 点 · 积怨 ↓', run: (g) => { g.me.ap = Math.max(0, g.me.ap - 2); g.griefScale(0.82); g.log('你在电视上宣布:提高工资和养老金,增加供应。', 'mine'); } },
+      ] },
+      { at: 12, title: '12月21日 · 群众大会', art: '🎙️', text: '你打算在中央委员会大楼前召开十万人大会,谴责蒂米什瓦拉的"流氓"。工厂和机关用大巴把人拉来,发了标语和你的画像。电视将向全国直播。<br><br>十万人站在同一个广场上,<b>每个人都能看见别人。</b>', choices: [
+        { label: '召开大会,全国直播', hint: '如果人们真的站在你这边,这会是一次胜利', run: (g) => {
+          const m = g.meanGrievance() / g.moodScale;
+          g.addEffect({ id: 'rally21', name: '全国直播的大会', icon: '📺', side: 'movement', rounds: 1, mod(mm) { mm.gs = 1; mm.vis = 1.2; mm.omega = 1; } });
+          if (m < 0.35) { g.org = Math.max(0, g.org - 25); g.me.ap += 3; g.log('大会秩序井然。电视上是一片挥舞的旗帜。', 'intel'); }
+          else { g.addSeeds(0.004 + 0.06 * Math.min(1, m - 0.35)); g.log('讲话进行到一半,广场后排传来口哨声和"蒂米什瓦拉!"的喊声。你愣住了,抬手示意安静。直播中断了。', 'crowd'); }
+        } },
+        { label: '取消大会', wise: true, hint: '什么也不会发生——至少今天', run: (g) => { g.org = Math.min(100, g.org + 8); } },
+      ] },
+      { at: 14, if: (g) => g.d >= 0.12 || g.x >= 0.06, title: '12月22日 · 国防部长', art: '🪖', text: '上午传来消息:国防部长米利亚死了。官方说他是"叛徒",畏罪自杀。<br><br>坦克上的士兵,开始把枪口转向天空。', choices: [{ label: '……' }], run: (g) => g.scalePsi(0.6, 0.35) },
+      { at: 14, if: (g) => !(g.d >= 0.12 || g.x >= 0.06), news: '国防部长米利亚照常向你汇报。首都一切如常。', kind: 'intel' },
+    ],
+    check: (g) => { if (g.flags.away && g.round >= 10) { g.flags.away = false; g.allowCards = null; } return null; },
+    endings: {
+      survive: { title: '新年', text: (g) => (g.meanGrievance() / g.moodScale < 0.55 ? '你撑到了1990年。暖气通上了,商店里有了面包,人们回到了家里。' : '你撑到了1990年。街道安静下来,报告说一切正常——报告一直都这么说。') + '<br><br><b>这不是历史。</b>历史上,12月22日中午,齐奥塞斯库夫妇乘直升机从中央委员会大楼楼顶逃离;三天后,他们在特尔戈维什泰被一个临时军事法庭草草审判,随即枪决。' },
+      crowd: { title: '直升机', text: '12月22日中午,人群冲进中央委员会大楼。你和埃列娜从楼顶乘直升机逃离。<br><br>三天后,你们在特尔戈维什泰被一个临时军事法庭审判,随即枪决。审判持续了不到一个小时。' },
+      army: { title: '军队和我们在一起', text: '坦克调转了方向。士兵们爬下车,和人群拥抱。国防部已经不再接你的电话。<br><br>三天后,你和埃列娜在特尔戈维什泰被草草审判,随即枪决。' },
+    },
+    history: '1989年12月15日,蒂米什瓦拉的教友围住匈牙利族牧师特凯什·拉斯洛的住所,阻止驱逐;次日抗议扩大为反政府示威。12月17日,军队和国家安全局向人群开枪,遇难者遗体被秘密运往布加勒斯特火化。齐奥塞斯库于18日至20日访问伊朗。20日蒂米什瓦拉全城罢工,军队撤回兵营。21日中午,齐奥塞斯库在中央委员会大楼前召开群众大会,讲话中途人群发出嘘声,电视直播中断;当晚布加勒斯特发生枪击。22日上午,国防部长米利亚死亡(官方称自杀),军队转向民众一方,齐奥塞斯库夫妇中午乘直升机逃离。25日,二人经临时军事法庭审判后被处决。',
+    lesson: { title: '性质一 · 性质十三:沉默不发出预警,崩落也未必有前兆', text: '公开参与可以一直是零,小扰动的恢复速度也可以一直不变,而临界点正在向它靠近——沉默本身不告诉你离崩落还有多远。模型也提醒我们:接近临界点时恢复会变慢,可反过来,不能用几天里的突变去证明"此前必定出现了临界减速"。12月21日广场上的口哨声,不是崩落的原因,而是一个早已存在的状态,第一次被所有人同时看见。' },
+  });
+
+  /* ============================================================
+   * 第十章 · 2022 四通桥与白纸 (行动方)
+   * ============================================================ */
+  LEVELS.push({
+    id: 'baizhi', chapter: '第十章', title: '一张白纸', era: '2022年10月13日—12月7日', place: '北京 · 上海 · 乌鲁木齐', icon: '📄',
     side: 'movement', role: '散落在各地的年轻人',
     blurb: '一个人,一座桥,两条横幅。然后是一场火,和一张什么也没写的纸。',
     intro: [
@@ -3177,7 +3771,7 @@ b { font-weight: 600; }
       '10月13日,北京海淀的四通桥上,一个男人挂出两条横幅:<b>"不要核酸要吃饭,不要封控要自由……"</b>',
       '这个国家有最严密的审查和最广的监控。在这里,站出来的人几乎一定会被找到。',
     ],
-    goalText: '在12月7日前,让各地同时站出来的人达到一个足以被看见的规模(约 1.2 万人),并坚持两天。',
+    goalText: '在12月7日前,让各地同时站出来的人达到一个足以被看见的规模(约 2 万人),并坚持两天。',
     tips: ['审查让每个人都低估了别人的愤怒——「翻墙转发」和「曝光真相」能打破它。', '举白纸的风险比喊口号小。', '悲剧会发生。那时候,人们的心里会有一个很大的缺口。'],
     rounds: 55, scale: 100, arrestScale: 2, moodScale: 0.2, tipSpread: 0.4, randomEvents: ['death', 'mole', 'prices', 'split', 'release', 'writer'],
     world: { N: 2000, tolType: 'uniform', tolMul: 0.46, netType: 'random', netDeg: 10, P: 1.0, Pbar: 0.85, K0: 42, M: 200, alpha: 0.08, beta: 0.4, delta: 0.15, gamma: 2.5, memDecay: 0.08, vis: 0.6, omega: 0.5, globalScale: 0.7, noise: 0.02, hardCore: 0.001, seed: 2022, psiScale: 2.0 },
@@ -3192,7 +3786,7 @@ b { font-weight: 600; }
     },
     startAP: 1, income: 0.9,
     ai: { aggression: 0.85, income: 1.4, lag: 2, start: { enforce: 'harsh', police: 'surge', info: 'blackout', target: 'organizer', release: 'long' }, cards: ['informants', 'editorial', 'cutnet'] },
-    goal: { x: 0.06, hold: 2 },
+    goal: { x: 0.1, hold: 2 },
     stars: [
       { text: '在11月底前成功', test: (g) => g.round <= 48 },
       { text: '被带走的人少于四百', test: (g) => g.sim.R < 0.1 },
@@ -3217,10 +3811,10 @@ b { font-weight: 600; }
   });
 
   /* ============================================================
-   * 第八章 · 朝鲜 (行动方 · 信息网络)
+   * 第十一章 · 朝鲜 (行动方 · 信息网络)
    * ============================================================ */
   LEVELS.push({
-    id: 'pyongyang', chapter: '第八章', title: '看不见的裂缝', era: '2019年—2022年', place: '朝鲜 · 惠山 / 新义州', icon: '🌑',
+    id: 'pyongyang', chapter: '第十一章', title: '看不见的裂缝', era: '2019年—2022年', place: '朝鲜 · 惠山 / 新义州', icon: '🌑',
     side: 'movement', role: '边境的走私与信息网络',
     blurb: '这里不会有游行。你能做的,是让沉默变薄——在不被发现的前提下。',
     intro: [
@@ -3614,9 +4208,17 @@ b { font-weight: 600; }
         else { this.jailAge[i] = 0; if (a[i]) { tx = this.qx[i]; ty = this.qy[i]; } else { tx = this.hx[i]; ty = this.hy[i]; } }
         px[i] += (tx - px[i]) * k; py[i] += (ty - py[i]) * k;
       }
-      // 家里的人
+      // 家里的人; 暗流图层打开时, "在观望"(橙)与"蠢蠢欲动"(红)的人家被标出来——点的疏密就是离爆发还有多远
+      const uc = this.layerOn && g.undercurrent ? g.undercurrent().tier : null;
       ctx.fillStyle = T.home;
-      for (let i = 0; i < N; i++) if (!a[i] && !r[i]) ctx.fillRect(X(px[i]) - d / 2, Y(py[i]) - d / 2, d, d);
+      for (let i = 0; i < N; i++) if (!a[i] && !r[i] && !(uc && uc[i])) ctx.fillRect(X(px[i]) - d / 2, Y(py[i]) - d / 2, d, d);
+      if (uc) {
+        ctx.fillStyle = night ? 'rgba(240,170,70,0.5)' : 'rgba(240,180,76,0.62)';
+        for (let i = 0; i < N; i++) if (uc[i] === 1 && !a[i] && !r[i]) ctx.fillRect(X(px[i]) - d / 2, Y(py[i]) - d / 2, d, d);
+        ctx.fillStyle = night ? 'rgba(255,100,70,0.8)' : 'rgba(255,96,70,0.95)';
+        const d2 = d * 1.35;
+        for (let i = 0; i < N; i++) if (uc[i] === 2 && !a[i] && !r[i]) ctx.fillRect(X(px[i]) - d2 / 2, Y(py[i]) - d2 / 2, d2, d2);
+      }
       if (night) {        // 夜里: 看过外面世界的人家亮着一盏小灯
         ctx.fillStyle = 'rgba(255,214,140,0.55)';
         for (let i = 0; i < N; i++) if (glow[i] && !r[i]) ctx.fillRect(X(px[i]) - d / 2, Y(py[i]) - d / 2, d, d);
@@ -3816,13 +4418,14 @@ b { font-weight: 600; }
 
   /* ================= 对局 ================= */
   let G = null, city = null, running = false, speed = 0, lastSpeed = 1, acc = 0, lastTs = 0, curLevel = null, curOpts = {};
-  let lastAutoPause = -99, endShown = false, prevWords = {};
-  const ROUND_MS = [Infinity, 1500, 750, 300];
+  let endShown = false, prevWords = {}, resumeIn = 0;
+  // 每一轮的真实时长(毫秒)。时间默认一直在走; 只有弹窗/面板/引导打开时停下, 关掉后稍等片刻再继续
+  const ROUND_MS = [Infinity, 3400, 1800, 850], RESUME_MS = 450;
 
   function startLevel(L, opts) {
     curLevel = L; curOpts = opts || {};
     G = new Game(L, { diff: curOpts.diff || 'normal' });
-    endShown = false; prevWords = {}; lastAutoPause = -99;
+    endShown = false; prevWords = {}; resumeIn = 900;
     show('game');
     $('g-chapter').textContent = L.chapter + ' · ';
     $('g-title').textContent = L.title;
@@ -3831,7 +4434,7 @@ b { font-weight: 600; }
     Bub.clear(); $('headline').innerHTML = ''; $('banner').innerHTML = ''; $('ov-tree').classList.remove('show');
     if (!city) city = new window.SilenceCity($('city'));
     requestAnimationFrame(() => { city.setGame(G); city.resize(); });
-    setSpeed(0);
+    setSpeed(lastSpeed || 1);
     renderAll(true);
     running = true; lastTs = 0; acc = 0;
     requestAnimationFrame(loop);
@@ -3883,12 +4486,16 @@ b { font-weight: 600; }
   function loop(ts) {
     if (!running) return;
     const dt = Math.min(80, ts - (lastTs || ts)); lastTs = ts;
-    const live = G && speed > 0 && !G.popup && !G.over && !Coach.blocking() && !anyOverlay();
+    const held = !G || !!G.popup || !!G.over || Coach.blocking() || anyOverlay();
+    if (held) resumeIn = Math.max(resumeIn, RESUME_MS);
+    else if (resumeIn > 0) resumeIn -= dt;
+    const live = !held && resumeIn <= 0 && speed > 0;
     if (live) {
       acc += dt;
       if (acc >= ROUND_MS[speed]) { acc = 0; doStep(); }
     }
     Bub.tick(dt, live);
+    if (G) $('g-timefill').style.width = (100 * Math.min(1, (G.round + (speed > 0 ? acc / ROUND_MS[speed] : 0)) / G.maxRound)).toFixed(2) + '%';
     if (city && G) city.frame(dt);
     requestAnimationFrame(loop);
   }
@@ -3904,14 +4511,12 @@ b { font-weight: 600; }
       const imp = G.news.find((n) => n.round === G.round && ['crowd', 'army', 'opp', 'arrest', 'event'].includes(n.kind));
       if (imp) headline(imp.text, imp.kind, true);
     }
-    // 街头突然聚集大量人群 → 自动暂停, 给玩家反应时间
-    if (G.side === 'regime' && G.x - x0 > 0.04 && G.round - lastAutoPause > 3 && speed > 0) autoPause('⚠ 街头突然聚集了大量人群!');
+    if (G.side === 'regime' && G.x - x0 > 0.04) toast('⚠ 街头突然聚集了大量人群!', 'crowd');
     renderAll();
     Coach.notify('round');
     if (G.popup) showEvent();
     if (G.over) setTimeout(showEnd, 1100);
   }
-  function autoPause(msg) { lastAutoPause = G.round; setSpeed(0); toast(msg + '(已暂停)', 'crowd'); }
 
   /* ---------- 特效与新闻 ---------- */
   function processFx() {
@@ -3919,7 +4524,7 @@ b { font-weight: 600; }
     const fx = G.fx.splice(0);
     const slogans = (G.L.slogans || []).filter(Boolean);
     for (const f of fx) {
-      if (f.type === 'crackdown') { city.flash('#ff2a1a', 900); city.shake(); $('stage').classList.remove('shake'); void $('stage').offsetWidth; $('stage').classList.add('shake'); if (G.side === 'movement' && G.round - lastAutoPause > 2 && speed > 0) autoPause('💥 当局动手了'); }
+      if (f.type === 'crackdown') { city.flash('#ff2a1a', 900); city.shake(); $('stage').classList.remove('shake'); void $('stage').offsetWidth; $('stage').classList.add('shake'); if (G.side === 'movement') toast('💥 当局动手了', 'opp'); }
       else if (f.type === 'raid') { city.flash('#ff4030', 500); }
       else if (f.type === 'defect') { city.flash('#57c28a', 500); }
       else if (f.type === 'reveal') { city.flash('#b392f0', 600); }
@@ -3934,11 +4539,12 @@ b { font-weight: 600; }
       else if (f.type === 'ignite') { banner('连锁反应!', '越来越多的人加入了', 'ignite'); city.flash('#ffb347', 700); }
       else if (f.type === 'nearmiss') banner('差一点', '人群散去了——再多一些人,也许就不一样了', 'miss');
       else if (f.type === 'stage') {
-        if (f.up) { banner(`当局:${STAGES[f.stage].name}`, STAGES[f.stage].tip, 'stage'); city.flash('#ff3b2f', 500); if (speed > 0 && G.round - lastAutoPause > 2) autoPause('当局升级了'); }
+        if (f.up) { banner(`当局:${STAGES[f.stage].name}`, STAGES[f.stage].tip, 'stage'); city.flash('#ff3b2f', 500); }
         else toast(`当局的戒备降到「${STAGES[f.stage].name}」`, 'good');
       }
-      else if (f.type === 'push') { banner('反对派发动了!', '一次大规模行动——压不压得住,取决于你看不见的临界点', 'stage'); if (G.side === 'regime' && speed > 0) autoPause('反对派发动了大规模行动'); }
+      else if (f.type === 'push') { banner('反对派发动了!', '一次大规模行动——压不压得住,取决于你看不见的临界点', 'stage'); }
       else if (f.type === 'buy') toast(`建成:${f.name}`, 'crowd');
+      else if (f.type === 'report') toast('📋 ' + (f.text.length > 64 ? f.text.slice(0, 62) + '…' : f.text), 'report');
     }
     if (G.x > 0.004 && slogans.length && Math.random() < Math.min(0.9, 0.25 + G.x * 2)) city.say(slogans[(Math.random() * slogans.length) | 0]);
   }
@@ -4004,10 +4610,182 @@ b { font-weight: 600; }
   function renderAll(first) {
     if (!G) return;
     $('g-date').textContent = G.dateLabel();
-    $('g-timefill').style.width = (100 * G.round / G.maxRound).toFixed(1) + '%';
     renderGoal(); renderMeters(); renderBuild(); renderReadouts(); renderEffects(); renderRes(); renderTreeBtn(); renderPolicies(); renderCards(); renderNews();
+    renderAdvice(); drawTrend($('trend'), false); renderLayerBtn();
+    if ($('ov-analysis').classList.contains('show')) renderAnalysis();
     $('pausetag').classList.toggle('hidden', speed > 0 || !!G.over);
   }
+
+  /* ================= 看清自己的策略: 趋势、走势图、参谋、暗流 ================= */
+  // 最近 lag 轮的变化; goodIfUp: 上升对玩家有利(true) / 不利(false) / 说不上(null)
+  const delta = (arr, lag) => { lag = lag || 2; const n = arr.length; return n > lag ? arr[n - 1] - arr[n - 1 - lag] : 0; };
+  function arrow(dv, eps, goodIfUp, words) {
+    if (Math.abs(dv) < eps) return words ? '<span class="trend flat">→ 平稳</span>' : '';
+    const up = dv > 0, good = goodIfUp == null ? null : up === goodIfUp;
+    return `<span class="trend ${good == null ? '' : good ? 'good' : 'bad'}">${up ? '↑' : '↓'}${words ? (up ? ' 上升' : ' 下降') : ''}</span>`;
+  }
+  const MOV = () => G.side === 'movement';
+
+  function renderAdvice() {
+    const d = G.diagnose();
+    const lv = (v) => (v >= 0.8 ? '很大' : v >= 0.55 ? '较大' : v >= 0.3 ? '一般' : v > 0.05 ? '较小' : '—');
+    const hand = G.hand().map((c) => c.id);
+    const sugg = (d.top && d.top.v > 0.05 ? d.top.cards : []).filter((id) => hand.includes(id)).map((id) => G.card(id));
+    $('advice').innerHTML = `<div class="advice ${d.side}">
+      <div class="ah"><span>🧭 参谋 · ${d.title}</span><button class="lnk" id="adv-more">详细 ›</button></div>
+      ${d.head ? `<div class="ahd ${d.head.kind}">${d.head.text}</div>` : ''}
+      ${d.factors.slice(0, 3).map((f) => `<div class="af"><span class="an">${f.name}</span><span class="abar"><i style="width:${Math.max(3, f.v * 100).toFixed(0)}%"></i></span><span class="alv">${lv(f.v)}</span></div>`).join('')}
+      ${d.top && d.top.v > 0.05 ? `<div class="at">${d.top.advice}</div>` : ''}
+      ${sugg.length ? `<div class="ac"><span>对症的牌:</span>${sugg.map((c) => `<button class="chip" data-play="${c.id}" data-tip="${esc('<b>' + c.icon + ' ' + c.name + '</b><br>' + c.text)}">${c.icon} ${c.name}</button>`).join('')}</div>` : ''}
+    </div>`;
+    $('advice').querySelectorAll('[data-play]').forEach((b) => b.addEventListener('click', () => playCard(b.dataset.play)));
+    $('adv-more').addEventListener('click', openAnalysis);
+  }
+
+  /* 走势图: 上半 = 街上的人 vs 估计的临界点(人口比例, 平方根刻度); 下半(大图) = 积怨、军心、警觉、暗流。全部是你的所见所闻。 */
+  const moodW = (v) => (v < 0.1 ? '平静' : v < 0.3 ? '隐忍' : v < 0.55 ? '积怨' : v < 0.8 ? '怨声载道' : '一触即发');
+  const armyW = (v) => (v < 0.05 ? '令行禁止' : v < 0.15 ? '私下抱怨' : v < 0.35 ? '人心浮动' : v < 0.6 ? '公开抗命' : '成建制倒戈');
+  function drawTrend(cv, big, hoverI) {
+    if (!cv || !G) return;
+    const dpr = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, H = cv.clientHeight;
+    if (!w || !H) return;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(H * dpr); }
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const h = G.hist, n = h.x.length, total = big ? Math.max(G.maxRound + 1, n) : Math.max(n + 3, 14);   // 小图只看走过的路
+    const L = G.L, sp = L.tipSpread != null ? L.tipSpread : 0.3, mov = MOV();
+    const pl = big ? 46 : 4, pr = big ? 14 : 4;
+    const X = (i) => pl + (w - pl - pr) * (total <= 1 ? 0 : i / (total - 1));
+    ctx.clearRect(0, 0, w, H);
+    ctx.fillStyle = '#0e131a'; ctx.fillRect(0, 0, w, H);
+    const P1 = big ? { y0: 10, y1: H * 0.56 } : { y0: 4, y1: H - 9 };
+    const Ys = (v) => P1.y1 - (P1.y1 - P1.y0) * Math.sqrt(clamp(v, 0, 1));
+    ctx.font = '10px sans-serif';
+    // 网格
+    for (const g of [0.01, 0.1, 0.25, 0.5]) {
+      const y = Ys(g); ctx.strokeStyle = '#1d2530'; ctx.beginPath(); ctx.moveTo(pl, y); ctx.lineTo(w - pr, y); ctx.stroke();
+      if (big) { ctx.fillStyle = '#6d7885'; ctx.fillText(g * 100 + '%', 6, y + 3); }
+    }
+    // 现在
+    if (n > 0) { ctx.fillStyle = 'rgba(255,255,255,.035)'; ctx.fillRect(X(n - 1), P1.y0, w - pr - X(n - 1), (big ? H - 22 : P1.y1) - P1.y0); }
+    // 目标线
+    if (mov && L.goal && L.goal.x != null) { ctx.strokeStyle = 'rgba(240,180,76,.35)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(pl, Ys(L.goal.x)); ctx.lineTo(w - pr, Ys(L.goal.x)); ctx.stroke(); ctx.setLineDash([]); }
+    // 临界点(估计)
+    if (mov) {
+      ctx.fillStyle = 'rgba(179,146,240,.22)';
+      for (let i = 0; i < n; i++) {
+        const t = h.tipSeen[i]; if (t >= 1) { ctx.fillStyle = 'rgba(179,146,240,.08)'; ctx.fillRect(X(i) - 1, P1.y0, Math.max(2, X(1) - X(0)), 6); ctx.fillStyle = 'rgba(179,146,240,.22)'; continue; }
+        const x0 = X(Math.max(0, i - 0.5)), x1 = X(Math.min(total - 1, i + 0.5));
+        ctx.fillRect(x0, Ys(t * (1 + sp)), x1 - x0, Ys(t * (1 - sp)) - Ys(t * (1 + sp)));
+      }
+    }
+    ctx.lineWidth = 1.6; ctx.strokeStyle = '#b392f0'; ctx.setLineDash(mov ? [] : [4, 3]); ctx.beginPath();
+    let on = false;
+    for (let i = 0; i < n; i++) { const t = h.tipSeen[i]; if (t >= 1) { on = false; continue; } on ? ctx.lineTo(X(i), Ys(t)) : ctx.moveTo(X(i), Ys(t)); on = true; }
+    ctx.stroke(); ctx.setLineDash([]);
+    // 街上的人
+    ctx.beginPath(); ctx.moveTo(X(0), P1.y1);
+    for (let i = 0; i < n; i++) ctx.lineTo(X(i), Ys(h.x[i]));
+    ctx.lineTo(X(Math.max(0, n - 1)), P1.y1); ctx.closePath();
+    ctx.fillStyle = 'rgba(255,207,112,.28)'; ctx.fill();
+    ctx.strokeStyle = '#ffcf70'; ctx.lineWidth = 1.8; ctx.beginPath();
+    for (let i = 0; i < n; i++) i ? ctx.lineTo(X(i), Ys(h.x[i])) : ctx.moveTo(X(i), Ys(h.x[i]));
+    ctx.stroke();
+    // 出手标记: 你(琥珀, 下) / 对手(红, 上)
+    for (const a of G.actions) {
+      const x = X(Math.min(total - 1, a.round + 0.5)), mine = a.side === G.side;
+      ctx.fillStyle = mine ? '#f0b44c' : '#e5534b';
+      ctx.beginPath();
+      if (mine) { ctx.moveTo(x, P1.y1 - 7); ctx.lineTo(x - 3.5, P1.y1); ctx.lineTo(x + 3.5, P1.y1); }
+      else { ctx.moveTo(x, P1.y0 + 6); ctx.lineTo(x - 3, P1.y0); ctx.lineTo(x + 3, P1.y0); }
+      ctx.fill();
+    }
+    if (big) {
+      const P2 = { y0: H * 0.64, y1: H - 22 };
+      const Y2 = (v) => P2.y1 - (P2.y1 - P2.y0) * clamp(v, 0, 1);
+      for (const g of [0, 0.5, 1]) { ctx.strokeStyle = '#1d2530'; ctx.beginPath(); ctx.moveTo(pl, Y2(g)); ctx.lineTo(w - pr, Y2(g)); ctx.stroke(); }
+      ctx.fillStyle = '#6d7885'; ctx.fillText('高', 6, Y2(1) + 4); ctx.fillText('低', 6, Y2(0));
+      const line = (arr, col, dash, f) => {
+        ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.setLineDash(dash || []); ctx.beginPath();
+        for (let i = 0; i < n; i++) { const v = f(arr[i]); i ? ctx.lineTo(X(i), Y2(v)) : ctx.moveTo(X(i), Y2(v)); }
+        ctx.stroke(); ctx.setLineDash([]);
+      };
+      line(h.moodSeen, '#ef6a5e', [5, 3], (v) => v / 1.1);
+      line(h.dSeen, '#57c28a', [5, 3], (v) => v / 0.7);
+      line(h.uc, '#ff8a65', [], (v) => v / 0.5);
+      if (mov && h.vigor) line(h.vigor, '#f0b44c', [2, 3], (v) => v);
+      if (mov) { if (!L.noAI) line(h.alert, '#8f99a6', [], (v) => v / 100); }
+      else line(h.orgSeen, '#8f99a6', [], (v) => v / 100);
+      ctx.fillStyle = '#6d7885'; ctx.fillText(G.dateLabel(0), pl, H - 6);
+      ctx.textAlign = 'right'; ctx.fillText(G.dateLabel(total - 1), w - pr, H - 6); ctx.textAlign = 'left';
+    }
+    if (hoverI != null && hoverI < n) { ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(hoverI), 4); ctx.lineTo(X(hoverI), H - (big ? 20 : 4)); ctx.stroke(); }
+    cv._X = X; cv._total = total;
+    if (!big) $('trend-legend').innerHTML = `<span><i style="background:#ffcf70"></i>${(L.labels && L.labels.crowd) || '街上'}</span><span><i style="background:#b392f0"></i>${mov ? '临界点(估计)' : '局势(据报)'}</span><span class="tri a">▲</span>你 <span class="tri o">▼</span>对手`;
+  }
+
+  function openAnalysis() { if (!G) return; $('ov-analysis').classList.add('show'); renderAnalysis(); }
+  function closeAnalysis() { $('ov-analysis').classList.remove('show'); }
+  $('ov-analysis').addEventListener('click', (e) => { if (e.target === $('ov-analysis')) closeAnalysis(); });
+  $('trendbox').addEventListener('click', openAnalysis);
+  function renderAnalysis() {
+    const d = G.diagnose(), mov = MOV(), lab = G.L.labels || {};
+    const lv = (v) => (v >= 0.8 ? '很大' : v >= 0.55 ? '较大' : v >= 0.3 ? '一般' : v > 0.05 ? '较小' : '—');
+    const reps = G.news.filter((q) => q.kind === 'report').slice(0, 6);
+    $('an-box').innerHTML = `<div class="an-head"><h3>局势分析 <small>${G.dateLabel()}</small></h3><button class="icon-btn" id="an-close" title="关闭 (Esc)">✕</button></div>
+      <div class="an-chart"><canvas id="an-cv"></canvas><div class="an-tip" id="an-tip"></div></div>
+      <div class="legend">
+        <span><i style="background:#ffcf70"></i>${lab.crowd || '街上'}的人</span>
+        <span><i style="background:#b392f0"></i>${mov ? '临界点(估计范围)' : '你估计的临界点(据报)'}</span>
+        <span style="color:#f0b44c">▲ 你的出手</span><span style="color:#e5534b">▼ 对手的出手</span>
+        <span style="color:#ef6a5e"><i class="dash"></i>积怨(${mov ? '传闻' : '据报'})</span>
+        <span style="color:#57c28a"><i class="dash"></i>${lab.army || '军警'}动摇(${mov ? '传闻' : '实情'})</span>
+        <span><i style="background:#ff8a65"></i>暗流</span>${mov ? '<span style="color:#f0b44c"><i class="dash"></i>组织元气</span>' : ''}
+        <span><i style="background:#8f99a6"></i>${mov ? '当局警觉' : '反对派组织度(据报)'}</span>
+      </div>
+      <div class="an-note">上半:人口比例(平方根刻度,1% · 10% · 25% · 50%)。下半:高低只看走向。<b>鼠标移到图上</b>,看那一轮发生了什么。</div>
+      <div class="an-cols">
+        <div class="an-diag"><h4>🧭 参谋 · ${d.title}</h4>
+          ${d.head ? `<div class="ahd ${d.head.kind}">${d.head.text}</div>` : ''}
+          ${d.factors.map((f) => `<div class="af"><span class="an">${f.name}</span><span class="abar"><i style="width:${Math.max(3, f.v * 100).toFixed(0)}%"></i></span><span class="alv">${lv(f.v)}</span></div>`).join('')}
+          ${d.factors.slice(0, 2).filter((f) => f.v > 0.05).map((f) => `<p class="at"><b>${f.name}:</b>${f.advice}</p>`).join('')}
+          <p class="an-fine">${mov ? '参谋的判断来自一个简单的推演:同样"一步"的改变——抓捕能力少三成、处罚轻四分之一、怨气多一档、消息多传开四分之一——哪一个能让临界点降得最多。它只比强弱,不给数字。' : '这些判断和你的情报一样,来自下面的报告:执法越凶,越"报喜不报忧"。'}</p>
+        </div>
+        <div class="an-reps"><h4>📋 最近的回报</h4>${reps.length ? reps.map((q) => `<div class="rp"><span class="d">${q.date}</span>${q.text}</div>`).join('') : '<div class="rp dim">出牌或调整政策两轮之后,这里会告诉你发生了什么。</div>'}</div>
+      </div>`;
+    $('an-close').addEventListener('click', closeAnalysis);
+    const cv = $('an-cv');
+    requestAnimationFrame(() => drawTrend(cv, true));
+    cv.addEventListener('mousemove', (e) => {
+      const r = cv.getBoundingClientRect(), X = cv._X; if (!X) return;
+      const n = G.hist.x.length, total = cv._total;
+      const i = clamp(Math.round(((e.clientX - r.left) - X(0)) / ((X(total - 1) - X(0)) / (total - 1))), 0, n - 1);
+      drawTrend(cv, true, i);
+      const h = G.hist, cnt = (v) => fmtCount(Math.max(0, v) * G.N * G.scale);
+      const sp = G.L.tipSpread != null ? G.L.tipSpread : 0.3;
+      const acts = G.actions.filter((a) => a.round === i).map((a) => `<span class="${a.side === G.side ? 'me' : 'op'}">${a.id.includes(':') ? polLabel(a.id) : (CARDS[a.id] ? CARDS[a.id].icon + ' ' + G.card(a.id).name : a.id)}</span>`);
+      const news = G.news.filter((q) => q.round === i && !['mine', 'report'].includes(q.kind)).slice(0, 3).map((q) => q.text);
+      const tip = h.tipSeen[i];
+      $('an-tip').innerHTML = `<b>${G.dateLabel(i)}</b><br>${lab.crowd || '街上'}约 ${cnt(h.x[i])} 人 · ${mov ? (tip >= 1 ? '看不到转机' : `临界点约 ${cnt(tip * (1 - sp))}～${cnt(tip * (1 + sp))} 人`) : ''}
+        <br>积怨(${mov ? '传闻' : '据报'}):${moodW(h.moodSeen[i])} · ${lab.army || '军警'}:${armyW(h.dSeen[i])}
+        ${acts.length ? `<div class="acts">${acts.join(' ')}</div>` : ''}${news.length ? `<div class="nws">${news.join('<br>')}</div>` : ''}`;
+      const tx = clamp(e.clientX - r.left + 14, 0, r.width - 260);
+      $('an-tip').style.left = tx + 'px'; $('an-tip').classList.add('show');
+    });
+    cv.addEventListener('mouseleave', () => { $('an-tip').classList.remove('show'); drawTrend(cv, true); });
+  }
+  const polLabel = (aid) => { const [k, v] = aid.split(':'); return POLICIES[k] ? `${POLICIES[k].icon} ${polTitle(k)}→${polName(k, v)}` : aid; };
+
+  /* 暗流图层开关 */
+  if (SAVE.layer == null) SAVE.layer = true;
+  function renderLayerBtn() {
+    const b = $('layer-btn'); if (!G) return;
+    const on = !!SAVE.layer;
+    const dv = delta(G.hist.uc, 2);
+    b.classList.toggle('on', on);
+    b.innerHTML = on ? `<b>🌊 暗流</b><span class="lg"><i class="c1"></i>观望 <i class="c2"></i>欲动</span>${arrow(dv, 0.006, MOV(), true).replace('上升', '扩大').replace('下降', '收缩')}` : '<b>🌊 暗流</b> <span class="lg">关</span>';
+    if (city) city.layerOn = on;
+  }
+  $('layer-btn').addEventListener('click', () => { SAVE.layer = !SAVE.layer; persist(); renderLayerBtn(); });
 
   function renderGoal() {
     const L = G.L, g = L.goal || {};
@@ -4067,7 +4845,7 @@ b { font-weight: 600; }
           <div class="mbar"><div class="fill" style="width:${lo == null ? '2%' : pct(clamp((1 - t.est) / 0.8, 0, 1))}"></div></div>
           <div class="ms">${G.streak.tip > 0 ? `<span class="go">裂缝已经出现(${G.streak.tip}/3)</span>` : '别上街:在这里,公开行动只是送死'}</div>`;
       } else {
-        main = `<div class="mh" data-tip="${esc('黄色:此刻站出来的人。斜纹:你手里的组织力一次还能带出的人。紫框:临界点——大约要这么多人同时站出来,风险才被摊薄、连锁才会开始(估计值)。')}"><b>🔥 离临界点</b><span class="mv">${lab.crowd || '街上'} ${crowdTxt} · 需要 ${tipTxt}</span></div>
+        main = `<div class="mh" data-tip="${esc('黄色:此刻站出来的人。斜纹:你手里的组织力一次还能带出的人。紫框:临界点——大约要这么多人同时站出来,风险才被摊薄、连锁才会开始(估计值)。')}"><b>🔥 离临界点</b><span class="mv">${lab.crowd || '街上'} ${crowdTxt} · 需要 ${tipTxt}${t.kind === 'est' ? ' ' + arrow(delta(G.hist.tipSeen), 0.004, false, true).replace('上升', '在升高').replace('下降', '在降低') : ''}</span></div>
           <div class="mbar"><div class="fill" style="width:${P(x)}"></div><div class="ghost" style="left:${P(x)};width:${P(cap)}"></div>${band}</div>
           <div class="ms">${ready ? '<span class="go">够了!现在全力行动,可能点燃连锁反应</span>' : cap > 0 ? `你的组织力一次还能带出约 ${cnt(cap)} 人` : '组织力不够发起行动——收集气泡,或等一等'}</div>`;
       }
@@ -4173,16 +4951,17 @@ b { font-weight: 600; }
   function renderReadouts() {
     const r = G.readout(), L = G.L, lab = L.labels || {};
     const rows = [];
-    rows.push({ id: 'risk', i: '⚠️', l: '此刻站出来', v: r.risk.words, s: '被抓的后果:' + r.pen.words, lv: r.risk.level, max: 4 });
-    rows.push({ id: 'legit', i: '⚖️', l: '执法在人们眼中', v: r.legit.words, s: r.legit.level ? '越界的处罚会被记住' : '', lv: r.legit.level, max: 3 });
-    rows.push({ id: 'army', i: '🪖', l: lab.army || '军警', tag: r.army.rumor ? '传闻' : '', v: r.army.words, lv: r.army.level, max: 4 });
+    const h = G.hist, mv = MOV();
+    rows.push({ id: 'risk', i: '⚠️', l: '此刻站出来', v: r.risk.words, s: '被抓的后果:' + r.pen.words, lv: r.risk.level, max: 4, tr: arrow(delta(h.risk), 0.04, !mv) });
+    rows.push({ id: 'legit', i: '⚖️', l: '执法在人们眼中', v: r.legit.words, s: r.legit.level ? '越界的处罚会被记住' : '', lv: r.legit.level, max: 3, tr: arrow(delta(h.over), 0.05, mv ? null : false) });
+    rows.push({ id: 'army', i: '🪖', l: lab.army || '军警', tag: r.army.rumor ? '传闻' : '', v: r.army.words, lv: r.army.level, max: 4, tr: arrow(delta(h.dSeen), 0.02, mv) });
     rows.push({ id: 'mood', i: '💢', l: '民间情绪', tag: G.side === 'regime' ? '可信度:' + r.mood.conf.split(':')[0] : '传闻', v: r.mood.words,
-      s: G.side === 'regime' && r.mood.bias >= 0.15 ? r.mood.conf.split(':')[1] || '' : '', lv: r.mood.level, max: 4 });
+      s: G.side === 'regime' && r.mood.bias >= 0.15 ? r.mood.conf.split(':')[1] || '' : '', lv: r.mood.level, max: 4, tr: arrow(delta(h.moodSeen), 0.03, mv) });
     $('readouts').innerHTML = rows.map((o) => {
       const changed = prevWords[o.id] != null && prevWords[o.id] !== o.v;
       return `<div class="ro ${changed ? 'flash' : ''}" id="ro-${o.id}" data-tip="${esc(RO_TIPS[o.id] || '')}">
         <div class="i">${o.i}</div><div class="l"><span>${o.l}</span>${o.tag ? `<span class="tag">${o.tag}</span>` : ''}</div>
-        <div class="v ${o.lv != null ? 'lv' + Math.min(5, Math.round((o.lv / (o.max || 4)) * 4)) : ''}">${o.v}</div>
+        <div class="v ${o.lv != null ? 'lv' + Math.min(5, Math.round((o.lv / (o.max || 4)) * 4)) : ''}">${o.v}${o.tr ? ' ' + o.tr : ''}</div>
         ${o.s ? `<div class="s">${o.s}</div>` : ''}
         ${o.lv != null ? `<div class="dots">${dots(o.lv, o.max)}</div>` : ''}</div>`;
     }).join('');
@@ -4214,7 +4993,11 @@ b { font-weight: 600; }
     const inc = G.income(G.side);
     const raw = G.side === 'regime' ? G.regimeRawIncome() : inc;
     const nm = G.side === 'regime' ? '政治资本' : '组织力';
-    const incText = G.side === 'regime' && raw < 0 ? '<span style="color:var(--red2)">入不敷出!代价正转嫁给百姓</span>' : `每轮 +${inc.toFixed(1)} · 另有气泡可收集`;
+    let incText = G.side === 'regime' && raw < 0 ? '<span style="color:var(--red2)">入不敷出!代价正转嫁给百姓</span>' : `每轮 +${inc.toFixed(1)} · 另有气泡可收集`;
+    if (G.side === 'movement' && G.L.id !== 'tutorial') {
+      const v = G.vigor, dv = delta(G.hist.vigor || [], 2);
+      incText += `<div class="vig ${v < 0.6 ? 'bad' : v < 0.85 ? 'mid' : ''}" data-tip="${esc('组织元气:人群没能越过临界点、你带出来的人却被抓走时,抓走的多是你的骨干——以后每次出手能带出的人都会变少。安静下来,它会慢慢恢复。')}">组织元气 ${Math.round(v * 100)}% ${arrow(dv, 0.01, true)}</div>`;
+    }
     const frac = clamp(st.ap - Math.floor(st.ap), 0, 1);
     $('res').className = 'res ' + G.side;
     $('res').innerHTML = `<div><div class="nm">${nm}</div><div class="inc">${incText}</div></div><div class="big">${cur()} ${Math.floor(st.ap)}<span class="frac"><i style="width:${(frac * 100).toFixed(0)}%"></i></span></div>`;
@@ -4281,7 +5064,8 @@ b { font-weight: 600; }
   }
 
   function renderNews() {
-    $('news').innerHTML = G.news.slice(0, 40).map((n) => `<div class="n ${n.kind}"><span class="d">${n.date}</span><span>${n.text}</span></div>`).join('');
+    const K = { opp: G.side === 'movement' ? '当局' : '对方', crowd: '街头', mine: '你', army: (G.L.labels && G.L.labels.army && G.L.labels.army.length <= 3) ? G.L.labels.army : '军警', event: '事件', intel: '情报', arrest: '抓捕', calm: '平静', report: '回报', info: '消息' };
+    $('news').innerHTML = G.news.slice(0, 50).map((n) => `<div class="n ${n.kind} ${n.round >= G.round ? 'now' : ''}"><span class="d">${n.date}</span><span class="k">${K[n.kind] || '消息'}</span><span class="t">${n.text}</span></div>`).join('');
   }
 
   /* ---------- 事件弹窗 ---------- */
@@ -4414,7 +5198,7 @@ b { font-weight: 600; }
   }
 
   /* ---------- 菜单与帮助 ---------- */
-  $('g-menu').addEventListener('click', () => { setSpeed(0); $('ov-menu').classList.add('show'); });
+  $('g-menu').addEventListener('click', () => $('ov-menu').classList.add('show'));
   $('mm-resume').addEventListener('click', () => $('ov-menu').classList.remove('show'));
   $('mm-restart').addEventListener('click', () => { $('ov-menu').classList.remove('show'); startLevel(curLevel, curOpts); });
   $('mm-help').addEventListener('click', () => { $('ov-menu').classList.remove('show'); $('ov-help').classList.add('show'); });
@@ -4423,7 +5207,7 @@ b { font-weight: 600; }
   $('mm-auto').addEventListener('click', () => { SAVE.autoCollect = !SAVE.autoCollect; persist(); autoLabel(); });
   $('mm-levels').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('levels'); });
   $('mm-title').addEventListener('click', () => { $('ov-menu').classList.remove('show'); show('title'); });
-  $('g-help').addEventListener('click', () => { setSpeed(0); $('ov-help').classList.add('show'); });
+  $('g-help').addEventListener('click', () => $('ov-help').classList.add('show'));
   $('g-guide').addEventListener('click', startGuide);
   $('mm-guide').addEventListener('click', () => { $('ov-menu').classList.remove('show'); startGuide(); });
   $('help-close').addEventListener('click', () => $('ov-help').classList.remove('show'));
@@ -4435,7 +5219,7 @@ b { font-weight: 600; }
   /* ---------- 键盘 ---------- */
   document.addEventListener('keydown', (e) => {
     if (current !== 'game' || !G) return;
-    if (anyOverlay()) { if (e.key === 'Escape' || (e.key === 'b' && $('ov-tree').classList.contains('show'))) { $('ov-menu').classList.remove('show'); $('ov-help').classList.remove('show'); closeTree(); } return; }
+    if (anyOverlay()) { if (e.key === 'Escape' || (e.key === 'b' && $('ov-tree').classList.contains('show')) || ((e.key === 'a' || e.key === 'A') && $('ov-analysis').classList.contains('show'))) { $('ov-menu').classList.remove('show'); $('ov-help').classList.remove('show'); closeTree(); closeAnalysis(); } return; }
     if (Coach.active && e.key === 'Escape') { Coach.end(); return; }
     if (Coach.locked()) return;
     if (e.key === ' ') { e.preventDefault(); setSpeed(speed > 0 ? 0 : lastSpeed || 1); }
@@ -4443,6 +5227,8 @@ b { font-weight: 600; }
     else if (e.key === 'Escape') { $('g-menu').click(); }
     else if (/^[1-9]$/.test(e.key)) { const c = G.hand()[+e.key - 1]; if (c) playCard(c.id); }
     else if (e.key === 'b' || e.key === 'B') openTree();
+    else if (e.key === 'a' || e.key === 'A') openAnalysis();
+    else if (e.key === 'l' || e.key === 'L') $('layer-btn').click();
   });
 
   /* ---------- 提示框 ---------- */
@@ -4458,7 +5244,7 @@ b { font-weight: 600; }
     tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
   });
   document.addEventListener('mouseout', (e) => { if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('[data-tip]')) tipEl.style.display = 'none'; });
-  window.addEventListener('resize', () => { if (city && current === 'game') city.resize(); Coach.reposition(); });
+  window.addEventListener('resize', () => { if (city && current === 'game') { city.resize(); drawTrend($('trend'), false); } Coach.reposition(); });
   window.addEventListener('scroll', () => Coach.reposition(true), { passive: true });
 
   /* ================= 新手引导 ================= */
@@ -4500,6 +5286,18 @@ b { font-weight: 600; }
       { target: '#cards', text: '「卫巫监谤」能让你<b>暂时听到真话</b>,还能看见每家每户心里的怨气(红色)。' },
     ],
     petrograd: [{ target: '#ro-army', text: '注意<b>驻军</b>。街上的人越多,士兵越动摇;士兵一动摇,能抓人的就少了,街上又会更安全——两层反馈会互相放大。「劝说士兵」要在人多的时候打。' }],
+    qingming: [
+      { target: '#layer-btn', text: '一月里被压住的悲痛,藏在人们心里。打开右上角的<b>「暗流」</b>:橙色是"在观望"的人,红色是"蠢蠢欲动"的人。清明节(4月4日)那天,它会浮出水面。' },
+      { target: '#cards', text: '「列车上的标语」能让被压住的悲痛提前浮出来——但当局也会提前警觉。什么时候出手,由你决定。' },
+    ],
+    seoul: [
+      { target: '#g-date', text: '六月之前每轮是一周,六月起每轮是一天。<b>把组织力留到六月。</b>' },
+      { target: '#cards', text: '朴钟哲之死被掩盖着。「曝光真相」能让悲愤浮出来;历史上,真相在5月18日被神父们公开。「明洞圣堂静坐」「领带部队」要等历史走到那一步才会出现。' },
+    ],
+    bucharest: [
+      { target: '#ro-mood', text: '你的情报几乎完全不可信:国家安全局越凶,下面的人越不敢说真话。左边「参谋」里的<b>「情报失真」</b>就是在提醒你这件事。' },
+      { target: '#policies', text: '所有高压政策都开着,还在勒紧腰带还外债——入不敷出的代价会变成看不见的积怨。接下来每一次弹窗里的选择,都很重要。' },
+    ],
     iran: [{ target: '#cards', text: '每一次镇压之后,大约<b>六周</b>会迎来一次"四十日"悼念。记忆在那时最强——那也是你出手的最好时机。' }],
     poland: [{ target: '#res', text: '戒严的所有手段都开着:军队进城、按名单拘押、封锁新闻……<b>它们非常贵</b>。入不敷出时,代价会转嫁给百姓,变成积怨。你得决定先放松哪一样。' }],
     beijing: [{ target: '#ro-army', text: '这一关,<b>人再多也不够</b>。百万人上街并没有改变结局——决定结局的,是那些开进城的士兵会不会开枪。' }],
@@ -4514,7 +5312,7 @@ b { font-weight: 600; }
   const Coach = (() => {
     const layer = $('coach-layer'), hole = $('coach-hole'), box = $('coach'), blocker = $('coach-blocker');
     let steps = [], i = 0, opts = {}, active = false;
-    function start(s, o) { steps = s; opts = o || {}; i = 0; active = true; layer.classList.add('show'); setSpeed(0); showStep(); }
+    function start(s, o) { steps = s; opts = o || {}; i = 0; active = true; layer.classList.add('show'); showStep(); }   // 引导打开期间时间自动停住(见 blocking)
     function end() {
       active = false; layer.classList.remove('show');
       document.body.classList.remove('coach-lock');
@@ -4542,6 +5340,7 @@ b { font-weight: 600; }
       reposition();
       if (waiting) setTimeout(remark, 30);
       if (st.wait && st.wait.startsWith('ap:') && G && G.me.ap >= +st.wait.slice(3)) setTimeout(next, 200);
+      if (st.wait === 'speed' && speed > 0) setTimeout(next, 1200);   // 时间本来就在走
       if (st.wait === 'collect' && G && !G.bubbles.length) { G.spawnBubble('morale', 1, 'plaza'); processFx(); }
     }
     function remark() {   // 重绘之后重新标记可点的控件, 并重新定位
