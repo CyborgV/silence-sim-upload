@@ -19,6 +19,7 @@
   const ymd = (t) => { const d = new Date(t); return [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), d.getUTCDay()]; };
   const dayFmt = (y, m, d, withYear) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [Y, M, D] = ymd(t0 + r * DAY); return (withYear === false ? '' : Y + '年') + M + '月' + D + '日'; }; };
   const weekFmt = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [Y, M, D] = ymd(t0 + r * 7 * DAY); return `${Y}年${M}月${D}日`; }; };
+  const halfDayFmt = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => { const [, M, D] = ymd(t0 + Math.floor(r / 2) * DAY); return M + '月' + D + '日 · ' + (r % 2 ? '夜' : '昼'); }; };
   const monthFmt = (y, m) => (r) => { const mm = m - 1 + r; return `${y + Math.floor(mm / 12)}年${(mm % 12) + 1}月`; };
   const weekday = (y, m, d) => { const t0 = Date.UTC(y, m - 1, d); return (r) => ymd(t0 + r * DAY)[3]; };
 
@@ -199,10 +200,77 @@
   });
 
   /* ============================================================
-   * 第三章 · 伊朗 1978 (行动方)
+   * 第三章 · 清明 1976 (行动方)
    * ============================================================ */
   LEVELS.push({
-    id: 'iran', chapter: '第三章', title: '四十日', era: '1978年1月—1979年2月', place: '库姆 · 大不里士 · 德黑兰', icon: '🕯️',
+    id: 'qingming', chapter: '第三章', title: '清明', era: '1976年3月19日—4月5日', place: '北京 · 天安门广场', icon: '💮',
+    side: 'movement', role: '北京一家工厂的青年工人',
+    blurb: '一月里,悼念被压了下去。三个月后,清明节要到了。',
+    intro: [
+      '1976年1月8日,周恩来逝世。灵车经过长安街那天,十里长街站满了送行的人;此后的悼念活动却被层层限制,报纸上的消息少得可怜。',
+      '年初,"反击右倾翻案风"运动愈演愈烈,矛头指向邓小平。三月下旬,上海《文汇报》的一篇文章被许多人读作影射总理。',
+      '3月19日,北京一所小学的师生把一个花圈送到了人民英雄纪念碑下。<b>清明节就要到了。</b>一个人去送花圈,可能会被单位追查;如果全城的人都去呢?',
+    ],
+    goalText: '在4月5日夜之前,让三成北京人来到广场悼念,并坚持一天(两个半天)。',
+    tips: ['一月里的悼念被压下去了,悲痛却没有消失——它藏在人们心里。清明节、曝光会让它浮出来。', '清明节是所有人都知道的日子:不用串联,大家也知道哪一天该去。', '单位会追查去过广场的人。人越多,越查不过来。'],
+    rounds: 36, scale: 4000, arrestScale: 20, moodScale: 0.2, tipSpread: 0.3,
+    randomEvents: ['mole', 'split', 'release', 'letter'],
+    world: { N: 2000, tolType: 'bell', tolMul: 0.42, netType: 'clusters', netGroups: 40, P: 1.0, Pbar: 0.75, K0: 40, M: 150, alpha: 0.15, beta: 0.5, delta: 0.1, gamma: 1.5, memDecay: 0.05, vis: 0.7, omega: 0.6, globalScale: 0.5, noise: 0.01, hardCore: 0.002, seed: 1976, psiScale: 1.8, latentDecay: 0.005 },
+    policies: { start: Object.assign({}, STD_POL, { info: 'blackout', enforce: 'harsh' }) },
+    setup: (g) => { const s = g.sim; for (let i = 0; i < g.N; i++) s.latent[i] = 0.05 + s.rng() * 0.1; },   // 一月里被压住的悲痛
+    labels: { army: '民兵', crowd: '广场上', plaza: '人民英雄纪念碑', prison: '公安局', barracks: '劳动人民文化宫', avenue: '长安街' },
+    slogans: ['悼念总理', '还我花圈', '扬眉剑出鞘'],
+    cards: ['memorial', 'samizdat', 'rally', 'march', 'network', 'lowkey', 'leak'],
+    cardNames: {
+      memorial: { name: '送花圈', text: '用白纸扎一个花圈,写上挽联,送到纪念碑下。' },
+      samizdat: { name: '抄诗', text: '纪念碑四周贴满了诗。人们一句一句地抄在本子上,带回单位、带回家。' },
+      rally: { name: '去纪念碑前', text: '下了班,去广场上站一站,看一看那些花圈和诗。' },
+      march: { name: '全车间一起去', text: '工友们扛着花圈,排着队走到广场。' },
+      network: { name: '厂里串联', text: '车间、班组、同学之间,约好一起去。' },
+      lowkey: { name: '不留名', text: '挽联不写单位,诗不署名字。' },
+      leak: { name: '列车上的标语', text: '南京的学生把标语刷在开往北京的列车上。车厢被冲洗,标语又被刷上。消息顺着铁路传开。', when: (g) => g.round >= 18, whenText: '要等南京的消息传来(3月28日前后)' },
+    },
+    startAP: 2, income: 1.0,
+    ai: { aggression: 0.7, alertMul: 0.6, income: 1.2, lag: 2, start: { enforce: 'harsh', police: 'normal', info: 'blackout', target: 'uniform' }, max: { police: 'surge' }, cards: ['editorial', 'informants', 'bonus'] },
+    oppSay: { editorial: '《人民日报》:要警惕"一小撮"借悼念之名兴风作浪。', informants: '单位里在追查:谁去过广场,谁抄过诗。', bonus: '首都民兵指挥部召开动员会。' },
+    goal: { x: 0.3, hold: 2 },
+    stars: [
+      { text: '在清明节(4月4日)之前做到', test: (g) => g.round <= 31 },
+      { text: '被抓的人少于两千', test: (g) => g.sim.R < 0.05 },
+    ],
+    dateFmt: halfDayFmt(1976, 3, 19),
+    events: [
+      { at: 0, title: '第一个花圈', art: '💮', text: '3月19日,一所小学的师生把一个花圈送到了人民英雄纪念碑下。<br><br>一月里,悼念总理的活动被层层限制。可人们没有忘。纪念碑就在那里——去不去,是每个人自己的事;去的人多不多,却是所有人的事。', choices: [{ label: '开始' }] },
+      { at: 18, title: '南京', art: '🚂', text: '南京的学生和市民到雨花台悼念总理,又把"打倒张春桥"之类的标语刷在开往北京的列车上。车站派人冲洗,标语又被刷上。<br><br>列车进了北京站,车厢上的字迹还看得出来。', choices: [
+        { label: '把消息传开', hint: '「列车上的标语」免费 · 当局警觉 +6', run: (g) => { g.giveFree('leak', 3); g.addAlert(6); } },
+        { label: '先别声张', hint: '保存力量' },
+      ] },
+      { at: 28, news: '各单位传达上级通知:不许去天安门广场送花圈。', kind: 'opp', run: (g) => { g.forcePolicy('info', 'blackout', 6, '单位传达'); g.forceOpp('editorial', false); } },
+      { at: 30, news: '纪念碑四周的花圈越堆越高,松墙上挂满了诗。', kind: 'crowd', run: (g) => g.giveFree('samizdat', 2) },
+      { at: 32, title: '清明', art: '🌸', text: '4月4日,星期天,清明节。从早到晚,人流涌向广场。花圈一层一层堆上纪念碑的台阶,有人站在高处念诗:<br><br>"欲悲闻鬼叫,我哭豺狼笑。洒泪祭雄杰,扬眉剑出鞘。"', choices: [
+        { label: '全家都去', hint: '很多人来到广场 · 被压住的悲痛浮出水面', run: (g) => { g.addSeeds(0.05); g.sim.reveal(0.4); } },
+        { label: '自己去送一次花圈', hint: '少量的人 · 悲痛浮出一些', run: (g) => { g.addSeeds(0.02); g.sim.reveal(0.2); } },
+      ] },
+      { at: 33, title: '花圈不见了', art: '🚚', text: '4月4日深夜,中央政治局认定这是一起"反革命"事件。当夜,纪念碑前的花圈被卡车一车一车地拉走,诗被撕掉,守在那里的人被带走。', choices: [{ label: '……' }], run: (g) => { g.griefAll(0.04); g.sim.reveal(0.5); g.addAlert(30); g.forcePolicy('enforce', 'terror', 4, '"反革命事件"'); } },
+      { at: 34, title: '还我花圈', art: '🔥', text: '4月5日,星期一。一早赶到广场的人发现花圈没了。"还我花圈!还我战友!"人群围住了广场东南角的小楼(联合指挥部),一辆广播车被掀翻,小楼起了火。', choices: [
+        { label: '留在广场', hint: '带出很多人 · 今晚会清场', run: (g) => g.addSeeds(0.04) },
+        { label: '天黑前回家', hint: '保护自己' },
+      ] },
+      { at: 35, title: '4月5日夜', art: '🌑', text: '傍晚六点半起,广场上的高音喇叭反复播放北京市委第一书记吴德的广播讲话,要人们离开。晚上九点多,广场上的灯突然全亮了——上万名民兵,和公安干警、卫戍部队一起,手持木棍冲进广场。', choices: [{ label: '……' }], run: (g) => { g.forcePolicy('police', 'martial', 9, '清场'); g.forceOpp('crackdown', false); } },
+    ],
+    endings: {
+      crowd: { title: '人民的悼念', text: '清明前后,来到广场的人数以百万计。花圈、挽联和诗把纪念碑围了一层又一层。<br><br>4月5日夜,广场被清场;两天后,邓小平被撤销一切职务,这次悼念被定性为"反革命事件"。<br>可它没有被忘记。1978年11月,中共北京市委宣布:天安门事件"完全是革命行动"。那些诗后来被编成了《天安门诗抄》。' },
+      timeout: { title: '花圈被收走了', text: '4月5日夜,广场被清场。来的人不够多,这次悼念没能成为全城的事。<br><br>——可在人们心里,记忆还在。两年后,这次事件被平反。' },
+    },
+    history: '1976年1月8日周恩来逝世,此后的悼念活动受到限制。3月下旬,《文汇报》的文章引发南京、北京等地民众不满;南京学生把标语刷上开往北京的列车。3月底起,人们陆续到天安门广场人民英雄纪念碑前献花圈、贴诗词,4月4日清明节达到高潮。当夜中央政治局将其定性为反革命事件,花圈被连夜清走。4月5日,民众与维持秩序的人员发生冲突,当晚民兵、公安干警和卫戍部队清场,许多人被打伤、被抓。4月7日,邓小平被撤销党内外一切职务。1978年11月,中共北京市委宣布天安门事件"完全是革命行动"。',
+    lesson: { title: '性质六 · 小规模行动可能被吸回同一个低位状态', text: '一月里,悼念被一次次压回沉默:每一次小规模行动,最后都只剩下那批本来就愿意承担完整代价的人。可"反复看见小行动没有扩散",只说明它们没有跨过相关障碍,不能证明更大的行动也会失败。清明节是一个人人都知道的日子;被压住的悲痛也在那一天浮出水面——改变的正是"别人也会去"这一判断,和人们愿意承担的代价。' },
+  });
+
+  /* ============================================================
+   * 第四章 · 伊朗 1978 (行动方)
+   * ============================================================ */
+  LEVELS.push({
+    id: 'iran', chapter: '第四章', title: '四十日', era: '1978年1月—1979年2月', place: '库姆 · 大不里士 · 德黑兰', icon: '🕯️',
     side: 'movement', role: '反对派网络',
     blurb: '人死后第四十天要悼念。悼念会上若再有人死去,四十天后又是一次悼念。',
     intro: [
@@ -248,10 +316,10 @@
   });
 
   /* ============================================================
-   * 第四章 · 波兰 1981 (朝廷)
+   * 第五章 · 波兰 1981 (朝廷)
    * ============================================================ */
   LEVELS.push({
-    id: 'poland', chapter: '第四章', title: '戒严之夜', era: '1981年12月—1982年10月', place: '华沙 · 格但斯克 · 卡托维兹', icon: '❄️',
+    id: 'poland', chapter: '第五章', title: '戒严之夜', era: '1981年12月—1982年10月', place: '华沙 · 格但斯克 · 卡托维兹', icon: '❄️',
     side: 'regime', role: '救国军事委员会',
     blurb: '坦克开上街头,名单上的人一夜之间消失。你可以让国家安静下来——代价是什么?',
     intro: [
@@ -302,10 +370,79 @@
   });
 
   /* ============================================================
-   * 第五章 · 北京 1989 (行动方)
+   * 第六章 · 首尔 1987 六月抗争 (行动方)
+   * 1—5月每轮一周, 6月每轮一天: 时间在六月慢了下来
+   * ============================================================ */
+  const seoulFmt = (r) => (r < 20 ? weekFmt(1987, 1, 14)(r) : dayFmt(1987, 6, 1)(r - 20));
+  LEVELS.push({
+    id: 'seoul', chapter: '第六章', title: '六月', era: '1987年1月14日—6月30日', place: '首尔 · 明洞 · 全国', icon: '👔',
+    side: 'movement', role: '首尔一所大学的学生,后来是国民运动本部的组织者',
+    blurb: '一个学生死在审讯室里。警方说:"啪地一拍桌子,他\'呃\'的一声就倒下了。"',
+    intro: [
+      '1987年1月14日,首尔大学学生朴钟哲在南营洞的警察对共分室里接受审讯时死亡。警方的说法是:"啪地一拍桌子,他\'呃\'的一声就倒下了。"',
+      '全斗焕将军在1980年光州的血泊之后掌权。宪法规定总统由"选举人团"间接选出——明年,他将把权力交给自己指定的接班人。',
+      '人们要的是一部让自己投票选总统的宪法。<b>一个人的死,会被压下去,还是会被记住?</b>',
+    ],
+    goalText: '在6月底之前,让全国三分之一以上的人走上街头,并坚持两天——逼当局接受总统直选。',
+    tips: ['朴钟哲的死被掩盖着:悲愤藏在人们心里。「曝光真相」能让它浮出来——越晚曝光,当局越难收场;越早,越早被压下去。', '六月之前每轮是一周,六月每轮是一天。积蓄的力量,要留到六月。', '明洞圣堂是一个警察不敢进去的地方。中产阶级(「领带部队」)一加入,就不再只是学生的事。'],
+    rounds: 50, scale: 5000, arrestScale: 25, moodScale: 0.2, tipSpread: 0.3,
+    randomEvents: ['death', 'mole', 'press', 'writer', 'split', 'release'],
+    world: { N: 2000, tolType: 'bell', tolMul: 0.34, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.7, K0: 55, M: 160, alpha: 0.2, beta: 0.5, delta: 0.15, gamma: 1.8, memDecay: 0.06, vis: 0.6, omega: 0.6, globalScale: 0.55, noise: 0.01, hardCore: 0.004, seed: 1987, psiScale: 1.6, latentDecay: 0.01 },
+    policies: { start: Object.assign({}, STD_POL, { enforce: 'harsh', police: 'surge', info: 'spin', target: 'organizer' }) },
+    labels: { army: '战警', crowd: '街头', plaza: '明洞圣堂', prison: '南营洞', barracks: '军营', avenue: '世宗大路' },
+    slogans: ['打倒独裁!', '撤销护宪!', '还我钟哲!', '直选!'],
+    cards: ['rally', 'march', 'memorial', 'leak', 'network', 'fraternize', 'sanctuary', 'necktie'],
+    cardNames: {
+      memorial: { name: '追悼会', text: '为朴钟哲举行追悼会。追悼会结束,人们会走到街上。' },
+      leak: { name: '曝光真相', text: '把被掩盖的审讯细节送到神父、记者手里。封锁压住的不是记忆,只是记忆的公开。' },
+      network: { name: '校园与教会串联', text: '学生会、教会、在野党,约好同一天、同一个时间。' },
+      fraternize: { name: '向战警喊话', text: '"你们也是被征来的年轻人。"对着盾牌后面的脸说话。' },
+    },
+    startAP: 2, income: 1.0,
+    ai: { aggression: 0.75, income: 1.2, lag: 2, start: { enforce: 'harsh', police: 'surge', info: 'spin', target: 'organizer' }, max: { police: 'surge', enforce: 'harsh' }, cards: ['editorial', 'informants', 'crackdown', 'bonus'] },
+    oppSay: { editorial: '政府发言人:一小撮"左倾势力"企图颠覆国家。', informants: '便衣警察在校园里拍照,登记示威者的脸。', crackdown: '战警发射了成排的催泪弹。', bonus: '战警部队加发津贴。' },
+    goal: { x: 0.35, hold: 2 },
+    stars: [
+      { text: '在6月20日之前做到', test: (g) => g.round <= 39 },
+      { text: '被带走的人少于五千', test: (g) => g.sim.R < 0.05 },
+    ],
+    dateFmt: seoulFmt,
+    setup: (g) => { g.flags.necktie = false; },
+    events: [
+      { at: 0, title: '南营洞', art: '🚿', text: '1月14日,首尔大学语言学系的学生朴钟哲被带到南营洞的治安本部对共分室,追问一位学长的下落。他没有说。<br><br>第二天,警方宣布他死于"休克":"啪地一拍桌子,他\'呃\'的一声就倒下了。"<br>给他做检查的医生看到的是另一回事。', choices: [{ label: '记住他' }], run: (g) => { const s = g.sim; for (let i = 0; i < g.N; i++) s.latent[i] += 0.06 + s.rng() * 0.06; g.griefAll(0.01); } },
+      { at: 13, title: '四一三护宪措施', art: '📺', text: '4月13日,全斗焕发表特别谈话:修宪讨论到此为止,等明年汉城奥运会之后再说。明年的总统,仍将由选举人团选出。<br><br>这意味着:他指定的接班人,将在一个没有对手的选举里当选。', choices: [
+        { label: '联署反对', hint: '教授、神父、作家接连发表声明 · 积怨上升', run: (g) => { g.griefAll(0.03); g.giveFree('network', 2); } },
+        { label: '沉默', hint: '保存力量' },
+      ] },
+      { at: 18, title: '五一八', art: '⛪', text: '5月18日,光州事件七周年的弥撒上,天主教正义实现全国司祭团宣读了一份声明:朴钟哲之死,警方掩盖了真相——参与拷问的警察不止两个,上面知道,还安排了顶罪。', choices: [
+        { label: '让全国都知道', hint: '被压住的悲愤浮出水面 · 人人看见', run: (g) => { g.sim.reveal(0.7); g.addEffect({ id: 'priests', name: '司祭团声明', icon: '⛪', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = Math.min(1, m.gs + 0.3); } }); } },
+      ] },
+      { at: 28, title: '李韩烈', art: '🩸', text: '6月9日,延世大学门前。学生李韩烈被一枚平射的催泪弹击中后脑,倒在同学的怀里。那张照片第二天登上了报纸。<br><br>明天,执政党要提名卢泰愚为总统候选人。', choices: [
+        { label: '明天上街', hint: '「大游行」免费 · 积怨上升', run: (g) => { g.griefAll(0.04); g.giveFree('march', 2); } },
+      ] },
+      { at: 29, title: '六一〇', art: '📣', text: '6月10日,执政党在体育馆里提名卢泰愚。同一时间,"声讨拷问杀人掩盖、撤销护宪"国民大会在全国二十多座城市举行。<br><br>傍晚,被驱散的示威者退进了明洞圣堂。', choices: [
+        { label: '守住明洞', hint: '「明洞圣堂静坐」免费', run: (g) => { g.addSeeds(0.025); g.giveFree('sanctuary', 3); } },
+      ] },
+      { at: 31, news: '午休时间,市中心打着领带的上班族走出写字楼,为示威队伍鼓掌。', kind: 'crowd', run: (g) => { g.flags.necktie = true; g.giveFree('necktie', 2); } },
+      { at: 38, title: '6月19日', art: '🪖', text: '据后来披露,全斗焕在这一天上午下令:军队准备进驻首尔等城市。<br><br>同一天,美国大使李洁明递交了里根总统的亲笔信。明年就是汉城奥运会,全世界都在看。', choices: [{ label: '……' }], run: (g) => {
+        if (g.x >= 0.06 || g.d >= 0.15) { g.log('傍晚,出兵的命令被收回了。', 'army'); g.L.ai.aggression = 0.5; g.scalePsi(0.3, 0.8); }
+        else { g.log('军队开进了城市。', 'opp'); g.flags.martialLaw = true; g.L.ai.max = {}; g.forcePolicy('police', 'martial', 99, '出兵'); g.forcePolicy('enforce', 'terror', 99, '出兵'); g.forceOpp('crackdown', false); }
+      } },
+      { at: 45, news: '6月26日,"国民平和大行进":全国三十多座城市,上百万人上街。', kind: 'crowd', run: (g) => g.addSeeds(0.035) },
+    ],
+    endings: {
+      crowd: { title: '六二九宣言', text: '6月29日,执政党总统候选人卢泰愚发表"六二九宣言":接受总统直选,赦免金大中,恢复政治犯的公民权,保障新闻自由……<br><br>7月9日,李韩烈的葬礼上,上百万人送他。12月,韩国举行了十六年来第一次总统直选。' },
+      timeout: { title: '护宪', text: '街头的人不够多,也不够久。"护宪措施"维持了下去,明年的总统仍由选举人团选出。<br><br><b>这不是历史。</b>历史上,六月的街头最终逼得当局让步。' },
+    },
+    history: '1987年1月14日,首尔大学学生朴钟哲在南营洞治安本部对共分室受水刑致死,警方起初声称"一拍桌子他就倒下了",随后承认拷问,但只承认两名警察涉案。4月13日,全斗焕发表"护宪措施",拒绝修宪。5月18日,天主教正义实现全国司祭团揭露警方掩盖真相。5月27日,民主宪法争取国民运动本部成立。6月9日,延世大学学生李韩烈被催泪弹击中头部(7月5日去世)。6月10日起,全国各地爆发大规模示威,明洞圣堂静坐持续数日,上班族也加入了街头。据后来披露,6月19日全斗焕曾下令军队准备出动,随后收回。6月26日"国民平和大行进"遍及全国。6月29日,卢泰愚发表"六二九宣言",接受总统直选。',
+    lesson: { title: '性质三 · 一次处罚会不会带来更多参与者,可以写成明确的局部条件', text: '"越压越反"并不总成立。反作用需要两个条件同时满足:事件足以改变人们的参与意愿,而且恰好有足够多的人位于当前门槛附近。一月里,朴钟哲的死没有立刻带来大游行;经过四一三、五一八,门槛附近的人越来越多——六月的一枚催泪弹,才带来了成倍的人。' },
+  });
+
+  /* ============================================================
+   * 第七章 · 北京 1989 (行动方)
    * ============================================================ */
   LEVELS.push({
-    id: 'beijing', chapter: '第五章', title: '春夏之交', era: '1989年4月15日—6月4日', place: '北京', icon: '🎓',
+    id: 'beijing', chapter: '第七章', title: '春夏之交', era: '1989年4月15日—6月4日', place: '北京', icon: '🎓',
     side: 'movement', role: '高校学生自治联合会',
     blurb: '百万人上街,政权并没有倒下。决定结局的,是那些开进城的士兵。',
     intro: [
@@ -316,9 +453,9 @@
     goalText: '在6月4日前,让戒严部队倒戈(军心"成建制倒戈"并维持两天)。',
     tips: ['街上的人数会影响士兵,但光靠人多压不垮军队。', '戒严后,「拦阻军车」和「劝说士兵」是你最重要的牌。', '当局可能调来与本地毫无联系的部队——他们不会和人群说话。'],
     rounds: 50, scale: 1000, arrestScale: 8, moodScale: 0.2, tipSpread: 0.35,
-    world: { N: 2000, tolType: 'bell', tolMul: 0.9, tolAdd: -0.45, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.9, K0: 30, M: 200, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.8, memDecay: 0.1, vis: 0.9, omega: 0.7, globalScale: 0.8, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 3.0 },
+    world: { N: 2000, tolType: 'bell', tolMul: 0.9, tolAdd: -0.45, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.9, K0: 30, M: 200, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.8, memDecay: 0.1, vis: 0.9, omega: 0.7, globalScale: 0.8, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 1.9 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin', enforce: 'lenient', police: 'lean' }) },
-    troopPsi: 2.4,
+    troopPsi: 2.32,
     labels: { army: '军警', crowd: '广场上', plaza: '天安门广场', prison: '收容审查', barracks: '城郊营地', avenue: '长安街' },
     slogans: ['反腐败!', '新闻自由!', '对话!', '人民军队爱人民!', '民主万岁!'],
     cards: ['rally', 'march', 'mobilize', 'hunger', 'fraternize', 'blockade', 'goddess', 'memorial', 'samizdat', 'legal'],
@@ -383,10 +520,10 @@
   });
 
   /* ============================================================
-   * 第六章 · 莱比锡 1989 (行动方)
+   * 第八章 · 莱比锡 1989 (行动方)
    * ============================================================ */
   LEVELS.push({
-    id: 'leipzig', chapter: '第六章', title: '我们是人民', era: '1989年9月4日—10月16日', place: '莱比锡', icon: '⛪',
+    id: 'leipzig', chapter: '第八章', title: '我们是人民', era: '1989年9月4日—10月16日', place: '莱比锡', icon: '⛪',
     side: 'movement', role: '尼古拉教堂的和平祈祷会',
     blurb: '每周一,教堂的门开着。四个月前北京发生的事,每个人都知道。',
     intro: [
@@ -397,7 +534,7 @@
     goalText: '在10月16日前,让周一游行达到全城的四成(约12万人),并坚持两天。',
     tips: ['周一的「和平祈祷」是免费的。', '当局把新闻压得越狠,一次「曝光真相」就越有力。', '教会、学校、工厂之间的联系(「串联织网」)会让人更容易互相带动。'],
     rounds: 42, scale: 150, arrestScale: 5, moodScale: 0.2, randomEvents: ['death', 'mole', 'press', 'writer', 'letter', 'release', 'split'],
-    world: { N: 2000, tolType: 'uniform', tolMul: 0.37, tolAdd: -0.15, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.75, K0: 50, M: 150, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.5, memDecay: 0.15, vis: 0.8, omega: 0.6, globalScale: 0.75, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 1.3 },
+    world: { N: 2000, tolType: 'uniform', tolMul: 0.37, tolAdd: -0.15, netType: 'clusters', netGroups: 30, P: 1.0, Pbar: 0.75, K0: 50, M: 150, alpha: 0.25, beta: 0.5, delta: 0.2, gamma: 1.5, memDecay: 0.15, vis: 0.8, omega: 0.6, globalScale: 0.75, noise: 0.01, hardCore: 0.004, seed: 1989, psiScale: 1.9 },
     policies: { start: Object.assign({}, STD_POL, { info: 'spin', target: 'organizer' }) },
     labels: { army: '警察与战斗队', crowd: '环城大道上', plaza: '卡尔·马克思广场', prison: '斯塔西看守所', barracks: '人民警察营地', avenue: '环城大道' },
     slogans: ['我们是人民!', '不要暴力!', '我们要留下来!', '新闻自由!'],
@@ -433,10 +570,98 @@
   });
 
   /* ============================================================
-   * 第七章 · 2022 四通桥与白纸 (行动方)
+   * 第九章 · 布加勒斯特 1989 (朝廷)
    * ============================================================ */
   LEVELS.push({
-    id: 'baizhi', chapter: '第七章', title: '一张白纸', era: '2022年10月13日—12月7日', place: '北京 · 上海 · 乌鲁木齐', icon: '📄',
+    id: 'bucharest', chapter: '第九章', title: '最后一次大会', era: '1989年12月15日—12月31日', place: '蒂米什瓦拉 · 布加勒斯特', icon: '🎙️',
+    side: 'regime', role: '尼古拉·齐奥塞斯库',
+    blurb: '国家安全局的报告说:一切正常。报告一直都这么说。',
+    intro: [
+      '1989年12月。柏林墙倒了,布拉格的人上了街,保加利亚换了领导人。在你的国家,一切照旧。',
+      '为了还清外债,你让全国勒紧了腰带:面包、肉、牛奶凭票供应,冬天的公寓里只有几个小时的暖气,晚上街灯是黑的。国家安全局(Securitate)无处不在,每个单位都有人打报告。',
+      '<b>报告说:人民拥护你。</b>报告一直都这么说。',
+    ],
+    quote: '沉默的记录,不足以确定沉默背后的反应结构。——《道路以目》',
+    goalText: '撑到1989年最后一天,别让街头失控,也别让军队倒戈。',
+    tips: ['你的情报几乎完全不可信:执法越凶,下面的人越不敢说真话。「国家安全局线人」能让你暂时听到真话。', '勒紧腰带省下的钱,正变成看不见的积怨。补贴能买来平静——真正的平静。', '十万人站在同一个广场上,每个人都能看见别人。'],
+    rounds: 34, scale: 5000, arrestScale: 30, moodScale: 0.2, tipSpread: 0.3,
+    randomEvents: ['r_ringleaders', 'r_rumor', 'r_hawks', 'r_advisor', 'r_pay'],
+    world: { N: 2000, tolType: 'uniform', tolMul: 0.4, netType: 'random', netDeg: 6, P: 1.0, Pbar: 0.7, K0: 50, M: 150, alpha: 0.3, beta: 0.45, delta: 0.2, gamma: 2, memDecay: 0.03, vis: 0.8, omega: 0.8, globalScale: 0.8, noise: 0.01, hardCore: 0.003, seed: 1989, psiScale: 1.6 },
+    policies: { start: { enforce: 'harsh', police: 'surge', target: 'preventive', info: 'blackout', release: 'long' } },
+    setup: (g) => { g.griefAll(0.13); g.flagTop(0.03); },   // 多年的配给、寒冷与监视
+    labels: { army: '军队', crowd: '街头', plaza: '宫殿广场', prison: '国家安全局', barracks: '国防部', avenue: '胜利大道' },
+    slogans: ['打倒齐奥塞斯库!', '蒂米什瓦拉!', '我们是人民!', '军队和我们在一起!'],
+    policyNames: {
+      police: { name: '警力', options: { lean: '精简', normal: '常规', surge: '国家安全局', martial: '军队进城' } },
+      info: { name: '舆论', options: { open: '如实报道', spin: '报喜不报忧', blackout: '只播领袖' } },
+    },
+    cardNames: {
+      informants: { name: '国家安全局线人', text: '让线人去听人们私下说什么。这几天你会听到真话——最敢说话的人也会先被抓。' },
+      editorial: { name: '电视讲话', text: '在电视上谴责"流氓"和"外国特务"。' },
+      crackdown: { name: '开枪', text: '命令军队和国家安全局向人群开枪。街道会空——枪声也会被所有人听见。' },
+      subsidy: { name: '恢复暖气与供应', text: '给公寓通上暖气,让商店里有面包和肉。花掉的是还债省下的钱。' },
+      dialogue: { name: '派人谈判', text: '承认一部分诉求:工资、供应、不再驱逐牧师。' },
+      amnesty: { name: '释放被捕者', text: '放掉这几天抓起来的人。' },
+      bonus: { name: '给军官加薪', text: '升职、加薪、许诺。让将军们记得是谁在养活他们。' },
+    },
+    cards: ['informants', 'subsidy', 'dialogue', 'amnesty', 'bonus', 'editorial', 'crackdown'],
+    startAP: 4, income: 1.2,
+    ai: { income: 1.0, every: 2, base: 0.01, smart: 0.8, aggression: 0.8, orgRate: 1.2, cards: ['rally', 'march', 'strike', 'memorial', 'leak', 'fraternize'],
+      pushNews: '全城罢工,人们涌向市中心!',
+      chatter: ['排队买面包的人在小声说话,看见戴皮帽的人就散了。', '有人在收听自由欧洲电台。', '公寓里只有几个小时的暖气。', '有人在墙上写了一个名字,又被刷掉了。'] },
+    goal: { x: 0.25, d: 0.5, hold: 2, dHold: 2 },
+    stars: [
+      { text: '没有下令开枪', test: (g) => !g.flags.shot },
+      { text: '年底时民间积怨不超过"积怨"', test: (g) => g.meanGrievance() / g.moodScale < 0.55 },
+    ],
+    dateFmt: halfDayFmt(1989, 12, 15),
+    events: [
+      { at: 0, title: '特凯什牧师', art: '⛪', text: '12月15日,蒂米什瓦拉。匈牙利族归正会牧师特凯什·拉斯洛接到了驱逐令——他在外国电视上批评了你的政策。<br><br>他的教友们手挽手,围在牧师住所门前,不让警察进去。', choices: [
+        { label: '照常驱逐', hint: '规矩就是规矩', run: (g) => { g.forceOpp('rally', false); g.griefAll(0.01, 0.5); } },
+        { label: '暂缓驱逐', wise: true, hint: '人群会散——你会显得软弱', run: (g) => { g.base.Pbar += 0.03; g.org = Math.min(100, g.org + 6); } },
+      ] },
+      { at: 3, title: '蒂米什瓦拉', art: '🔥', text: '围在牧师门前的人越来越多,罗马尼亚人也加入了。人群冲进县党委大楼,把你的画像和书扔出窗外,喊着"打倒齐奥塞斯库"。<br><br>县里请示:要不要开枪?', choices: [
+        { label: '开枪', hint: '街道会空——枪声也会被所有人听见', run: (g) => { g.flags.shot = true; g.selfCard('crackdown', '12月17日,军队和国家安全局在蒂米什瓦拉向人群开枪。'); } },
+        { label: '水龙和警棍', hint: '驱散,但不开枪', run: (g) => g.addEffect({ id: 'hose', name: '水龙驱散', icon: '🚒', side: 'regime', rounds: 2, mod(m) { m.K0 *= 1.4; } }) },
+        { label: '派人去谈', wise: true, hint: '承认一部分诉求 · 对手会觉得你软', run: (g) => g.selfCard('dialogue', '县里派人和人群谈判。') },
+      ] },
+      { at: 6, title: '伊朗之行', art: '✈️', text: '按计划,你今天出发去德黑兰进行国事访问,20日回来。夫人埃列娜会替你主持政治执行委员会。<br><br>取消出访,全世界都会猜到国内出了事。', choices: [
+        { label: '按计划出访', hint: '接下来两天你无法出牌、也不能改政策', run: (g) => { g.flags.away = true; g.allowCards = []; g.log('你飞往德黑兰。', 'mine'); } },
+        { label: '取消出访', wise: true, hint: '花费 3 点 · 反对派士气 ↑', run: (g) => { g.me.ap = Math.max(0, g.me.ap - 3); g.org = Math.min(100, g.org + 8); } },
+      ] },
+      { at: 10, if: (g) => !!g.flags.shot, news: '蒂米什瓦拉全城罢工。军队撤回了兵营,市民在歌剧院广场上宣布:这里是"自由城市"。', kind: 'crowd', run: (g) => { if (g.flags.away) { g.flags.away = false; g.allowCards = null; } g.scalePsi(0.2, 0.8); g.forceOpp('strike', false); } },
+      { at: 10, if: (g) => !g.flags.shot, news: '蒂米什瓦拉的工厂里,工人们在议论这几天的事。有人在厂门口停了下来,又走了进去。', kind: 'event', run: (g) => { if (g.flags.away) { g.flags.away = false; g.allowCards = null; } g.forceOpp('rally', false); } },
+      { at: 11, title: '电视讲话', art: '📺', text: '你从德黑兰回来,当晚在电视上发表讲话。', choices: [
+        { label: '谴责"流氓"和外国特务', hint: '怕的人会退缩——被冤枉的人会记住', run: (g) => { g.selfCard('editorial', '你在电视上说:蒂米什瓦拉的事件是外国特务和流氓挑起的。'); } },
+        { label: '宣布涨工资、增加供应', wise: true, hint: '花费 2 点 · 积怨 ↓', run: (g) => { g.me.ap = Math.max(0, g.me.ap - 2); g.griefScale(0.82); g.log('你在电视上宣布:提高工资和养老金,增加供应。', 'mine'); } },
+      ] },
+      { at: 12, title: '12月21日 · 群众大会', art: '🎙️', text: '你打算在中央委员会大楼前召开十万人大会,谴责蒂米什瓦拉的"流氓"。工厂和机关用大巴把人拉来,发了标语和你的画像。电视将向全国直播。<br><br>十万人站在同一个广场上,<b>每个人都能看见别人。</b>', choices: [
+        { label: '召开大会,全国直播', hint: '如果人们真的站在你这边,这会是一次胜利', run: (g) => {
+          const m = g.meanGrievance() / g.moodScale;
+          g.addEffect({ id: 'rally21', name: '全国直播的大会', icon: '📺', side: 'movement', rounds: 1, mod(mm) { mm.gs = 1; mm.vis = 1.2; mm.omega = 1; } });
+          if (m < 0.35) { g.org = Math.max(0, g.org - 25); g.me.ap += 3; g.log('大会秩序井然。电视上是一片挥舞的旗帜。', 'intel'); }
+          else { g.addSeeds(0.004 + 0.06 * Math.min(1, m - 0.35)); g.log('讲话进行到一半,广场后排传来口哨声和"蒂米什瓦拉!"的喊声。你愣住了,抬手示意安静。直播中断了。', 'crowd'); }
+        } },
+        { label: '取消大会', wise: true, hint: '什么也不会发生——至少今天', run: (g) => { g.org = Math.min(100, g.org + 8); } },
+      ] },
+      { at: 14, if: (g) => g.d >= 0.12 || g.x >= 0.06, title: '12月22日 · 国防部长', art: '🪖', text: '上午传来消息:国防部长米利亚死了。官方说他是"叛徒",畏罪自杀。<br><br>坦克上的士兵,开始把枪口转向天空。', choices: [{ label: '……' }], run: (g) => g.scalePsi(0.6, 0.35) },
+      { at: 14, if: (g) => !(g.d >= 0.12 || g.x >= 0.06), news: '国防部长米利亚照常向你汇报。首都一切如常。', kind: 'intel' },
+    ],
+    check: (g) => { if (g.flags.away && g.round >= 10) { g.flags.away = false; g.allowCards = null; } return null; },
+    endings: {
+      survive: { title: '新年', text: (g) => (g.meanGrievance() / g.moodScale < 0.55 ? '你撑到了1990年。暖气通上了,商店里有了面包,人们回到了家里。' : '你撑到了1990年。街道安静下来,报告说一切正常——报告一直都这么说。') + '<br><br><b>这不是历史。</b>历史上,12月22日中午,齐奥塞斯库夫妇乘直升机从中央委员会大楼楼顶逃离;三天后,他们在特尔戈维什泰被一个临时军事法庭草草审判,随即枪决。' },
+      crowd: { title: '直升机', text: '12月22日中午,人群冲进中央委员会大楼。你和埃列娜从楼顶乘直升机逃离。<br><br>三天后,你们在特尔戈维什泰被一个临时军事法庭审判,随即枪决。审判持续了不到一个小时。' },
+      army: { title: '军队和我们在一起', text: '坦克调转了方向。士兵们爬下车,和人群拥抱。国防部已经不再接你的电话。<br><br>三天后,你和埃列娜在特尔戈维什泰被草草审判,随即枪决。' },
+    },
+    history: '1989年12月15日,蒂米什瓦拉的教友围住匈牙利族牧师特凯什·拉斯洛的住所,阻止驱逐;次日抗议扩大为反政府示威。12月17日,军队和国家安全局向人群开枪,遇难者遗体被秘密运往布加勒斯特火化。齐奥塞斯库于18日至20日访问伊朗。20日蒂米什瓦拉全城罢工,军队撤回兵营。21日中午,齐奥塞斯库在中央委员会大楼前召开群众大会,讲话中途人群发出嘘声,电视直播中断;当晚布加勒斯特发生枪击。22日上午,国防部长米利亚死亡(官方称自杀),军队转向民众一方,齐奥塞斯库夫妇中午乘直升机逃离。25日,二人经临时军事法庭审判后被处决。',
+    lesson: { title: '性质一 · 性质十三:沉默不发出预警,崩落也未必有前兆', text: '公开参与可以一直是零,小扰动的恢复速度也可以一直不变,而临界点正在向它靠近——沉默本身不告诉你离崩落还有多远。模型也提醒我们:接近临界点时恢复会变慢,可反过来,不能用几天里的突变去证明"此前必定出现了临界减速"。12月21日广场上的口哨声,不是崩落的原因,而是一个早已存在的状态,第一次被所有人同时看见。' },
+  });
+
+  /* ============================================================
+   * 第十章 · 2022 四通桥与白纸 (行动方)
+   * ============================================================ */
+  LEVELS.push({
+    id: 'baizhi', chapter: '第十章', title: '一张白纸', era: '2022年10月13日—12月7日', place: '北京 · 上海 · 乌鲁木齐', icon: '📄',
     side: 'movement', role: '散落在各地的年轻人',
     blurb: '一个人,一座桥,两条横幅。然后是一场火,和一张什么也没写的纸。',
     intro: [
@@ -484,10 +709,10 @@
   });
 
   /* ============================================================
-   * 第八章 · 朝鲜 (行动方 · 信息网络)
+   * 第十一章 · 朝鲜 (行动方 · 信息网络)
    * ============================================================ */
   LEVELS.push({
-    id: 'pyongyang', chapter: '第八章', title: '看不见的裂缝', era: '2019年—2022年', place: '朝鲜 · 惠山 / 新义州', icon: '🌑',
+    id: 'pyongyang', chapter: '第十一章', title: '看不见的裂缝', era: '2019年—2022年', place: '朝鲜 · 惠山 / 新义州', icon: '🌑',
     side: 'movement', role: '边境的走私与信息网络',
     blurb: '这里不会有游行。你能做的,是让沉默变薄——在不被发现的前提下。',
     intro: [

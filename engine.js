@@ -251,6 +251,29 @@
         g.addEffect({ id: 'banner', name: '横幅照片流传', icon: '🪧', side: 'movement', rounds: 3, mod(m) { m.vis = Math.max(m.vis, 1); m.gs = Math.min(1, m.gs + 0.2); } });
       },
     },
+    sanctuary: {
+      side: 'movement', name: '明洞圣堂静坐', icon: '⛪', cost: 2, cd: 99, once: true, special: true,
+      text: '示威者退进明洞天主教堂。神父们站在门口:要抓他们,先从我们身上踩过去。',
+      tags: ['上街 +少量', '一个抓不走的据点', '持续六轮'],
+      run(g) {
+        g.addSeeds(0.015);
+        g.addEffect({ id: 'sanctuary', name: '明洞静坐', icon: '⛪', side: 'movement', rounds: 6, mod(m) { m.K0 *= 0.75; m.vis = Math.max(m.vis, 0.9); } });
+      },
+    },
+    necktie: {
+      side: 'movement', name: '领带部队', icon: '👔', cost: 2, cd: 5, special: true,
+      text: '午休时间,打着领带的上班族走出写字楼,在人行道上鼓掌、从窗口扔下卫生纸卷,然后加入了队伍。',
+      tags: ['上街 +较多', '中产加入', '执法更容易被看作越界'],
+      when: (g) => !!g.flags.necktie, whenText: '要等到六月,街上已经有人的时候',
+      run(g) {
+        g.addSeeds(0.03);
+        g.base.Pbar = Math.max(0.3, g.base.Pbar - 0.03);
+        // 中产的加入: 这不再只是学生的事——一部分人的承受上限整体上移
+        const s = g.sim;
+        for (let i = 0; i < s.o.N; i++) if (s.rng() < 0.25) s.tau[i] += 0.02;
+        s.tauDirty = true;
+      },
+    },
     blankpaper: {
       side: 'movement', name: '举起白纸', icon: '📄', cost: 2, cd: 4, special: true,
       text: '白纸上什么也没写——所有人都知道上面写着什么。罪名很难定。',
@@ -396,7 +419,7 @@
   };
   for (const [id, v] of Object.entries(CARD_ECON)) { CARDS[id].cost = v[0]; CARDS[id].alert = v[1] || 0; CARDS[id].org = v[2] || 0; }
   /* 能把人带上街的牌: 规模(占人口比例) */
-  const SEEDS = { rally: 0.015, march: 0.04, mobilize: 0.03, strike: 0.08, goddess: 0.03, blankpaper: 0.035, hunger: 0.006, t_small: 0.01, t_big: 0.025 };
+  const SEEDS = { rally: 0.015, march: 0.04, mobilize: 0.03, strike: 0.08, goddess: 0.03, blankpaper: 0.035, hunger: 0.006, sanctuary: 0.015, necktie: 0.03, t_small: 0.01, t_big: 0.025 };
   CARDS.prayer.seedFn = (g) => (g.isMonday() ? 0.022 : 0.01);
 
   /* ---------- 气泡: 局势变化时冒出来, 点击收集 ---------- */
@@ -594,7 +617,11 @@
   class Game {
     constructor(level, opts) {
       opts = opts || {};
-      this.L = level;
+      // 历史事件会改动对手 AI 的设置(如戒严后更警觉): 每局拷一份, 不污染关卡定义, 重玩时从头开始
+      const copy1 = (o) => (Array.isArray(o) ? o.slice() : o && typeof o === 'object' ? Object.assign({}, o) : o);
+      const ai = level.ai ? Object.assign({}, level.ai) : level.ai;
+      if (ai) for (const k in ai) ai[k] = copy1(ai[k]);
+      this.L = Object.assign({}, level, { ai });
       this.side = level.side;                            // 玩家阵营 'movement' | 'regime'
       this.oppSide = this.side === 'movement' ? 'regime' : 'movement';
       this.diff = DIFFS[opts.diff || 'normal'];
@@ -795,7 +822,7 @@
     play(id) {
       const c = CARDS[id];
       if (!c) return false;
-      const cs = this.cardState(Object.assign({ id }, c));
+      const cs = this.cardState(this.card(id));   // 关卡可以改写牌的出牌条件(when)
       if (!cs.ok) return false;
       this.me.ap -= cs.cost;
       if (this.freebies[id] > 0) this.freebies[id] = 0;
@@ -1357,7 +1384,7 @@
             ev, title: ev.title, art: ev.art || '📜', date: this.dateLabel(),
             text: typeof ev.text === 'function' ? ev.text(this) : ev.text,
             quote: ev.quote,
-            choices: (ev.choices || [{ label: '继续' }]).map(c => ({ label: c.label, hint: c.hint })),
+            choices: (ev.choices || [{ label: '继续' }]).map(c => ({ label: c.label, hint: c.hint, wise: !!c.wise })),
           };
           this.fx.push({ type: 'popup' });
           return true;
@@ -1382,7 +1409,7 @@
       const flav = (L.flavor && L.flavor[ev.id]) || {};
       const E = Object.assign({}, ev, flav);
       this.popup = { ev: E, title: E.title, art: E.art, date: this.dateLabel(), text: E.text, quote: E.quote, random: true,
-        choices: E.choices.map((c) => ({ label: c.label, hint: c.hint })) };
+        choices: E.choices.map((c) => ({ label: c.label, hint: c.hint, wise: !!c.wise })) };
       this.fx.push({ type: 'popup' });
       return true;
     }

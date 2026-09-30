@@ -17,7 +17,7 @@ function tryPlay(g, id) {
 /* ---------- 行动方: 看读数行事的"认真玩家" ---------- */
 // 攒资源, 估计火候够了再一次性全押; 平时只打便宜的铺垫牌并留足储备
 function movementBot(g) {
-  const pushCards = ['strike', 'blankpaper', 'march', 'mobilize', 'prayer', 'goddess', 'rally', 't_big'];
+  const pushCards = ['strike', 'blankpaper', 'necktie', 'march', 'mobilize', 'sanctuary', 'prayer', 'goddess', 'rally', 't_big'];
   for (let guard = 0; guard < 8; guard++) {
     const r = g.readout(), x = g.x;
     // 1) 能否一次凑够临界点?(用界面上那根条的"斜纹是否越过紫框")
@@ -98,7 +98,12 @@ function runOne(L, bot, seed, choicePolicy) {
   const g = new Game(L, { seed, seedOffset: seed });
   let guard = 0;
   while (!g.over && guard++ < 400) {
-    if (g.popup) { const n = g.popup.choices.length; g.choose(choicePolicy === 'last' ? n - 1 : 0); continue; }
+    if (g.popup) {
+      // idle 选最后一项; wise 选关卡标了 wise 的那一项(没有就选第一项); 其余选第一项
+      const cs = g.popup.choices, w = cs.findIndex((c) => c.wise);
+      g.choose(choicePolicy === 'last' ? cs.length - 1 : choicePolicy === 'wise' && w >= 0 ? w : 0);
+      continue;
+    }
     if (choicePolicy !== 'last') g.collectAll(0.85);   // 认真的玩家会点掉大多数气泡
     bot(g);
     if (g.popup) continue;
@@ -118,7 +123,7 @@ function main() {
       let wins = 0, stars = 0, rounds = 0;
       const keys = {};
       for (let s = 1; s <= runs; s++) {
-        const g = runOne(L, bot, s * 7919, name === 'idle' ? 'last' : 'first');
+        const g = runOne(L, bot, s * 7919, name === 'idle' ? 'last' : name);
         if (g.over.win) { wins++; stars += g.over.starCount; }
         rounds += g.round;
         keys[g.over.key] = (keys[g.over.key] || 0) + 1;
