@@ -2,6 +2,7 @@
  *   node video/render.js <zh|en>            整条视频 → video/out/<lang>/
  *   node video/render.js <zh|en> --from 290 --to 340 --shots    只渲染一段, 每秒存一张截图(调画面用)
  *   node video/render.js <zh|en> --post     只重做字幕/配乐/封面/简介(不重新渲染画面)
+ *   node video/render.js <zh|en> --fit 29   把成片与无字幕版两遍编码压到 29 MB 以内
  * 输出:
  *   silence-explainer-<lang>.mp4        烧录字幕 + 轻背景音, 可直接上传
  *   silence-explainer-<lang>-clean.mp4  无字幕无声, 配合 .srt 在剪映里做「文本朗读」配音
@@ -363,6 +364,21 @@ Note: the historical scenes are simulated in the game engine to illustrate the m
   console.log(`简介: ${path.relative(ROOT, path.join(OUT, `youtube-${LANG}.txt`))}`);
 }
 
+// 两遍编码压到 mb 兆以内(方便传输): node video/render.js zh --fit 29 → *-29MB.mp4
+async function fit(mb) {
+  const dur = VS.timeline(LANG).total, log = path.join(OUT, 'x264-2pass');
+  for (const [src, audio] of [[`${NAME}.mp4`, true], [`${NAME}-clean.mp4`, false]]) {
+    const inF = path.join(OUT, src), outF = path.join(OUT, src.replace('.mp4', `-${mb}MB.mp4`));
+    if (!fs.existsSync(inF)) continue;
+    const kbps = Math.floor(mb * 1024 * 1024 * 8 / dur / 1000 * 0.97 - (audio ? 96 : 0));
+    const v = ['-c:v', 'libx264', '-preset', 'slow', '-b:v', kbps + 'k', '-pix_fmt', 'yuv420p', '-passlogfile', log];
+    await run(['-y', '-i', inF, ...v, '-pass', '1', '-an', '-f', 'mp4', require('os').devNull]);
+    await run(['-y', '-i', inF, ...v, '-pass', '2', ...(audio ? ['-c:a', 'aac', '-b:a', '96k'] : ['-an']), '-movflags', '+faststart', outF]);
+    console.log(`${path.relative(ROOT, outF)}  ${(fs.statSync(outF).size / 1048576).toFixed(1)} MB  (视频 ${kbps} kbps)`);
+  }
+  for (const f of fs.readdirSync(OUT)) if (f.startsWith('x264-2pass')) fs.unlinkSync(path.join(OUT, f));
+}
+
 // 只跑「游戏」一段的分镜, 不截图, 看这个种子的结局: node video/render.js zh --probe 39,45,24
 async function probe(seeds) {
   const server = await serve();
@@ -379,6 +395,7 @@ async function probe(seeds) {
 
 (async () => {
   const total = VS.timeline(LANG).total;
+  if (opt('fit')) { await fit(+opt('fit')); return; }
   if (opt('probe')) { await probe(String(opt('probe')).split(',').map(Number)); return; }
   if (opt('post')) { await post(total); await thumbnail(); return; }
   const r = await renderVideo();

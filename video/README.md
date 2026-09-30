@@ -30,6 +30,8 @@ node video/render.js zh                                # → video/out/zh/
 node video/render.js en                                # → video/out/en/
 node video/render.js zh --from 290 --to 330 --shots    # 只渲染一段，每秒存一张截图
 node video/render.js zh --post                         # 只重做字幕、背景音、封面、简介
+node video/render.js zh --fit 29                       # 成片和无字幕版各压一份 29 MB 以内的(两遍编码)
+node video/render.js zh --probe 39,45                  # 只跑游戏片段，看这些种子的结局
 ```
 
 输出（`video/out/<lang>/`）：
