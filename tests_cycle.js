@@ -472,7 +472,7 @@ if (want('T5')) {
       return { g: c.lastGradP, P: c.P, xLo, xHi };
     };
     const far = grad('farsighted'), myo = grad('myopic');
-    check('远见政权 (useMem) 在 x̂ 里看得见临界点: 低一点就失守, 高一点守得住', far.xLo > 0.6 && far.xHi < 0.02 && far.g > 100 && near(far.P, 0.5, 1e-12), `x̂(P−δ)=${far.xLo.toFixed(3)}, x̂(P+δ)=${far.xHi.toFixed(3)}, 梯度=${far.g.toFixed(0)}, P: 0.4 → ${far.P}`);
+    check('远见政权 (useMem) 在 x̂ 里看得见临界点: 低一点就失守, 高一点守得住; 于是按信赖域上限加压', far.xLo > 0.6 && far.xHi < 0.02 && far.g > 100 && near(far.P, 0.4 + 0.02, 1e-12), `x̂(P−δ)=${far.xLo.toFixed(3)}, x̂(P+δ)=${far.xHi.toFixed(3)}, 梯度=${far.g.toFixed(0)}, P: 0.4 → ${far.P.toFixed(2)}`);
     check('短视政权 (看不见 b) 的 x̂ 两边都是 0, 对同一处悬崖毫无反应', myo.xLo === 0 && myo.xHi === 0 && Math.abs(myo.g) < 1 && myo.P < 0.4, `梯度=${myo.g.toFixed(3)}, P: 0.4 → ${myo.P.toFixed(4)}`);
   }
   {
