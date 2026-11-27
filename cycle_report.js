@@ -224,5 +224,25 @@ for (const regime of ['myopic', 'zhaogong', 'farsighted']) {
   OUT.items.t67['cycle02/' + regime] = o;
 }
 
+/* ---------- 补充: 两个敏感性检查 (校准参数, 短视政权) ---------- */
+head('补充 A: 开国效应里有多少来自"雾散了" (C6), 有多少来自隐藏变异释放? 关掉 C6 重跑');
+{
+  const R = []; for (let s = 0; s < NSEED; s++) R.push(digest(make('校准', { regime: 'myopic', betaFog: 0 }, s).run(RPY * YEARS)));
+  const rt = R.map(r => r.found.map(q => q.rate)), n = [].concat(...rt).length;
+  const o = n ? { n, rate: bootCluster(rt, median), rateUp: bootCluster(rt.map(g => g.map(v => v > 1 ? 1 : 0))), falls: boot(R.map(r => r.n)) } : null;
+  if (o) console.log(`  β_fog=0 (${n} 次改朝换代, 每次运行 ${ci(o.falls, 1)} 次): 单位滞后的适应速率之比 中位数 = ${ci(o.rate, 3)}, 大于 1 的占 ${pct(o.rateUp)}`);
+  else console.log('  β_fog=0: 没有可统计的改朝换代');
+  OUT.items.suppFog = o;
+}
+head('补充 B: 倒台是不是卡在 P_max 上? (执行者倒戈大约需要 P − P̄_eff ≈ 1.4, 而 P_max=2 只比它高一点)');
+OUT.items.suppPmax = {};
+for (const Pmax of [1.7, 2.0, 3.0]) {
+  const ns = [], never = [];
+  for (let s = 0; s < NSEED; s++) { const c = make('校准', { regime: 'myopic', Pmax, recordEvery: RPY }, s).run(RPY * YEARS); ns.push(c.dynasties.length); never.push(c.dynasties.length === 0 ? 1 : 0); }
+  const o = { n: boot(ns), never: boot(never) };
+  console.log(`  P_max=${Pmax}: 改朝换代次数=${ci(o.n, 1)}, ${YEARS} 年里一次都没倒台的运行占 ${pct(o.never)}`);
+  OUT.items.suppPmax['Pmax' + Pmax] = o;
+}
+
 console.log(`\n总用时 ${((Date.now() - t0) / 1000).toFixed(0)}s`);
 if (jsonFile) { fs.writeFileSync(jsonFile, JSON.stringify(OUT, null, 1)); console.log('已写入 ' + jsonFile); }
