@@ -307,5 +307,70 @@ if (want('T3')) {
   }
 }
 
+/* ================= T5 耦合的单通道测试 ================= */
+/** 周期律基线快层 + 全部耦合关闭, 再按需单独打开某一条 */
+const CY = (over, fastOver) => new CycleSim(Object.assign({}, OFF, { seedSlow: 11, env: { type: 'constant', v: 0.03 }, fast: Object.assign({}, CYCLE_FAST, fastOver || {}) }, over || {}));
+const meanOf = (arr) => { let s = 0; for (let i = 0; i < arr.length; i++) s += arr[i]; return s / arr.length; };
+if (want('T5')) {
+  console.log('【T5】耦合通道: 每条单独打开, 检查方向');
+  {
+    const on = CY({ kappa: 0.1 }).run(20 * 300), off = CY({ kappa: 0 }).run(20 * 300);
+    const bOn = meanOf(on.sim.b), bOff = meanOf(off.sim.b);
+    const expect = 0.1 * on.ell * on.dt / on.sim.o.memDecay;
+    check('C1 滞后生怨: ℓ>0 时 b̄ 上升, 关闭时 b̄ 恒为 0', bOn > 0 && bOff === 0, `b̄=${bOn.toFixed(5)} (关闭: ${bOff})`);
+    check('C1: 指数核下 b̄ 的稳态 = κ·ℓ·dt/ρ', Math.abs(bOn / expect - 1) < 0.01, `${bOn.toFixed(5)} vs ${expect.toFixed(5)}`);
+    const xcOn = on.sim.analysis({ useMem: true }).xCrit, xcOff = off.sim.analysis({ useMem: true }).xCrit;
+    check('C1: 真实临界种子 (useMem) 下降', xcOn < xcOff, `${xcOff.toFixed(4)} → ${xcOn.toFixed(4)}`);
+    check('C1: 政权看到的临界种子 (useMem=false) 不变, 两条线的差距就是看不见的债务', on.sim.analysis({ useMem: false }).xCrit === off.sim.analysis({ useMem: false }).xCrit);
+    const still = CY({ kappa: 0.1, env: { type: 'static' } }).run(20 * 50);
+    check('C1: ℓ=0 (环境不动) 时即使 κ>0 也不产生积怨', meanOf(still.sim.b) === 0);
+    const mem = CY({ kappa: 0.1 }, { kernel: 'memorial', memPeak: 10, memPeakAmp: 1.5 }).run(20 * 100);
+    check('C1: memorial 核下经由 addGrievance 写进 Ehist, 下一轮重算后仍然保留', meanOf(mem.sim.b) > 0 && mem.sim.Ehist.length > 1, `b̄=${meanOf(mem.sim.b).toFixed(5)}`);
+    const xi = CY({ kappa: 0.1, xiSigma: 0.8 }).run(20 * 100);
+    let mx = 0; for (let i = 0; i < xi.xi.length; i++) mx += xi.xi[i]; mx /= xi.xi.length;
+    const bs = Array.from(xi.sim.b).sort((p, q) => p - q);
+    check('C1: 个体暴露度 ξ_i 均值 1, 打开后 b 在人群里有了离散', Math.abs(mx - 1) < 0.08 && bs[bs.length - 1] > 3 * bs[0], `ξ̄=${mx.toFixed(3)}, b 的最小/最大=${bs[0].toExponential(1)}/${bs[bs.length - 1].toExponential(1)}`);
+  }
+  {
+    const on = CY({ evolveP: true, cE: 0.5, env: { type: 'static' } }), off = CY({ evolveP: false, env: { type: 'static' } });
+    let synced = true;
+    for (let i = 0; i < 20 * 30; i++) { const chosen = on.P; on.step(); off.step(); if (on.sim.o.P !== chosen) synced = false; }   // 本轮快层用的是政权上一次选定的 P
+    check('C2 表达压制: 政权选定的 P 每轮写入 sim.o.P; 关闭时 sim.o.P 不动', synced && on.sim.o.P !== 0.4 && off.sim.o.P === 0.4, `打开: P=${on.sim.o.P.toFixed(3)}, 关闭: P=${off.sim.o.P}`);
+  }
+  {
+    // P 固定在 0.45 (< P̄_0 = 0.5, 原本合法). 环境快速移动 → ℓ 上升 → W 下降 → P̄_eff 跌到 P 以下 → 同样的拘押开始生怨 (性质二)
+    const mk = (lw) => CY({ lambdaW: lw, u0: 2, env: { type: 'constant', v: 0.08 } }, { P: 0.45 });
+    const on = mk(0.5).run(20 * 200), off = mk(0).run(20 * 200);
+    check('C3 绩效决定合法性: W 下降时 P̄_eff 下降并写入 sim.o.Pbar', on.PbarEff < 0.5 && on.sim.o.Pbar === on.PbarEff && off.sim.o.Pbar === 0.5, `W−W_ref=${(on.W - on.Wref).toFixed(3)}, P̄_eff=${on.PbarEff.toFixed(3)}`);
+    check('C3: 原本合法的 P 越过界线后开始产生积怨; 关闭时 b̄ 恒为 0', on.PbarEff < 0.45 && meanOf(on.sim.b) > 0 && meanOf(off.sim.b) === 0, `b̄=${meanOf(on.sim.b).toExponential(2)} (关闭: ${meanOf(off.sim.b)})`);
+    const c2 = CY({ lambdaW: 0.5, env: { type: 'static' } }, { P: 0.45 }).run(20 * 50);
+    check("C3: W_ref 取 'auto' 时, 平静稳态下 P̄_eff = P̄_0", Math.abs(c2.PbarEff - 0.5) < 1e-12, `P̄_eff=${c2.PbarEff}`);
+  }
+  {
+    const on = CY({ chi: 0.3, env: { type: 'constant', v: 0.08 } }).run(20 * 200), off = CY({ chi: 0, env: { type: 'constant', v: 0.08 } }).run(20 * 200);
+    check('C4 财政: K0_eff = K0·(1−χℓ) 写入 sim.o.K0, 执行能力 k 下降', near(on.sim.o.K0, 20 * (1 - 0.3 * on.hist.ell[on.hist.ell.length - 2]), 1e-9) && on.lastK < off.lastK && off.sim.o.K0 === 20, `K0=${on.sim.o.K0.toFixed(3)}, k: ${off.lastK} → ${on.lastK}`);
+    const on2 = CY({ deltaL: 0.2, env: { type: 'constant', v: 0.08 } }).run(20 * 200), off2 = CY({ deltaL: 0, env: { type: 'constant', v: 0.08 } }).run(20 * 200);
+    const sh = on2.psi0[0] - on2.sim.psi[0];
+    check('C4 军心: ψ_j = ψ_j^0 − δ_ℓ·ℓ, 拒绝执行比例 d 上升', sh > 0 && near(sh, 0.2 * on2.hist.ell[on2.hist.ell.length - 2], 1e-9) && on2.sim.meanU8(on2.sim.z) > off2.sim.meanU8(off2.sim.z) && sameArr(off2.sim.psi, off2.psi0), `门槛下移 ${sh.toFixed(4)}, d: ${off2.sim.meanU8(off2.sim.z).toFixed(3)} → ${on2.sim.meanU8(on2.sim.z).toFixed(3)}`);
+  }
+  {
+    // C5: 同一个社会, 只是 P 不同 → e 不同. δ_h=0 时长期的 V_显 相同, 只有 V_隐 不同; δ_h>0 时 V_显 才真的被压低
+    const run = (P, dh) => CY({ deltaH: dh, env: { type: 'static' } }, { P, alpha: 0, beta: 0, delta: 0 }).run(20 * 600);
+    const lo = run(0.4, 0), hi = run(1.5, 0), lo2 = run(0.4, 0.2), hi2 = run(1.5, 0.2);
+    check('C5 表达供给改革: P 越高, 敢说话的人越少 (e 下降)', hi.e < lo.e, `e: ${lo.e.toFixed(3)} (P=0.4) → ${hi.e.toFixed(3)} (P=1.5)`);
+    check('C5: δ_h=0 时压制只是把变异存进 V_隐 (V_隐* ∝ 1/e), 长期的 V_显 不变', near(hi.VhMean * hi.e, lo.VhMean * lo.e, 1e-9) && near(hi.VxMean, lo.VxMean, 1e-9), `V_隐: ${lo.VhMean.toFixed(4)} → ${hi.VhMean.toFixed(4)}; V_显: ${lo.VxMean.toFixed(5)} → ${hi.VxMean.toFixed(5)}`);
+    check('C5: δ_h>0 时压制才真的降低长期的 V_显', hi2.VxMean < lo2.VxMean - 1e-3, `V_显: ${lo2.VxMean.toFixed(4)} → ${hi2.VxMean.toFixed(4)}`);
+  }
+  {
+    const mk = (bf) => CY({ betaFog: bf }, { P: 1.5, alpha: 0, beta: 0, delta: 0 }).run(20 * 600);
+    const on = mk(0.5), off = mk(0);
+    const hl = on.hist;
+    check('C6 报喜不报忧: 政权感知的滞后 < 真实滞后', hl.percLag[hl.percLag.length - 1] < hl.lag[hl.lag.length - 1] && near(on.phi, 0.5, 1e-12), `感知 ${hl.percLag[hl.percLag.length - 1].toFixed(4)} / 真实 ${hl.lag[hl.lag.length - 1].toFixed(4)}`);
+    check('C6: 看到的差距打五折, 真实的稳态滞后就翻倍', near(on.lag / off.lag, 2, 1e-6), `${off.lag.toFixed(4)} → ${on.lag.toFixed(4)}`);
+    const im = CY({ betaFog: 0.5, regime: 'farsighted' }, { P: 1.5, alpha: 0, beta: 0, delta: 0 }).run(20 * 600);
+    check('C6: 远见政权不受影响', im.phi === 1 && near(im.lag, off.lag, 1e-12));
+  }
+}
+
 console.log(`\n结果: ${pass} 通过, ${fail} 失败`);
 process.exit(fail ? 1 : 0);
