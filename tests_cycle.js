@@ -177,6 +177,10 @@ if (want('T2')) {
     c.run(20 * 500);
     check('稳态滞后 (θ−s)* = v/(Vh)', near(c.st.theta[0] - c.st.s[0], th.lagStar(v, Vs, h), 1e-10), `${(c.st.theta[0] - c.st.s[0]).toFixed(8)} vs ${th.lagStar(v, Vs, h).toFixed(8)}`);
     check('稳态滞后负荷 v²/(2hV²)', near(c.ell, th.lagLoadStar(v, Vs, h), 1e-10), `${c.ell.toExponential(6)} vs ${th.lagLoadStar(v, Vs, h).toExponential(6)}`);
+    const c2 = SA({ env: { type: 'constant', v }, V0: 3 * Vs });
+    let w2 = 0;
+    for (let y = 1; y <= 120; y++) { c2.run(20); w2 = Math.max(w2, Math.abs((c2.st.theta[0] - c2.st.s[0]) - th.lagRiccati(v, 3 * Vs, U, h, y))); }
+    check('V 与 s 同时处于暂态时, 滞后也有闭式解 (Riccati 的积分因子)', w2 < 1e-9, `max|Δ|=${w2.toExponential(2)}`);
   }
   {
     const Lmax = 0.2, vc = th.vCrit(Vs, h, Lmax);

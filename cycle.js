@@ -199,7 +199,8 @@
     hP: null, useMem: null, fogImmune: null, legalCap: null,   // null = 按 regime 预设
     etaP: 0.05, deltaP: 0.02, cE: 0.05, cX: 5,
     Pmin: 0.3, Pmax: 2.0, margin: 0.05,
-    dPmax: 0.1,              // 每次更新 P 的最大步长 (J 在分岔点不连续, 不设上限会一步跳到边界)
+    dPmax: 0.02,             // 每次更新 P 的最大步长, 默认等于探测半径 δ (信赖域): 政权不迈到它没评估过的地方.
+                             // 不设这个上限, 看得远的政权 (J 按 h_P 年累加, 梯度大 15 倍) 会一步迈过它刚刚看见的悬崖
     DeltaP: null,            // 政权更新间隔 (轮); null = Δ, 即一年
     vWindow: 10,             // 估计环境速度 v̂ 的窗口 (年)
     forecastDt: 0.25,        // 政权预测时慢层 ODE 的步长 (年)
@@ -570,6 +571,9 @@
     lagLoadStar: (v, V, h) => v * v / (2 * h * V * V),
     /** V 固定, 从 0 滞后出发的滞后轨迹 g(t) = g*·(1 − e^{−Vht}) */
     lagT: (v, V, h, t) => v / (V * h) * (1 - Math.exp(-V * h * t)),
+    /** V 按 Riccati 解演化 (V(0)=V0), 从 0 滞后出发的滞后轨迹. 积分因子 M(t) = cosh(ωt) + (V0/V*)·sinh(ωt), ω = √(Uh):
+     *  g(t) = (v/ω)·(tanh ωt + r·(1 − sech ωt)) / (1 + r·tanh ωt),  r = V0/V*.  t→∞ 时趋于 v/(V*·h) */
+    lagRiccati: (v, V0, U, h, t) => { const w = Math.sqrt(U * h), r = V0 / Math.sqrt(U / h), th = Math.tanh(w * t), sech = 1 / Math.cosh(w * t); return v / w * (th + r * (1 - sech)) / (1 + r * th); },
     vCrit: (V, h, Lmax) => V * Math.sqrt(Math.max(0, 2 * h * (Lmax - h * V / 2))),
     totalLoad: (v, V, h) => h * V / 2 + v * v / (2 * h * V * V),
     Vopt: (v, h) => Math.cbrt(2 * v * v / (h * h)),
@@ -577,7 +581,62 @@
     VexpStar: (U, h, muE, e, deltaH) => Math.sqrt(muE * e * U / ((muE * e + deltaH) * h)),
   };
 
-  const api = { CycleSim, Environment, advanceSlow, lagLoad, varLoad, theory, DEFAULTS, OFF, REGIMES, CYCLE_FAST, gauss, poisson };
+  /* ---------- 校准值与预设场景 ----------
+   * DEFAULTS 是提示词的初值 (经确认的修正见文档). 用初值跑, 所有政权都把 P 降到 P_min, 1000 年里没有一次改朝换代.
+   * CALIB 是让周期出现所需的最小改动, 只动两个数 (在校准用的 seed 上定的, T6 在另外的 seed 上报告):
+   *   cE   0.05 → 0.002 : 压制表达的收益是暂态的, 每单位 P 约 0.017 (h_P=2), 执法成本 c_E·h_P 必须低于它, 棘轮才存在.
+   *   etaP 0.05 → 1     : J 的梯度量级约 0.01, 要让 P 在百年尺度上变化 O(1), 学习率得是 O(1).               */
+  const CALIB = { cE: 0.002, etaP: 1 };
+  const SHOCKS = { type: 'shocks', vCalm: 0.002, vShock: 0.05, durMin: 20, durMax: 40, meanGap: 150, sigmaTheta: 0 };
+  const LIWANG = { N: 2000, tolType: 'low', netType: 'random', netDeg: 8, P: 1.15, Pbar: 0.6, K0: 40, M: 80, alpha: 0.2, beta: 0.4, delta: 0.3, gamma: 12, memDecay: 0.04, vis: 0.7, omega: 1, globalScale: 0.5, noise: 0, hardCore: 0.002, targetMode: 'organizer', netDamage: 0.6, releaseProb: 0.05, seed: 21, d0: 0, psiScale: 1 };
+  const SCENARIOS = {
+    static: {
+      name: '① 静止环境: 只有棘轮', years: 300,
+      desc: '环境不动 (v=0). 短视政权每年往前看 2 年: 压一压, 说话的人少了, 眼前的"杂音"(变异负荷) 就小一点. 于是 <b>P 一年年往上推, e 往下走</b>. 没有任何冲击, 也没有人上街, 最后是执行者自己不干了. 把"执法成本 c_E"调回 0.05 再跑: 棘轮消失, P 降到 P_min.',
+      opts: Object.assign({}, CALIB, { regime: 'myopic', env: { type: 'static' } }),
+    },
+    iceage: {
+      name: '② 小冰期: 平静之后来一次冲击', years: 300,
+      desc: '先平静 60 年, 然后环境连续移动 30 年 (v=0.05/年), 再恢复平静. 冲击到来时制度跟不上, 滞后负荷 ℓ 上升: 积怨增加 (C1), 合法性界线下移 (C3), 财政与军心受损 (C4). <b>同样的冲击, 落在王朝早期还是晚期, 结果不同</b>: 拖动"冲击开始年份"试试.',
+      opts: Object.assign({}, CALIB, { regime: 'myopic', env: { type: 'script', phases: [{ years: 60, v: 0.002 }, { years: 30, v: 0.05, shock: true }, { v: 0.002 }] } }),
+    },
+    cycle: {
+      name: '③ 周期律: 随机冲击下的多轮兴衰', years: 1000,
+      desc: '冲击随机到来 (平均间隔 150 年, 每次 20–40 年). 短视政权. 看慢层图上 P 的锯齿, 和每个朝代末尾 d 的陡升. 下方的朝代表列出每一次倒台的原因: <b>x</b> 是人群越过临界点, <b>d</b> 是执行者倒戈.',
+      opts: Object.assign({}, CALIB, { regime: 'myopic', env: SHOCKS }),
+    },
+    zhaogong: {
+      name: '④ 召公: 宣之使言', years: 1000,
+      desc: '环境与 ③ 完全相同 (同一个慢层种子), 但政权守住 P ≤ P̄_eff − margin: 处罚不越过人们认可的界线. 绩效一差, 界线下移, 它就跟着放宽.',
+      opts: Object.assign({}, CALIB, { regime: 'zhaogong', env: SHOCKS }),
+    },
+    farsighted: {
+      name: '⑤ 远见: 看得见积怨, 看 30 年', years: 1000,
+      desc: '环境与 ③ 相同. 政权看得见 b (用 τ+b 算临界点), 往前看 30 年, 情报不失真. 它知道压制的收益是暂时的, 所以平时把 P 放得很低, 只在临界点逼近时才收紧.',
+      opts: Object.assign({}, CALIB, { regime: 'farsighted', env: SHOCKS }),
+    },
+    mibang: {
+      name: '⑥ 弭谤有效吗: δ_h=0 对比 δ_h>0', years: 250,
+      desc: '政权不调 P. 第 50 年把 P 从 0.4 一次提到 1.5 (厉王弭谤). 实线: 被压住的想法不会消亡 (δ_h=0); 虚线: 会消亡 (δ_h=0.2/年). <b>δ_h=0 时 V_显 只是暂时下降, 几年后回到原值</b>, 变异只是存进了 V_隐; 只有 δ_h>0, 压制才有长期效果.',
+      opts: { regime: 'myopic', evolveP: false, revolution: false, kappa: 0, lambdaW: 0, chi: 0, deltaL: 0, betaFog: 0, u0: 0, env: { type: 'static' }, fast: Object.assign({}, CYCLE_FAST, { alpha: 0, beta: 0, delta: 0 }) },
+      compare: { deltaH: 0.2 },
+      events: [{ year: 50, setP: 1.5 }],
+    },
+    degenA: {
+      name: '⑦ 退化检查 A: 耦合全关 = 原模型', years: 15,
+      desc: '快层用 lab.html 的"② 厉王弭谤"参数, 每轮 10 人例行小动作; 全部耦合取关闭值. 页面同时跑一个原版 Sim, 逐轮比较: <b>x, d, b̄ 必须逐位相同</b> (状态栏显示比较结果). 慢层照常演化, 但碰不到快层.',
+      opts: Object.assign({}, OFF, { env: SHOCKS, fast: LIWANG }),
+      seedEvery: { count: 10, every: 1 }, checkAgainstSim: true,
+    },
+    degenB: {
+      name: '⑧ 退化检查 B: standalone = Lande 闭式解', years: 120,
+      desc: '不建快层, e≡1, 不区分显隐. 一维, 环境匀速 (v=0.01/年), V 从 3 倍稳态值出发. 虚线是闭式解: V(t) 是 Riccati 方程的精确解, 稳态滞后 v/(Vh). <b>仿真与虚线重合</b>.',
+      opts: { standalone: true, n: 1, h: 1, U0: 0.02, V0: 3 * Math.sqrt(0.02), env: { type: 'constant', v: 0.01 }, revolution: false, Lmax: 1e9 },
+      closedForm: true,
+    },
+  };
+
+  const api = { CycleSim, Environment, advanceSlow, lagLoad, varLoad, theory, DEFAULTS, OFF, REGIMES, CYCLE_FAST, CALIB, SCENARIOS, gauss, poisson };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   global.CycleModel = api;
 })(typeof window !== 'undefined' ? window : globalThis);
