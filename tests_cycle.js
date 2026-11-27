@@ -18,6 +18,106 @@ function check(name, cond, detail) {
 }
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
 
+/* ================= T1 快层无损 (L1) ================= */
+const sameArr = (A, B) => { if (A.length !== B.length) return false; for (let i = 0; i < A.length; i++) if (!Object.is(A[i], B[i])) return false; return true; };
+/** 两个 Sim 的全部动态状态是否逐位相同; 返回第一处不同的名字, 全同返回 null */
+function simDiff(A, B) {
+  for (const key of ['t', 'x', 'd', 'p', 'k', 'b', 'R']) if (!sameArr(A.hist[key], B.hist[key])) return 'hist.' + key;
+  for (const key of ['a', 'b', 'r', 'z', 'latent', 'flagged', 'psi', 'tau']) if (!sameArr(A[key], B[key])) return key;
+  if (A.Ehist.length !== B.Ehist.length) return 'Ehist.length';
+  for (let h = 0; h < A.Ehist.length; h++) if (!sameArr(A.Ehist[h], B.Ehist[h])) return 'Ehist[' + h + ']';
+  for (const key of ['P', 'Pbar', 'K0']) if (!Object.is(A.o[key], B.o[key])) return 'o.' + key;
+  if (!Object.is(A.R, B.R) || A.t !== B.t) return 'R/t';
+  if (A.rng() !== B.rng()) return 'rng 流的位置';        // 两边各取一个数: 流的位置也必须一致
+  return null;
+}
+if (want('T1')) {
+  console.log('【T1】快层无损 (L1): 全部耦合取关闭值时, CycleSim 与原版 Sim 逐位相同');
+  const { mulberry32 } = require(path + 'model.js');
+  const src = fs.readFileSync(path + 'lab.js', 'utf8');
+  const SCENARIOS = eval('(' + src.match(/const SCENARIOS = \{[\s\S]*?\n\};/)[0].replace('const SCENARIOS = ', '').replace(/;$/, '') + ')');
+  const ROUNDS = 500;
+  /** 同时驱动参照 Sim 与 CycleSim: 场景自带的例行种子/计划 + 随机种子注入 + 外生事件 (大赦, P 覆盖, 直接改 o.P) */
+  function runPair(opts, cyc, sc, driveSeed, feedBack) {
+    const ref = new Sim(opts), cs = new CycleSim(Object.assign({}, OFF, cyc, { fast: Object.assign({}, opts) }));
+    const rnd = mulberry32(driveSeed);
+    let slowMoved = false;
+    for (let t = 0; t < ROUNDS; t++) {
+      let count = 0, mode = 'random';
+      if (sc.recur && t > 0 && t % sc.recur.every === 0) count += sc.recur.count;
+      for (const p of (sc.plan || [])) if (p.at === t && p.count) count += p.count;
+      if (rnd() < 0.08) { count += 1 + ((rnd() * 60) | 0); mode = rnd() < 0.3 ? 'near' : 'random'; }
+      const u = rnd();
+      for (const s of [ref, cs.sim]) {
+        if (u < 0.01) s.pushEvent({ rounds: 1, amnesty: true });
+        else if (u < 0.03) s.pushEvent({ rounds: 1 + ((u * 1000) | 0) % 3, P: s.o.P * (0.5 + 50 * u), vis: 1 });
+        else if (u < 0.04) s.o.P = opts.P * (0.7 + 20 * (u - 0.03));        // 像 tune.js 的迟滞实验那样从外部直接改 P
+      }
+      cs.step(count, mode);
+      if (feedBack) ref.step(cs.lastSeedCount, cs.lastSeedMode);           // 背景种子打开时: 把同一串种子数喂给参照
+      else ref.step(count, mode);
+      if (cs.lag > 0) slowMoved = true;
+    }
+    return { diff: simDiff(ref, cs.sim), slowMoved, cs };
+  }
+  const envA = { type: 'shocks', vCalm: 0.01, vShock: 0.2, durMin: 2, durMax: 5, meanGap: 6, sigmaTheta: 0.02 };
+  let runs = 0, bad = [], moved = 0;
+  for (const [key, sc] of Object.entries(SCENARIOS)) {
+    let ok = true;
+    for (let j = 0; j < 5; j++) {
+      const opts = Object.assign({}, sc.opts, { seed: sc.opts.seed + 101 * j });
+      const variants = [
+        [opts, { seedSlow: 900 + j, env: envA, critEvery: 5 }, false],                                       // 慢层照常演化, 并频繁调用只读的分析工具
+        [opts, { seedSlow: 900 + j, env: envA, poolMode: 'direct', deltaH: 0.3, u0: 1.5 }, true],            // 背景种子打开 (喂回参照)
+      ];
+      if (j < 2 && opts.kernel !== 'memorial') variants.push([Object.assign({}, opts, { kernel: 'memorial', memPeak: 8, memPeakAmp: 2 }), { seedSlow: 900 + j, env: envA }, false]);
+      for (const [o2, cyc, fb] of variants) {
+        const r = runPair(o2, cyc, sc, 7000 + 13 * j, fb);
+        runs++; if (r.slowMoved) moved++;
+        if (r.diff) { ok = false; bad.push(`${key}#${j}: ${r.diff}`); }
+      }
+    }
+    check(`${sc.name.replace(/:.*/, '')}: 5 个 seed × ${ROUNDS} 轮逐位相同`, ok, ok ? '' : bad.join('; '));
+  }
+  check(`合计 ${runs} 对运行 (含 memorial 核, 随机种子注入, 大赦, P 覆盖, 外部改 o.P, 背景种子)`, bad.length === 0, bad.slice(0, 3).join('; '));
+  check('期间慢层确实在演化 (不是因为什么都没发生才相同)', moved === runs, `${moved}/${runs} 次运行里滞后 > 0`);
+  {
+    // 反例对照: 任何一条慢→快通道打开, 逐位相同就应当被打破 (证明上面的比较有分辨力)
+    const sc = SCENARIOS.liwang, opts = Object.assign({}, sc.opts);
+    const broke = [];
+    for (const [name, cyc] of [['C1', { kappa: 0.5 }], ['C2', { evolveP: true, Pmin: 0.5, cE: 0.5 }], ['C3', { lambdaW: 0.5 }], ['C4 财政', { chi: 0.5 }], ['C4 军心', { deltaL: 0.5 }]]) {
+      const r = runPair(opts, Object.assign({ seedSlow: 3, env: envA }, cyc), sc, 7000, false);
+      if (r.diff) broke.push(name);
+    }
+    check('反例对照: 单独打开 C1/C2/C3/C4 任何一条, 快层轨迹都会改变', broke.length === 5, `被打破的: ${broke.join(', ')}`);
+    const r6 = runPair(opts, { seedSlow: 3, env: envA, betaFog: 0.9 }, sc, 7000, false);
+    check('C6 只影响慢层: 单独打开它, 快层仍逐位相同', r6.diff === null);
+  }
+  /* 红线 1: 现有文件与基线逐字节一致 */
+  try {
+    const cp = require('child_process'), crypto = require('crypto');
+    const git = (args) => cp.execFileSync('git', args, { cwd: __dirname, encoding: 'buffer', stdio: ['ignore', 'pipe', 'ignore'] });
+    let base = '6d9c2e1ea4fa32c1d6676a67ea17e4c434515e75';      // 开工时的提交 (远端没有 main 分支)
+    try { base = git(['rev-parse', '--verify', '-q', 'main']).toString().trim() || base; } catch (e) { /* 没有 main, 用上面的提交 */ }
+    const files = git(['-c', 'core.quotepath=false', 'ls-tree', '-r', '--name-only', '-z', base]).toString('utf8').split('\0').filter(Boolean);
+    const changed = [];
+    for (const f of files) {
+      if (!fs.existsSync(path + f)) { changed.push(f + ' (被删除)'); continue; }
+      const want2 = git(['rev-parse', `${base}:${f}`]).toString().trim();
+      const have = git(['hash-object', '--', f]).toString().trim();
+      if (want2 !== have) changed.push(f);
+    }
+    check(`红线 1: 基线 ${base.slice(0, 7)} 的全部 ${files.length} 个文件内容未变 (git blob 逐一比对)`, changed.length === 0, changed.slice(0, 5).join(', '));
+    const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
+    const lf = (buf) => Buffer.from(buf.toString('latin1').replace(/\r\n/g, '\n'), 'latin1');       // 检出时的换行符转换不算改动
+    const named = ['model.js', 'engine.js', 'levels.js', 'app.js', 'city.js', 'lab.js', 'timelines.js'];
+    const mism = named.filter(f => sha(git(['cat-file', 'blob', `${base}:${f}`])) !== sha(lf(fs.readFileSync(path + f))));
+    check('红线 1: model/engine/levels/app/city/lab/timelines 的 sha256 与基线一致', mism.length === 0, mism.join(', ') || `model.js sha256=${sha(lf(fs.readFileSync(path + 'model.js'))).slice(0, 16)}…`);
+  } catch (e) {
+    console.log(`  - 红线 1 的文件比对跳过 (这里没有可用的 git 仓库: ${String(e.message).split('\n')[0]})`);
+  }
+}
+
 /* ================= T4 Fisher 几何模型 ================= */
 if (want('T4')) {
   console.log('【T4】Fisher 几何模型: 精确公式 vs 蒙特卡洛 (10^5 次, 固定 seed)');
