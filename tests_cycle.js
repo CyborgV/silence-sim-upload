@@ -6,6 +6,8 @@
 const path = __dirname + '/';
 const fs = require('fs');
 const Fisher = require(path + 'fisher.js');
+const { Sim } = require(path + 'model.js');
+const { CycleSim, theory: th, OFF, CYCLE_FAST } = require(path + 'cycle.js');
 
 const only = process.argv.slice(2).map(s => s.toUpperCase());
 const want = (id) => !only.length || only.includes(id);
@@ -52,6 +54,157 @@ if (want('T4')) {
   }
   check('正态近似误差随 n 单调下降', errs.every((e, i) => i === 0 || e < errs[i - 1]), errs.map(e => e.toExponential(1)).join(' → '));
   check('n=10^4 时正态近似误差 < 1e-4', errs[3] < 1e-4, `${errs[3].toExponential(2)}`);
+}
+
+/* ================= T2 慢层无损 (L2): standalone 与闭式解 ================= */
+const SA = (over) => new CycleSim(Object.assign({ standalone: true, n: 1, h: 1, U0: 0.02, env: { type: 'static' }, revolution: false, Lmax: 1e9 }, over || {}));
+if (want('T2')) {
+  console.log('【T2】慢层 standalone = 经典 Lande + 变异-选择平衡, 与闭式解核对');
+  const U = 0.02, h = 1, Vs = th.Vstar(U, h);
+  {
+    const c = SA({ V0: 3 * Vs });
+    let worst = 0;
+    for (let y = 1; y <= 60; y++) { c.run(20); worst = Math.max(worst, Math.abs(c.st.Vx[0] - th.Vt(3 * Vs, U, h, y))); }
+    check('V(t) 的暂态与 Riccati 精确解一致 (60 年, 逐年)', worst < 1e-9, `max|Δ|=${worst.toExponential(2)}`);
+    c.run(20 * 400);
+    check('稳态变异 V* = √(U/h)', near(c.st.Vx[0], Vs, 1e-12), `V=${c.st.Vx[0].toFixed(8)} V*=${Vs.toFixed(8)}`);
+  }
+  {
+    const v = 0.01, c = SA({ env: { type: 'constant', v } });
+    let worst = 0;
+    for (let y = 1; y <= 80; y++) { c.run(20); worst = Math.max(worst, Math.abs((c.st.theta[0] - c.st.s[0]) - th.lagT(v, Vs, h, y))); }
+    check('匀速环境: 滞后的暂态 g(t) = g*(1−exp(−Vht))', worst < 1e-9, `max|Δ|=${worst.toExponential(2)}`);
+    c.run(20 * 500);
+    check('稳态滞后 (θ−s)* = v/(Vh)', near(c.st.theta[0] - c.st.s[0], th.lagStar(v, Vs, h), 1e-10), `${(c.st.theta[0] - c.st.s[0]).toFixed(8)} vs ${th.lagStar(v, Vs, h).toFixed(8)}`);
+    check('稳态滞后负荷 v²/(2hV²)', near(c.ell, th.lagLoadStar(v, Vs, h), 1e-10), `${c.ell.toExponential(6)} vs ${th.lagLoadStar(v, Vs, h).toExponential(6)}`);
+  }
+  {
+    const Lmax = 0.2, vc = th.vCrit(Vs, h, Lmax);
+    const lo = SA({ env: { type: 'constant', v: 0.9 * vc }, Lmax }).run(1e4);
+    const hi = SA({ env: { type: 'constant', v: 1.1 * vc }, Lmax }).run(1e4);
+    check(`临界环境速度 v_c=${vc.toFixed(5)}: v=0.9v_c 时 10^4 轮不崩`, lo.firstCollapse === null, `最终负荷=${(lo.ell + lo.vload).toFixed(4)} < L_max=${Lmax}`);
+    check('v=1.1v_c 时崩溃', hi.firstCollapse !== null, `首次满足判据于第 ${hi.firstCollapse} 轮`);
+    const edge1 = SA({ env: { type: 'constant', v: 0.995 * vc }, Lmax }).run(4e4), edge2 = SA({ env: { type: 'constant', v: 1.005 * vc }, Lmax }).run(4e4);
+    check('贴近临界值两侧 (±0.5%) 仍然分得开', edge1.firstCollapse === null && edge2.firstCollapse !== null);
+  }
+  {
+    const hs = [0.5, 1, 2, 4], Us = [0.01, 0.02, 0.03, 0.04], vv = [0.01, -0.02, 0.005, 0];
+    const c = SA({ n: 4, h: hs, U0: Us, env: { type: 'constant', vVec: vv } }).run(20 * 1500);
+    let eV = 0, eG = 0, tot = 0;
+    for (let k = 0; k < 4; k++) {
+      const V = Math.sqrt(Us[k] / hs[k]);
+      eV = Math.max(eV, Math.abs(c.st.Vx[k] - V));
+      eG = Math.max(eG, Math.abs((c.st.theta[k] - c.st.s[k]) - vv[k] / (V * hs[k])));
+      tot += th.totalLoad(vv[k], V, hs[k]);
+    }
+    check('n 维 (对角): 每一维的 V* 与稳态滞后都对上', eV < 1e-10 && eG < 1e-9, `max|ΔV|=${eV.toExponential(1)} max|Δg|=${eG.toExponential(1)}`);
+    check('n 维: 总负荷 = Σ_k [h_kV_k/2 + v_k²/(2h_kV_k²)]', near(c.ell + c.vload, tot, 1e-9), `${(c.ell + c.vload).toFixed(8)} vs ${tot.toFixed(8)}`);
+    const a = SA({ n: 4, h: hs, U0: Us, env: { type: 'constant', vVec: vv }, Lmax: tot * 1.02 }).run(1e4);
+    const b = SA({ n: 4, h: hs, U0: Us, env: { type: 'constant', vVec: vv }, Lmax: tot * 0.98 }).run(1e4);
+    check('n 维: L_max 高于稳态总负荷 2% 不崩, 低 2% 崩溃', a.firstCollapse === null && b.firstCollapse !== null);
+  }
+  {
+    const v = 0.02, Vopt = th.Vopt(v, h);
+    let best = null, worst = 0;
+    const grid = [];
+    for (let V = 0.04; V <= 0.2501; V += 0.004) grid.push(V);
+    for (const V of grid) {
+      const c = SA({ env: { type: 'constant', v }, fixV: true, V0: V, recordEvery: 20 }).run(20 * 700);
+      const hh = c.hist; let m = 0, cnt = 0;
+      for (let i = hh.t.length - 100; i < hh.t.length; i++) { m += hh.ell[i] + hh.vload[i]; cnt++; }
+      m /= cnt;
+      worst = Math.max(worst, Math.abs(m - th.totalLoad(v, V, h)));
+      if (!best || m < best.m) best = { V, m };
+    }
+    check('扫描 V: 平均总负荷与 hV/2 + v²/(2hV²) 一致', worst < 1e-8, `max|Δ|=${worst.toExponential(1)}`);
+    check('总负荷的最小值点 V_opt = (2v²/h²)^(1/3)', Math.abs(best.V - Vopt) <= 0.004, `扫描最小值在 V=${best.V.toFixed(3)}, 闭式 ${Vopt.toFixed(4)}`);
+  }
+  {
+    const c = SA({ n: 3, evolveU: true, hP: 2 });
+    const us = [c.UMean];
+    for (let y = 0; y < 3000; y++) { c.run(20); us.push(c.UMean); }
+    let mono = true, strict = 0;
+    for (let i = 1; i < us.length; i++) { if (us[i] > us[i - 1] + 1e-15) mono = false; if (us[i] < us[i - 1]) strict++; }
+    const hit = us.findIndex(u => u <= c.o.Umin * (1 + 1e-9));
+    check('约减原理: v=0 时二阶选择让 U 单调不增', mono, `严格下降 ${strict} 年`);
+    check('...并一直推到下界 U_min', hit > 0, `第 ${hit} 年到达 U_min=${c.o.Umin}`);
+    // 对照: 环境在动, 而且政权看得够远时, U 不会被推到下界, 而是停在让总负荷最小的 U_opt = h·V_opt² 附近
+    const v = 0.02, c2 = SA({ n: 1, evolveU: true, hP: 60, etaU: 0.02, env: { type: 'constant', v }, Umax: 0.5 });
+    c2.run(20 * 6000);
+    const Uopt = h * th.Vopt(v, h) ** 2;
+    check('对照: v>0 且看得远 (h_P=60) 时 U 停在 U_opt = h·V_opt² 附近 (±15%)', Math.abs(c2.UMean / Uopt - 1) < 0.15, `U=${c2.UMean.toFixed(5)} U_opt=${Uopt.toFixed(5)}`);
+  }
+}
+
+/* ================= T3 显隐两个变异库 ================= */
+if (want('T3')) {
+  console.log('【T3】显隐库: 稳态公式, δ_h=0 时与 e 无关, direct 模式退化');
+  const U = 0.02, h = 1, muE = 2;
+  // 故意从远离稳态的初值出发 (V_显 偏大一倍多, V_隐 偏到 0.05), 跑 3000 年
+  const steady = (e, deltaH) => SA({ poolMode: 'split', eFixed: e, deltaH, muE, V0: 0.3, Vh0: 0.05 }).run(20 * 3000);
+  {
+    let worst = 0;
+    for (const dh of [0, 0.2, 1]) for (const e of [0.1, 0.4, 1]) {
+      const c = steady(e, dh);
+      worst = Math.max(worst, Math.abs(c.st.Vh[0] - th.VhidStar(U, muE, e, dh)), Math.abs(c.st.Vx[0] - th.VexpStar(U, h, muE, e, dh)));
+    }
+    check('稳态: V_隐* = U/(μ_e·e+δ_h), V_显* = √(μ_e·e·U/((μ_e·e+δ_h)·h))', worst < 1e-10, `9 组参数, max|Δ|=${worst.toExponential(1)}`);
+  }
+  {
+    const es = [0.05, 0.1, 0.3, 0.6, 1];
+    const v0 = es.map(e => steady(e, 0).st.Vx[0]);
+    const spread = Math.max(...v0) - Math.min(...v0);
+    check('δ_h = 0: V_显* 与 e 无关, 恒为 √(U/h)', spread < 1e-10 && near(v0[0], Math.sqrt(U / h), 1e-10), `e 从 0.05 到 1, V_显* 的极差=${spread.toExponential(1)}`);
+    const hid = es.map(e => steady(e, 0).st.Vh[0]);
+    check('δ_h = 0: 压制只是把变异存进隐藏库 (V_隐* ∝ 1/e)', hid.every((v, i) => near(v * es[i], U / muE, 1e-10)), `V_隐*: ${hid.map(v => v.toFixed(3)).join(', ')}`);
+    const v2 = es.map(e => steady(e, 0.2).st.Vx[0]);
+    check('δ_h > 0: V_显* 随 e 严格单调递增', v2.every((v, i) => i === 0 || v > v2[i - 1]), v2.map(v => v.toFixed(4)).join(' < '));
+  }
+  {
+    // 独立写的参照积分器: 第 4 节的方程, 向量形式的教科书 RK4
+    const v = 0.013, V0 = 0.3, dt = 1 / 20;
+    const f = (t, y) => [y[1] * h * (v * t - y[0]), U - h * y[1] * y[1]];      // y = [s, V], θ(t) = v·t
+    let y = [0, V0], t = 0, worst = 0;
+    const c = SA({ env: { type: 'constant', v }, V0, poolMode: 'direct' });
+    for (let i = 0; i < 4000; i++) {
+      const k1 = f(t, y), k2 = f(t + dt / 2, y.map((q, j) => q + dt / 2 * k1[j])), k3 = f(t + dt / 2, y.map((q, j) => q + dt / 2 * k2[j])), k4 = f(t + dt, y.map((q, j) => q + dt * k3[j]));
+      y = y.map((q, j) => q + dt / 6 * (k1[j] + 2 * k2[j] + 2 * k3[j] + k4[j])); t += dt;
+      c.step();
+      worst = Math.max(worst, Math.abs(c.st.s[0] - y[0]), Math.abs(c.st.Vx[0] - y[1]));
+    }
+    check("mode:'direct' 与第 4 节方程的独立参照积分器逐步一致 (4000 步)", worst < 1e-12, `max|Δ|=${worst.toExponential(1)}`);
+  }
+  {
+    // 带着快层跑 direct 模式 (C6 关): 慢层轨迹必须与 standalone 逐位相同, 即快层的存在不扰动慢层
+    const env = { type: 'shocks', vCalm: 0.002, vShock: 0.05, durMin: 20, durMax: 40, meanGap: 60, sigmaTheta: 0.01 };
+    const a = new CycleSim({ standalone: true, env, revolution: false, Lmax: 1e9, seedSlow: 5 });
+    const b = new CycleSim(Object.assign({}, OFF, { poolMode: 'direct', env, seedSlow: 5, fast: Object.assign({}, CYCLE_FAST, { P: 1.3 }) }));
+    let same = true;
+    for (let i = 0; i < 6000 && same; i++) {
+      a.step(); b.step(i % 7 === 0 ? 5 : 0);
+      for (let k = 0; k < 5; k++) if (a.st.s[k] !== b.st.s[k] || a.st.Vx[k] !== b.st.Vx[k] || a.st.theta[k] !== b.st.theta[k]) same = false;
+    }
+    check('direct 模式下, 有无快层的慢层轨迹逐位相同 (6000 轮, 含环境噪声与冲击)', same);
+  }
+  {
+    // split → direct 的极限: e ≡ 1, δ_h = 0, μ_e 越大越接近.
+    // 隐藏库从空的开始 (Vh0 = 0), 它要花 ~1/μ_e 年填满, 这段时间里的供给缺口就是两种模式的差
+    const errs = [], exact = [];
+    for (const mu of [2, 8, 32, 128]) {
+      const opt = { env: { type: 'constant', v: 0.01 }, V0: 0.3, roundsPerYear: 400 };
+      const a = SA(Object.assign({}, opt, { poolMode: 'direct' })), b = SA(Object.assign({}, opt, { poolMode: 'split', muE: mu, Vh0: 0 }));
+      const c = SA(Object.assign({}, opt, { poolMode: 'split', muE: mu, Vh0: U / mu }));
+      let w = 0, w2 = 0;
+      for (let i = 0; i < 400 * 80; i++) {
+        a.step(); b.step(); c.step();
+        w = Math.max(w, Math.abs(a.st.Vx[0] - b.st.Vx[0]), Math.abs(a.st.s[0] - b.st.s[0]));
+        w2 = Math.max(w2, Math.abs(a.st.Vx[0] - c.st.Vx[0]), Math.abs(a.st.s[0] - c.st.s[0]));
+      }
+      errs.push(w); exact.push(w2);
+    }
+    check('e≡1, δ_h=0, μ_e→∞ 时显隐库收敛到 direct (误差随 μ_e 单调下降, 约 ∝ 1/μ_e)', errs.every((e, i) => i === 0 || e < errs[i - 1]) && errs[3] < errs[0] / 20, errs.map(e => e.toExponential(1)).join(' → '));
+    check('隐藏库起步就在稳态 (V_隐 = U/μ_e) 时, 任意 μ_e 下显隐库与 direct 的差都在舍入误差内', exact.every(e => e < 1e-12), exact.map(e => e.toExponential(1)).join(', '));
+  }
 }
 
 console.log(`\n结果: ${pass} 通过, ${fail} 失败`);
