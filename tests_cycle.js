@@ -370,6 +370,114 @@ if (want('T5')) {
     const im = CY({ betaFog: 0.5, regime: 'farsighted' }, { P: 1.5, alpha: 0, beta: 0, delta: 0 }).run(20 * 600);
     check('C6: 远见政权不受影响', im.phi === 1 && near(im.lag, off.lag, 1e-12));
   }
+
+  console.log('   -- C7 改朝换代 --');
+  {
+    // 用一次大规模外生行动逼出改朝换代; 孪生运行关掉 C7, 用来对照重置前后的状态
+    const mk = (rev) => CY({ revolution: rev, kappa: 0.1, u0: 2, env: { type: 'constant', v: 0.05 } }, { P: 0.6, Pbar: 0.5 });
+    const A = mk(true), B = mk(false);
+    A.run(20 * 40); B.run(20 * 40);
+    let fellAt = -1;
+    for (let i = 0; i < 12 && fellAt < 0; i++) { const f = A.step(700); B.step(700); if (f) fellAt = A.t; }
+    const D = A.dynasties[0];
+    check('C7: x ≥ x_rev 连续 m_rev 轮触发, 记下一行朝代记录', fellAt > 0 && A.dynasties.length === 1 && D.cause === 'x' && near(D.years, fellAt / 20, 1e-9), D ? `第 ${fellAt} 轮, 时长 ${D.years} 年, 原因 ${D.cause}` : '没有触发');
+    check('C7: 朝代记录字段齐全', D && ['startRound', 'endRound', 'years', 'Wpeak', 'WpeakYear', 'VxAtWpeak', 'PAtWpeak', 'xMaxPre', 'bAtFall', 'VhAtFall', 'cause'].every(k2 => D[k2] !== undefined && !(typeof D[k2] === 'number' && Number.isNaN(D[k2]))));
+    check('C7: 崩溃前 (截至倒台前一年) 的 x 最大值不含最后的起飞', D && D.xMaxPre < 0.05, D && `xMaxPre=${D.xMaxPre.toFixed(4)}`);
+    const keep = 1 - A.o.phiCath;
+    let okB = true, okL = true;
+    for (let i = 0; i < 1000; i++) { if (A.sim.b[i] !== B.sim.b[i] * keep) okB = false; if (A.sim.latent[i] !== B.sim.latent[i] * keep) okL = false; }
+    check('C7 快层重置: b 与 latent 乘以 (1−φ_cath)', okB && okL);
+    check('C7 快层重置: a 清零 (人们回家了), z 清零, flagged 清零', meanOf(A.sim.a) === 0 && meanOf(A.sim.z) === 0 && meanOf(A.sim.flagged) === 0 && meanOf(B.sim.a) > 0.5);
+    check('C7 快层重置: P ← P_new, 警力降到 K0_new', A.sim.o.P === A.o.Pnew && A.P === A.o.Pnew && near(A.K0cur, 20 * A.o.K0newFrac, 1e-12));
+    let okV = true, jump = 0;
+    for (let k = 0; k < 5; k++) {
+      if (!near(A.st.Vx[k], B.st.Vx[k] + A.o.rRel * B.st.Vh[k], 1e-15) || !near(A.st.Vh[k], B.st.Vh[k] * (1 - A.o.rRel), 1e-15)) okV = false;
+      jump += Math.abs(A.st.s[k] - B.st.s[k]);
+    }
+    check('C7 慢层重置: V_显 += r_rel·V_隐, V_隐 *= (1−r_rel), s 发生随机跳动', okV && jump > 0, `Σ|Δs|=${jump.toFixed(4)}`);
+    A.step(); B.step();
+    check('C7: 下一轮大赦生效 (拘押清空), 警力开始恢复', meanOf(A.sim.r) === 0 && meanOf(B.sim.r) > 0 && A.sim.o.K0 > 20 * A.o.K0newFrac * (1 - 0.3) && A.K0cur > 20 * A.o.K0newFrac, `K0cur=${A.K0cur.toFixed(3)}`);
+    A.run(20 * 80);
+    check('C7: 警力以时间常数 τ_K 恢复到原编制', Math.abs(A.K0cur - 20) < 0.02 || A.dynasties.length > 1, `80 年后 K0cur=${A.K0cur.toFixed(3)}, 朝代数=${A.dynasties.length + 1}`);
+  }
+  {
+    // 执行者倒戈: P 远高于 P̄, 全程没人上街, d 自己升到 d_rev (性质一)
+    const c = CY({ revolution: true, env: { type: 'static' } }, { P: 1.95 });
+    let f = null, t = 0;
+    while (!f && t < 400) { f = c.step(); t++; }
+    check('C7: d ≥ d_rev 连续 m_rev 轮也触发, 而且全程 x = 0 (沉默中倒台)', f === 'd' && c.dynasties[0].xMaxPre === 0 && Math.max(...c.hist.x) === 0, `第 ${t} 轮, 原因 ${f}`);
+  }
+  {
+    const c = CY({ revolution: true, kappa: 0.1, env: { type: 'constant', v: 0.05 } }, { kernel: 'memorial', memPeak: 10, memPeakAmp: 1.5, P: 0.6 });
+    c.run(20 * 40);
+    let f = null; for (let i = 0; i < 12 && !f; i++) f = c.step(700);
+    const b0 = meanOf(c.sim.b);
+    c.step();
+    check('C7: memorial 核下 Ehist 同步缩放, 下一轮按核重算后积怨没有弹回去', f === 'x' && meanOf(c.sim.b) < b0 * 1.5 && meanOf(c.sim.b) > 0, `重置后 b̄=${b0.toFixed(5)}, 下一轮 ${meanOf(c.sim.b).toFixed(5)}`);
+  }
+  {
+    const off = CY({ revolution: false }, { P: 1.95 });
+    off.run(400);
+    check('C7 关闭: 判据满足也不重置, 只记下首次满足的时刻', off.dynasties.length === 0 && off.firstCollapse !== null && meanOf(off.sim.z) > 0.7);
+  }
+  {
+    // standalone: 负荷判据. v > v_c 的匀速环境下周而复始; 关掉随机跳动后每个朝代一样长
+    const Vs = Math.sqrt(0.02), Lmax = 0.2, vc = th.vCrit(Vs, 1, Lmax);
+    const c = SA({ revolution: true, zetaJump: 0, env: { type: 'constant', v: 1.3 * vc }, Lmax }).run(20 * 400);
+    const ys = c.dynasties.map(q => q.years);
+    check('C7 standalone: 用负荷判据, 匀速环境 (v=1.3v_c) 下周而复始', ys.length >= 5 && c.dynasties.every(q => q.cause === 'load') && Math.max(...ys.slice(1)) - Math.min(...ys.slice(1)) < 0.11, `朝代时长: ${ys.slice(0, 6).map(y => y.toFixed(1)).join(', ')} 年`);
+  }
+  {
+    const c = CY({ revolution: true, nChaos: 40, Wchaos: 0.5, env: { type: 'static' } }, { P: 1.95 });
+    let f = null; while (!f) f = c.step();
+    const s0 = Float64Array.from(c.st.s);
+    c.step();
+    const Wc = c.W; c.run(60);
+    check('C7 空位期 (可选): n_chaos 轮内 W 额外扣减, s 随机游走', near(Wc, -c.hist.ell[c.hist.ell.length - 61] - c.hist.vload[c.hist.vload.length - 61] - 0.5, 1e-12) && c.chaosLeft === 0 && !sameArr(s0, c.st.s));
+  }
+
+  console.log('   -- 政权 (第 6 节) --');
+  {
+    const hi = CY({ evolveP: true, cE: 0.5, env: { type: 'static' } });
+    const ps = [hi.P]; for (let y = 0; y < 40; y++) { hi.run(20); ps.push(hi.P); }
+    check('执法成本很高 (c_E=0.5) 时, 政权把 P 单调降到 P_min', ps.every((p, i) => i === 0 || p <= ps[i - 1]) && ps[ps.length - 1] === hi.o.Pmin, `P: ${ps[0]} → ${ps[ps.length - 1]}`);
+    const lo = CY({ evolveP: true, cE: 0, etaP: 1, env: { type: 'static' } }, { alpha: 0, beta: 0, delta: 0 });
+    const ps2 = [lo.P], es = [lo.e]; for (let y = 0; y < 60; y++) { lo.run(20); ps2.push(lo.P); es.push(lo.e); }
+    check('执法不要钱 (c_E=0) 时, 短视政权在平静期把 P 往上推, e 随之下降 (约减原理的方向)', ps2.every((p, i) => i === 0 || p >= ps2[i - 1]) && ps2[60] > ps2[0] + 0.05 && es[60] < es[0], `P: ${ps2[0]} → ${ps2[60].toFixed(3)}, e: ${es[0].toFixed(3)} → ${es[60].toFixed(3)}`);
+  }
+  {
+    const env = { type: 'shocks', vCalm: 0.002, vShock: 0.08, durMin: 10, durMax: 20, meanGap: 30, sigmaTheta: 0 };
+    const c = CY({ evolveP: true, regime: 'zhaogong', lambdaW: 0.5, cE: 0, etaP: 1, env });
+    let ok = true, tight = 0;
+    for (let i = 0; i < 20 * 300; i++) {
+      c.step();
+      const cap = Math.max(c.o.Pmin, c.PbarEff - c.o.margin);
+      if (c.sim.o.P > cap + 1e-12) ok = false;
+      if (c.sim.o.P > cap - 1e-9) tight++;
+    }
+    check('召公政权: 每一轮都守住 P ≤ max(P_min, P̄_eff − margin)', ok && tight > 100, `约束起作用的轮数: ${tight}/6000`);
+  }
+  {
+    // 在鞍结点上摆一个状态: 给所有人加 0.106 的积怨后, P−δ 下低态已经消失, P+δ 下还在.
+    // 看得见 b 的政权 (useMem) 从 x̂ 里看到悬崖, 看不见的政权什么也看不到.
+    const grad = (regime) => {
+      const c = CY({ evolveP: true, regime, cE: 0.05, env: { type: 'static' } });
+      for (let i = 0; i < 1000; i++) c.sim.addGrievance(i, 0.106);
+      const xLo = c.attractorAt(c.P - c.o.deltaP, c.o.useMem), xHi = c.attractorAt(c.P + c.o.deltaP, c.o.useMem);
+      c._updateRegime();
+      return { g: c.lastGradP, P: c.P, xLo, xHi };
+    };
+    const far = grad('farsighted'), myo = grad('myopic');
+    check('远见政权 (useMem) 在 x̂ 里看得见临界点: 低一点就失守, 高一点守得住', far.xLo > 0.6 && far.xHi < 0.02 && far.g > 100 && near(far.P, 0.5, 1e-12), `x̂(P−δ)=${far.xLo.toFixed(3)}, x̂(P+δ)=${far.xHi.toFixed(3)}, 梯度=${far.g.toFixed(0)}, P: 0.4 → ${far.P}`);
+    check('短视政权 (看不见 b) 的 x̂ 两边都是 0, 对同一处悬崖毫无反应', myo.xLo === 0 && myo.xHi === 0 && Math.abs(myo.g) < 1 && myo.P < 0.4, `梯度=${myo.g.toFixed(3)}, P: 0.4 → ${myo.P.toFixed(4)}`);
+  }
+  {
+    const c = CY({ evolveP: true, env: { type: 'static' } });
+    const snap = { a: Uint8Array.from(c.sim.a), b: Float64Array.from(c.sim.b), r: Uint8Array.from(c.sim.r), z: Uint8Array.from(c.sim.z) };
+    const probe = c.sim.rng; let calls = 0; c.sim.rng = () => { calls++; return probe(); };     // 只在测试里包一层计数, 不是给模型打补丁
+    for (let i = 0; i < 5; i++) { c.objectiveP(0.3 + 0.3 * i); c.exprAt(1); c.attractorAt(0.5, true); c.forecastSlow(0.5, 1); }
+    check('政权的预测只读: 不消耗快层随机数, 不改快层状态', calls === 0 && sameArr(snap.a, c.sim.a) && sameArr(snap.b, c.sim.b) && sameArr(snap.r, c.sim.r) && sameArr(snap.z, c.sim.z));
+  }
 }
 
 console.log(`\n结果: ${pass} 通过, ${fail} 失败`);

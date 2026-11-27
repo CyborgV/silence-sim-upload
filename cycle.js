@@ -377,12 +377,14 @@
       this.thetaHatLog.push(this.perceivedTheta());
       if (this.thetaHatLog.length > 4096) this.thetaHatLog.splice(0, 2048);
       if (this.sim && o.evolveP) {
+        /* 中心差分; 但候选值不越出允许范围 (贴着边界时退化为单侧差分): 政权不去评估它本来就不能选的政策 */
         const d = o.deltaP;
-        const grad = (this.objectiveP(this.P + d) - this.objectiveP(this.P - d)) / (2 * d);
+        const hi = o.legalCap ? Math.min(o.Pmax, this._legalCap()) : o.Pmax;
+        const Pp = Math.min(hi, this.P + d), Pm = Math.max(o.Pmin, this.P - d);
+        const grad = Pp > Pm ? (this.objectiveP(Pp) - this.objectiveP(Pm)) / (Pp - Pm) : 0;
         let step = o.etaP * grad;
         if (step > o.dPmax) step = o.dPmax; else if (step < -o.dPmax) step = -o.dPmax;
         let P = this.P + step;
-        const hi = o.legalCap ? Math.min(o.Pmax, this._legalCap()) : o.Pmax;
         if (P > hi) P = hi;
         if (P < o.Pmin) P = o.Pmin;
         this.lastGradP = grad;
